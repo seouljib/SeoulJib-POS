@@ -7,6 +7,7 @@ const MENU_KEY    = "sj-menu-v5";
 const CATS_KEY    = "sj-cats-v5";
 const TABLE_KEY   = "sj-table-num";
 const MAIN_KEY    = "sj-is-main";   // marks this device as the main (kitchen) tablet
+const CALLS_KEY   = "sj-calls-v5";    // call staff requests
 const NUM_TABLES  = 15;
 const TABLES      = Array.from({ length: NUM_TABLES }, (_, i) => i + 1);
 
@@ -118,6 +119,8 @@ export default function App() {
   const [mode, setMode]             = useState("home");
   const [fixedTable, setFixedTable] = useState(() => db.get(TABLE_KEY));
   const [isMainTablet, setIsMainTablet] = useState(() => !!db.get(MAIN_KEY));
+  const [calls, setCalls]               = useState(() => db.get(CALLS_KEY) || []);
+  const [battery, setBattery]           = useState(null);
   const [menu, setMenu]             = useState(() => db.get(MENU_KEY) || DEFAULT_MENU);
   const [cats, setCats]             = useState(() => db.get(CATS_KEY) || DEFAULT_CATS);
   const [orders, setOrders]         = useState(() => db.get(ORDERS_KEY) || []);
@@ -158,6 +161,9 @@ export default function App() {
     const pend=loaded.filter(o=>o.status==="pending");
     if(pend.length>prevCount.current){const ids=pend.slice(prevCount.current).map(o=>o.id);setNewIds(new Set(ids));beep();setTimeout(()=>setNewIds(new Set()),5000);}
     prevCount.current=pend.length; setOrders(loaded);
+    // Also reload calls
+    const loadedCalls=db.get(CALLS_KEY);
+    if(loadedCalls) setCalls(loadedCalls);
   },[]);
 
   useEffect(()=>{
@@ -165,6 +171,25 @@ export default function App() {
     else clearInterval(pollRef.current);
     return()=>clearInterval(pollRef.current);
   },[mode,poll]);
+
+  // Battery detection
+  useEffect(()=>{
+    const nav = navigator;
+    if(nav.getBattery){
+      nav.getBattery().then(b=>{
+        setBattery(Math.round(b.level*100));
+        b.addEventListener('levelchange',()=>setBattery(Math.round(b.level*100)));
+      });
+    }
+  },[]);
+
+  const saveCalls = useCallback((n)=>{setCalls(n);db.set(CALLS_KEY,n);},[]);
+
+  const callStaff = ()=>{
+    const c={id:Date.now().toString(),table:fixedTable,time:new Date().toLocaleTimeString("en-NZ",{hour:"2-digit",minute:"2-digit"}),ts:Date.now(),done:false};
+    const next=[...(db.get(CALLS_KEY)||[]),c];
+    db.set(CALLS_KEY,next);setCalls(next);
+  };
 
   const showToast=(msg)=>{setToast(msg);setTimeout(()=>setToast(""),2200);};
 
@@ -265,12 +290,19 @@ export default function App() {
         )}
       </div>
 
-      {/* Table number indicator */}
-      {fixedTable && (
-        <div style={{position:"absolute",bottom:20,color:C.dim,fontSize:11,letterSpacing:2,fontWeight:500}}>
-          TABLE {fixedTable} · <span style={{cursor:"pointer",color:C.sub,textDecoration:"underline"}} onClick={()=>setTableSetup(true)}>change</span>
-        </div>
-      )}
+      {/* Table number indicator + battery */}
+      <div style={{position:"absolute",bottom:20,display:"flex",alignItems:"center",gap:16}}>
+        {fixedTable && (
+          <div style={{color:C.dim,fontSize:11,letterSpacing:2,fontWeight:500}}>
+            TABLE {fixedTable} · <span style={{cursor:"pointer",color:C.sub,textDecoration:"underline"}} onClick={()=>setTableSetup(true)}>change</span>
+          </div>
+        )}
+        {battery!==null&&(
+          <div style={{fontSize:11,fontWeight:600,color:battery<=20?"#e74c3c":battery<=40?"#e8924a":C.dim,letterSpacing:1}}>
+            {battery<=20?"🪫":battery<=40?"🔋":"🔋"} {battery}%
+          </div>
+        )}
+      </div>
     </div>
   );
 
@@ -369,6 +401,10 @@ export default function App() {
               <span>Total</span><span style={{color:C.goldLt}}>${cartTotal.toFixed(2)}</span>
             </div>
             <button style={{...goldBtn(true),padding:"16px",fontSize:16,opacity:cart.length?1:.35,cursor:cart.length?"pointer":"default"}} onClick={submitOrder} disabled={!cart.length}>Place Order</button>
+            <button onClick={(e)=>{callStaff();showToast("Staff has been called ✓");e.currentTarget.classList.add('sj-call-active');setTimeout(()=>e.currentTarget.classList.remove('sj-call-active'),1300);}}
+              style={{width:"100%",marginTop:8,padding:"13px",background:"transparent",border:`1.5px solid ${C.border}`,borderRadius:14,color:C.sub,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:F,transition:"all .15s"}}>
+              🔔 &nbsp;Call Staff
+            </button>
           </div>
         </div>
       </div>
@@ -395,7 +431,7 @@ export default function App() {
   // ════════════════════════════════════════════════════════
   if (mode==="kitchen") {
     const now=Date.now();
-    const showOrders=(ktab==="pending"?[...pending]:[...done]).reverse();
+    const showOrders=(ktab==="pending"?[...pending]:[...done]); // oldest first = natural order
     return (
       <div style={{...pg,background:"#08090a"}}>
         <div style={{...hdr,background:"#08090a",padding:"10px 14px"}}>
@@ -404,11 +440,30 @@ export default function App() {
             <button style={pill(ktab==="pending")} onClick={()=>setKtab("pending")}>🔥 Pending {pending.length>0?`(${pending.length})`:""}</button>
             <button style={pill(ktab==="done")} onClick={()=>setKtab("done")}>✅ Done {done.length>0?`(${done.length})`:""}</button>
           </div>
-          <div style={{display:"flex",alignItems:"center",gap:7}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            {calls.filter(c=>!c.done).length>0&&(
+              <div style={{background:"#c0392b",color:"#fff",borderRadius:20,padding:"5px 12px",fontSize:12,fontWeight:700,animation:"pulse 1s ease infinite"}}>
+                🔔 {calls.filter(c=>!c.done).length} Call{calls.filter(c=>!c.done).length>1?"s":""}
+              </div>
+            )}
             <span style={{color:"#1a2222",fontSize:10}}>live · 3s</span>
             <button onClick={poll} style={{...darkBtn(),padding:"6px 11px",fontSize:12}}>↻</button>
           </div>
         </div>
+        {/* Call Staff alerts */}
+        {calls.filter(c=>!c.done).length>0&&(
+          <div style={{padding:"10px 12px",borderBottom:`1px solid ${C.border}`,display:"flex",gap:8,flexWrap:"wrap",background:"#1a0808"}}>
+            {calls.filter(c=>!c.done).map(c=>(
+              <div key={c.id} style={{display:"flex",alignItems:"center",gap:8,background:"#2a0f0f",border:"1.5px solid #c0392b",borderRadius:10,padding:"8px 14px"}}>
+                <span style={{fontSize:16}}>🔔</span>
+                <span style={{fontWeight:700,fontSize:14,color:"#fff"}}>Table {c.table}</span>
+                <span style={{color:"#888",fontSize:12}}>{c.time}</span>
+                <button onClick={()=>saveCalls(calls.map(x=>x.id===c.id?{...x,done:true}:x))}
+                  style={{background:"#27ae60",border:"none",color:"#fff",borderRadius:6,padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:F}}>Done</button>
+              </div>
+            ))}
+          </div>
+        )}
         <div style={{flex:1,overflowY:"auto",padding:"12px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(285px,1fr))",gap:10,alignContent:"start"}}>
           {showOrders.length===0&&<div style={{gridColumn:"1/-1",textAlign:"center",color:"#1a2222",marginTop:60,fontSize:13}}>{ktab==="pending"?"No pending orders 🎉":"No completed orders yet"}</div>}
           {showOrders.map(order=>{
@@ -446,6 +501,22 @@ export default function App() {
                   }
                   <button onClick={()=>{const w=window.open("","_blank","width=430,height=640");if(w){w.document.write(receipt(order));w.document.close();}}} style={{flex:1,background:"#0a1525",color:"#5a8acc",border:"1.5px solid #172040",borderRadius:9,padding:"11px",fontWeight:700,cursor:"pointer",fontSize:13,fontFamily:F}}>🖨️</button>
                   {ktab==="done"&&<button onClick={()=>saveOrders(orders.filter(o=>o.id!==order.id))} style={{flex:1,background:"#200c0c",color:"#cc4444",border:"1.5px solid #3a1515",borderRadius:9,padding:"11px",fontWeight:700,cursor:"pointer",fontSize:13,fontFamily:F}}>🗑️</button>}
+                </div>
+                {/* Quick sold out — only for pending */}
+                {ktab==="pending"&&(
+                  <div style={{padding:"0 10px 10px",display:"flex",gap:6,flexWrap:"wrap"}}>
+                    {order.items.map((item,i)=>{
+                      const menuItem=menu.find(m=>m.id===item.id);
+                      if(!menuItem||menuItem.soldOut) return null;
+                      return(
+                        <button key={i} onClick={()=>{saveMenu(menu.map(m=>m.id===item.id?{...m,soldOut:true}:m));showToast(`"${item.name}" marked sold out`);}}
+                          style={{background:"#1a0f0f",border:"1px solid #3a2020",borderRadius:6,color:"#cc6666",fontSize:10,fontWeight:600,padding:"4px 9px",cursor:"pointer",fontFamily:F}}>
+                          🚫 {item.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
                 </div>
               </div>
             );
