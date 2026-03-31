@@ -539,7 +539,7 @@ export default function App() {
                       const menuItem=menu.find(m=>m.id===item.id);
                       if(!menuItem||menuItem.soldOut) return null;
                       return(
-                        <button key={i} onClick={()=>{saveMenu(menu.map(m=>m.id===item.id?{...m,soldOut:true}:m));showToast(`"${item.name}" marked sold out`);}}
+                        <button key={i} onClick={()=>{saveMenu(menu.map(m=>m.id===item.id?{...m,soldOut:true}:m));showToast(item.name+" marked sold out");}}
                           style={{background:"#1a0f0f",border:"1px solid #3a2020",borderRadius:6,color:"#cc6666",fontSize:10,fontWeight:600,padding:"4px 9px",cursor:"pointer",fontFamily:F}}>
                           🚫 {item.name}
                         </button>
@@ -710,8 +710,8 @@ export default function App() {
         <div style={{flex:1,overflowY:"auto",padding:"18px"}}>
           <div style={{maxWidth:480,margin:"0 auto"}}>
             <div style={{display:"flex",gap:8,marginBottom:24}}>
-              <input value={newCatName} onChange={e=>setNewCatName(e.target.value)} placeholder="New category name..." style={{...inp,flex:1}} onKeyDown={e=>e.key==="Enter"&&(()=>{const n=newCatName.trim();if(!n)return;if(cats.includes(n)){showToast("Already exists");return;}saveCats([...cats,n]);setNewCatName("");showToast(`"${n}" added ✓`);})()}/>
-              <button style={{...goldBtn(),padding:"11px 18px",fontSize:14}} onClick={()=>{const n=newCatName.trim();if(!n)return;if(cats.includes(n)){showToast("Already exists");return;}saveCats([...cats,n]);setNewCatName("");showToast(`"${n}" added ✓`);}}>+ Add</button>
+              <input value={newCatName} onChange={e=>setNewCatName(e.target.value)} placeholder="New category name..." style={{...inp,flex:1}} onKeyDown={e=>e.key==="Enter"&&(()=>{const n=newCatName.trim();if(!n)return;if(cats.includes(n)){showToast("Already exists");return;}saveCats([...cats,n]);setNewCatName("");showToast(n+" added ✓");})()}/>
+              <button style={{...goldBtn(),padding:"11px 18px",fontSize:14}} onClick={()=>{const n=newCatName.trim();if(!n)return;if(cats.includes(n)){showToast("Already exists");return;}saveCats([...cats,n]);setNewCatName("");showToast(n+" added ✓");}}>+ Add</button>
             </div>
             <div style={{fontSize:10,fontWeight:700,color:C.gold,letterSpacing:3,marginBottom:12,paddingBottom:6,borderBottom:`1px solid ${C.border}`}}>CURRENT CATEGORIES</div>
             {cats.map((c,i)=>{
