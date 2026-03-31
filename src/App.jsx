@@ -525,10 +525,30 @@ export default function App() {
               {cartCount > 0 && <div style={{ color: C.sub, fontSize: 13 }}>{cartCount + " item" + (cartCount > 1 ? "s" : "")}</div>}
             </div>
             <button style={{ background: "none", border: "none", color: C.gLt, fontSize: 22, cursor: "pointer", padding: "4px" }} onClick={function() { setCart([]); setNote(""); setMode("home"); }}>
-              {"\u2190"}
+              {"\\u2190"}
             </button>
           </div>
-          <div style={{ flex: 1, overflowY: "auto" }}>
+          {(function() {
+            var tp = orders.filter(function(o) { return o.table === tableNum && o.status === "pending"; });
+            if (!tp.length) return null;
+            var tot = tp.reduce(function(s,o){return s+o.total;},0);
+            var allItems = [];
+            tp.forEach(function(o){o.items.forEach(function(i){allItems.push(i);});});
+            return (
+              <div style={{background:"#0d1a0d",borderBottom:"1px solid #1a3a1a",padding:"10px 16px 12px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+                  <span style={{fontSize:11,fontWeight:700,color:"#4dca4d",letterSpacing:1}}>ORDER SENT</span>
+                  <span style={{fontSize:14,fontWeight:800,color:"#4dca4d"}}>{"$"+tot.toFixed(2)}</span>
+                </div>
+                {allItems.map(function(item,i){return(
+                  <div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"#5a9a5a",padding:"2px 0"}}>
+                    <span>{item.name}</span><span>{"x"+item.qty}</span>
+                  </div>
+                );})}
+              </div>
+            );
+          })()}
+          <div style={{ flex: 1, overflowY: "auto" }}>>
             {cart.length === 0 && (
               <div style={{ textAlign: "center", color: C.dim, padding: "48px 20px 0", fontSize: 14, lineHeight: 2 }}>
                 <div style={{ fontSize: 36, marginBottom: 8 }}>🛒</div>
@@ -592,7 +612,7 @@ export default function App() {
       <div style={{ color: C.sub, fontSize: 16 }}>{"Table " + tableNum + " \u00b7 We\u2019ll be right with you"}</div>
       <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
         <button style={Object.assign({}, gBtn(), { fontSize: 16 })} onClick={function() { setCat(cats[0]); setMode("order"); }}>Add More</button>
-        <button style={Object.assign({}, dBtn(), { fontSize: 16 })} onClick={function() { setMode("home"); }}>Done</button>
+        <button style={Object.assign({}, dBtn(), { fontSize: 16 })} onClick={function() { setMode("order"); }}>Done</button>
       </div>
     </div>
   );
