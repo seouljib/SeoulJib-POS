@@ -93,6 +93,7 @@ const pg  = { minHeight:"100dvh", background:C.bg, color:C.text, fontFamily:F, d
 const hdr = { display:"flex", alignItems:"center", justifyContent:"space-between", padding:"13px 18px", borderBottom:`1px solid ${C.border}`, background:C.bg, position:"sticky", top:0, zIndex:100 };
 
 const GLOBAL_CSS = `
+  :root { --border: #22282a; }
   @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap');
   @keyframes popIn  { 0%{transform:scale(.6);opacity:0} 70%{transform:scale(1.15)} 100%{transform:scale(1);opacity:1} }
   @keyframes slideUp{ from{transform:translateY(14px);opacity:0} to{transform:translateY(0);opacity:1} }
@@ -103,6 +104,8 @@ const GLOBAL_CSS = `
   .sj-addbtn:active { transform:scale(.88) }
   .sj-qtybtn:active { transform:scale(.88) }
   .sj-badge         { animation:popIn .25s cubic-bezier(.34,1.56,.64,1) both }
+  @keyframes callGlow{0%,100%{background:transparent;border-color:#22282a;color:#8a8278}50%{background:rgba(192,57,43,.2);border-color:#c0392b;color:#ff6b6b;box-shadow:0 0 18px rgba(192,57,43,.45)}}
+  .sj-call-active{animation:callGlow .8s ease infinite !important;border-color:#c0392b !important;color:#ff6b6b !important}
   .sj-row           { animation:fadeIn .2s ease both }
   select option     { background:#161819; color:#ece7de; }
 `;
@@ -148,11 +151,31 @@ export default function App() {
   const saveMenu   = useCallback((n)=>{setMenu(n);db.set(MENU_KEY,n);},[]);
   const saveCats   = useCallback((n)=>{setCats(n);db.set(CATS_KEY,n);},[]);
 
-  const beep = () => {
+  const beep = (type="order") => {
     try {
       if(!_ctx.current) _ctx.current=new(window.AudioContext||window.webkitAudioContext)();
       const ctx=_ctx.current;
-      [0,.16,.32].forEach(d=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=920;g.gain.setValueAtTime(.3,ctx.currentTime+d);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+d+.18);o.start(ctx.currentTime+d);o.stop(ctx.currentTime+d+.18);});
+      if(type==="call"){
+        // Call staff — urgent rising tone × 4
+        [0,.15,.30,.45].forEach((d,i)=>{
+          const o=ctx.createOscillator(),g=ctx.createGain();
+          o.connect(g);g.connect(ctx.destination);
+          o.frequency.value=600+(i*120);
+          g.gain.setValueAtTime(.7,ctx.currentTime+d);
+          g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+d+.22);
+          o.start(ctx.currentTime+d);o.stop(ctx.currentTime+d+.22);
+        });
+      } else {
+        // New order — triple chime
+        [[0,880],[.18,1100],[.36,880]].forEach(([d,freq])=>{
+          const o=ctx.createOscillator(),g=ctx.createGain();
+          o.connect(g);g.connect(ctx.destination);
+          o.type="sine";o.frequency.value=freq;
+          g.gain.setValueAtTime(.6,ctx.currentTime+d);
+          g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+d+.25);
+          o.start(ctx.currentTime+d);o.stop(ctx.currentTime+d+.25);
+        });
+      }
     } catch{}
   };
 
@@ -186,6 +209,7 @@ export default function App() {
   const saveCalls = useCallback((n)=>{setCalls(n);db.set(CALLS_KEY,n);},[]);
 
   const callStaff = ()=>{
+    beep("call");
     const c={id:Date.now().toString(),table:fixedTable,time:new Date().toLocaleTimeString("en-NZ",{hour:"2-digit",minute:"2-digit"}),ts:Date.now(),done:false};
     const next=[...(db.get(CALLS_KEY)||[]),c];
     db.set(CALLS_KEY,next);setCalls(next);
@@ -314,12 +338,12 @@ export default function App() {
     const displayMenu=cat==="All"?menu:menu.filter(m=>m.cat===cat);
     return (
       <div style={{...pg,flexDirection:"row",height:"100dvh",overflow:"hidden"}}>
-        <div style={{width:108,background:C.surface,borderRight:`1px solid ${C.border}`,display:"flex",flexDirection:"column",alignItems:"center",padding:"14px 0",gap:2,flexShrink:0,overflowY:"auto"}}>
+        <div style={{width:130,background:C.surface,borderRight:`1px solid ${C.border}`,display:"flex",flexDirection:"column",alignItems:"center",padding:"14px 0",gap:2,flexShrink:0,overflowY:"auto"}}>
           <div style={{fontSize:8,color:C.dim,letterSpacing:3,marginBottom:10,fontWeight:600}}>MENU</div>
           {allCats.map(c=>{
             const on=cat===c;
             return (
-              <button key={c} onClick={()=>setCat(c)} style={{width:92,padding:"10px 4px 9px",border:"none",borderRadius:10,background:on?C.accent:"transparent",color:on?"#fff":C.sub,fontWeight:on?700:400,fontSize:11,cursor:"pointer",transition:"all .15s",fontFamily:F,textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+              <button key={c} onClick={()=>setCat(c)} style={{width:114,padding:"12px 4px 11px",border:"none",borderRadius:10,background:on?C.accent:"transparent",color:on?"#fff":C.sub,fontWeight:on?700:400,fontSize:14,cursor:"pointer",transition:"all .15s",fontFamily:F,textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
                 <span style={{lineHeight:1.2,fontSize:11}}>{c}</span>
               </button>
             );
@@ -328,7 +352,7 @@ export default function App() {
           <div style={{color:C.dim,fontSize:10,fontWeight:700,marginBottom:6,textAlign:"center",lineHeight:1.4}}>T.{fixedTable}</div>
         </div>
 
-        <div style={{flex:1,overflowY:"auto",padding:"12px 10px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(175px,1fr))",gap:10,alignContent:"start"}}>
+        <div style={{flex:1,overflowY:"auto",padding:"12px 10px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:10,alignContent:"start"}}>
           {displayMenu.length===0&&<div style={{gridColumn:"1/-1",textAlign:"center",color:C.dim,marginTop:60,fontSize:13}}>No items in this category</div>}
           {displayMenu.map(item=>{
             const inCart=cart.find(c=>c.id===item.id);
@@ -338,19 +362,19 @@ export default function App() {
               <div key={item.id} className="sj-card" style={{background:C.card,border:`1.5px solid ${inCart?C.gold:C.border}`,borderRadius:16,overflow:"hidden",cursor:item.soldOut?"default":"pointer",opacity:item.soldOut?.4:1,position:"relative",animation:wasAdded?"bounceIn .28s ease both":"none",transition:"border-color .15s"}}>
                 {item.img
                   ?<div style={{height:130,overflow:"hidden"}}><img src={item.img} alt={item.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/></div>
-                  :<div style={{height:100,background:`linear-gradient(145deg,${cs.from},${cs.to})`,display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
+                  :<div style={{height:120,background:`linear-gradient(145deg,${cs.from},${cs.to})`,display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
                     <div style={{position:"absolute",width:80,height:80,borderRadius:"50%",background:`radial-gradient(circle,${cs.accent}22 0%,transparent 70%)`}}/>
-                    <span style={{fontSize:42,position:"relative"}}>{item.emoji}</span>
+                    <span style={{fontSize:52,position:"relative"}}>{item.emoji}</span>
                   </div>
                 }
                 {inCart&&<div className="sj-badge" style={{position:"absolute",top:7,right:7,background:C.gold,color:"#fff",borderRadius:"50%",width:24,height:24,fontSize:12,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{inCart.qty}</div>}
                 {item.soldOut&&<div style={{position:"absolute",top:7,left:7,background:"rgba(0,0,0,.78)",color:C.sub,borderRadius:5,padding:"2px 7px",fontSize:10,fontWeight:600}}>SOLD OUT</div>}
                 <div style={{padding:"10px 12px 12px"}}>
-                  <div style={{fontWeight:700,fontSize:14,lineHeight:1.3}}>{item.name}</div>
-                  <div style={{color:C.sub,fontSize:10,marginTop:1}}>{item.sub}</div>
-                  {item.desc&&<div style={{color:"#3e4545",fontSize:10,marginTop:3,lineHeight:1.4}}>{item.desc}</div>}
+                  <div style={{fontWeight:700,fontSize:17,lineHeight:1.3}}>{item.name}</div>
+                  <div style={{color:C.sub,fontSize:13,marginTop:2}}>{item.sub}</div>
+                  {item.desc&&<div style={{color:"#3e4545",fontSize:12,marginTop:4,lineHeight:1.4}}>{item.desc}</div>}
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:10}}>
-                    <div style={{background:`${cs.accent}22`,border:`1px solid ${cs.accent}44`,borderRadius:7,padding:"3px 9px",color:C.goldLt,fontWeight:800,fontSize:15}}>
+                    <div style={{background:`${cs.accent}22`,border:`1px solid ${cs.accent}44`,borderRadius:7,padding:"3px 9px",color:C.goldLt,fontWeight:800,fontSize:18}}>
                       {item.price===0?"Free":`$${item.price}`}
                     </div>
                     {!item.soldOut&&(inCart
@@ -368,7 +392,7 @@ export default function App() {
           })}
         </div>
 
-        <div style={{width:272,background:C.surface,borderLeft:`1px solid ${C.border}`,display:"flex",flexDirection:"column",flexShrink:0}}>
+        <div style={{width:300,background:C.surface,borderLeft:`1px solid ${C.border}`,display:"flex",flexDirection:"column",flexShrink:0}}>
           <div style={{padding:"13px 14px 10px",borderBottom:`1px solid ${C.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <div>
               <div style={{fontWeight:800,fontSize:15}}>Your Order</div>
@@ -381,7 +405,7 @@ export default function App() {
             {cart.map(item=>(
               <div key={item.id} style={{padding:"10px 12px",borderBottom:`1px solid ${C.border}`}}>
                 <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
-                  <span style={{fontWeight:600,fontSize:13,flex:1,lineHeight:1.3}}>{item.name}</span>
+                  <span style={{fontWeight:600,fontSize:15,flex:1,lineHeight:1.3}}>{item.name}</span>
                   <span style={{color:C.goldLt,fontWeight:700,fontSize:13,marginLeft:6}}>${(item.price*item.qty).toFixed(2)}</span>
                 </div>
                 <div style={{display:"flex",alignItems:"center",gap:9}}>
@@ -401,9 +425,9 @@ export default function App() {
               <span>Total</span><span style={{color:C.goldLt}}>${cartTotal.toFixed(2)}</span>
             </div>
             <button style={{...goldBtn(true),padding:"16px",fontSize:16,opacity:cart.length?1:.35,cursor:cart.length?"pointer":"default"}} onClick={submitOrder} disabled={!cart.length}>Place Order</button>
-            <button onClick={(e)=>{callStaff();showToast("Staff has been called ✓");e.currentTarget.classList.add('sj-call-active');setTimeout(()=>e.currentTarget.classList.remove('sj-call-active'),1300);}}
+            <button onClick={(e)=>{callStaff();showToast("Staff has been called ✓");const btn=e.currentTarget;btn.classList.add("sj-call-active");btn.disabled=true;setTimeout(()=>{btn.classList.remove("sj-call-active");btn.disabled=false;},5000);}}
               style={{width:"100%",marginTop:8,padding:"13px",background:"transparent",border:`1.5px solid ${C.border}`,borderRadius:14,color:C.sub,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:F,transition:"all .15s"}}>
-              🔔 &nbsp;Call Staff
+              🔔  Call Staff
             </button>
           </div>
         </div>
@@ -586,9 +610,28 @@ export default function App() {
             </div>
           </div>
           <div>
-            <div style={{color:C.sub,fontSize:12,marginBottom:5,fontWeight:500}}>Image URL (Cloudinary)</div>
-            <input value={editItem.img} onChange={e=>setEditItem({...editItem,img:e.target.value})} placeholder="https://res.cloudinary.com/..." style={inp}/>
-            {editItem.img&&<div style={{marginTop:8,borderRadius:10,overflow:"hidden",height:150}}><img src={editItem.img} alt="preview" style={{width:"100%",height:"100%",objectFit:"cover"}} onError={e=>e.target.style.display="none"}/></div>}
+            <div style={{color:C.sub,fontSize:12,marginBottom:5,fontWeight:500}}>Menu Photo</div>
+            <label style={{display:"block",cursor:"pointer"}}>
+              <input type="file" accept="image/*" style={{display:"none"}}
+                onChange={e=>{
+                  const file=e.target.files[0];
+                  if(!file)return;
+                  const r=new FileReader();
+                  r.onload=ev=>setEditItem({...editItem,img:ev.target.result});
+                  r.readAsDataURL(file);
+                }}
+              />
+              <div style={{background:C.card,border:`1.5px dashed ${editItem.img?C.gold:C.border}`,borderRadius:10,padding:"16px",textAlign:"center",color:editItem.img?C.goldLt:C.sub,fontSize:13,fontWeight:600,transition:"all .15s"}}>
+                {editItem.img?"📷  Change Photo":"📷  Choose Photo from Device"}
+              </div>
+            </label>
+            {editItem.img&&(
+              <div style={{marginTop:8,borderRadius:10,overflow:"hidden",height:180,position:"relative"}}>
+                <img src={editItem.img} alt="preview" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                <button onClick={()=>setEditItem({...editItem,img:""})}
+                  style={{position:"absolute",top:8,right:8,background:"rgba(0,0,0,.75)",border:"none",color:"#fff",borderRadius:"50%",width:32,height:32,fontSize:18,cursor:"pointer",fontFamily:F}}>x</button>
+              </div>
+            )}
           </div>
           <div style={{display:"flex",gap:10,marginTop:4}}>
             <button style={goldBtn(true)} onClick={saveItem}>{isNewItem?"Add to Menu":"Save Changes"}</button>
