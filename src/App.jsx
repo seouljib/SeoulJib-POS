@@ -55,7 +55,20 @@ const db = {
   remove:(k)   => { try { localStorage.removeItem(k); } catch{} },
 };
 
-const receipt = (o) => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Courier New',monospace;font-size:14px;width:80mm;padding:6mm}.c{text-align:center}.logo{font-size:20px;font-weight:900;letter-spacing:4px}.hr{border:none;border-top:1px dashed #aaa;margin:7px 0}.row{display:flex;justify-content:space-between;margin:4px 0}.b{font-weight:700}.note{background:#f5f5f5;padding:5px 8px;font-style:italic;font-size:11px;margin-top:5px;border-radius:3px}@media print{@page{margin:0;size:80mm auto}}</style></head><body><div class="c"><div class="logo">SEOUL JIB</div><div style="font-size:10px;color:#777;margin-top:2px">270 St Asaph St, Christchurch</div></div><hr class="hr"><div class="row"><span class="b" style="font-size:15px">Table ${o.table}</span><span>${o.time}</span><span style="color:#bbb">#${o.id.slice(-5)}</span></div><hr class="hr">${o.items.map(i=>`<div class="row"><span style="flex:1">${i.name}</span><span style="margin:0 8px;color:#999">×${i.qty}</span><span>$${(i.price*i.qty).toFixed(2)}</span></div>`).join("")}${o.note?`<div class="note">Note: ${o.note}</div>`:""}<hr class="hr"><div class="row b" style="font-size:16px"><span>TOTAL</span><span>$${o.total.toFixed(2)}</span></div><hr class="hr"><div class="c" style="margin-top:10px;font-size:11px;color:#888">Thank you for dining with us 🙏</div><script>window.onload=()=>{window.print();setTimeout(()=>window.close(),700)}<\/script></body></html>`;
+function receipt(o) {
+  const rows = o.items.map(i =>
+    "<div class=\"row\"><span style=\"flex:1\">" + i.name + "</span><span style=\"margin:0 8px;color:#999\">x" + i.qty + "</span><span>$" + (i.price*i.qty).toFixed(2) + "</span></div>"
+  ).join("");
+  const noteHtml = o.note ? "<div class=\"note\">Note: " + o.note + "</div>" : "";
+  return "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Courier New',monospace;font-size:14px;width:80mm;padding:6mm}.c{text-align:center}.logo{font-size:20px;font-weight:900;letter-spacing:4px}.hr{border:none;border-top:1px dashed #aaa;margin:7px 0}.row{display:flex;justify-content:space-between;margin:4px 0}.b{font-weight:700}.note{background:#f5f5f5;padding:5px 8px;font-style:italic;font-size:11px;margin-top:5px;border-radius:3px}@media print{@page{margin:0;size:80mm auto}}</style></head><body>"
+    + "<div class=\"c\"><div class=\"logo\">SEOUL JIB</div><div style=\"font-size:10px;color:#777;margin-top:2px\">270 St Asaph St, Christchurch</div></div>"
+    + "<hr class=\"hr\"><div class=\"row\"><span class=\"b\" style=\"font-size:15px\">Table " + o.table + "</span><span>" + o.time + "</span><span style=\"color:#bbb\">#" + o.id.slice(-5) + "</span></div>"
+    + "<hr class=\"hr\">" + rows + noteHtml
+    + "<hr class=\"hr\"><div class=\"row b\" style=\"font-size:16px\"><span>TOTAL</span><span>$" + o.total.toFixed(2) + "</span></div>"
+    + "<hr class=\"hr\"><div class=\"c\" style=\"margin-top:10px;font-size:11px;color:#888\">Thank you 🙏</div>"
+    + "<scr" + "ipt>window.onload=()=>{window.print();setTimeout(()=>window.close(),700)}</scr" + "ipt>"
+    + "</body></html>";
+}
 
 const C = {
   bg:"#0a0b0b", surface:"#111314", card:"#161819", border:"#22282a",
