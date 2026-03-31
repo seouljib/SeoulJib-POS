@@ -86,30 +86,45 @@ let audioCtx = null;
 function playBeep(type) {
   try {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const ctx = audioCtx;
+    var ctx = audioCtx;
+
+    function tone(freq, startT, dur, vol, wave) {
+      var o = ctx.createOscillator();
+      var g = ctx.createGain();
+      var dist = ctx.createWaveShaper();
+      // Soft distortion for more punch
+      var curve = new Float32Array(256);
+      for (var i = 0; i < 256; i++) {
+        var x = (i * 2) / 256 - 1;
+        curve[i] = (Math.PI + 300) * x / (Math.PI + 300 * Math.abs(x));
+      }
+      dist.curve = curve;
+      o.type = wave || "square";
+      o.frequency.value = freq;
+      o.connect(dist);
+      dist.connect(g);
+      g.connect(ctx.destination);
+      g.gain.setValueAtTime(0, ctx.currentTime + startT);
+      g.gain.linearRampToValueAtTime(vol, ctx.currentTime + startT + 0.01);
+      g.gain.setValueAtTime(vol, ctx.currentTime + startT + dur - 0.05);
+      g.gain.linearRampToValueAtTime(0, ctx.currentTime + startT + dur);
+      o.start(ctx.currentTime + startT);
+      o.stop(ctx.currentTime + startT + dur + 0.01);
+    }
+
     if (type === "call") {
-      [0, 0.15, 0.30, 0.45].forEach(function(d, i) {
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.connect(g); g.connect(ctx.destination);
-        o.frequency.value = 600 + i * 120;
-        g.gain.setValueAtTime(0.7, ctx.currentTime + d);
-        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + d + 0.22);
-        o.start(ctx.currentTime + d);
-        o.stop(ctx.currentTime + d + 0.22);
-      });
+      // CALL STAFF: urgent alarm — 4 rapid double-beeps
+      var t = 0;
+      for (var i = 0; i < 4; i++) {
+        tone(1400, t,       0.08, 1.0, "square");
+        tone(1400, t+0.10, 0.08, 1.0, "square");
+        t += 0.28;
+      }
     } else {
-      [[0, 880], [0.18, 1100], [0.36, 880]].forEach(function(pair) {
-        const d = pair[0]; const freq = pair[1];
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.connect(g); g.connect(ctx.destination);
-        o.frequency.value = freq;
-        g.gain.setValueAtTime(0.6, ctx.currentTime + d);
-        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + d + 0.25);
-        o.start(ctx.currentTime + d);
-        o.stop(ctx.currentTime + d + 0.25);
-      });
+      // NEW ORDER: 3-note descending chime, loud and clear
+      tone(1046, 0.00, 0.22, 1.0, "sine"); // C6
+      tone(880,  0.20, 0.22, 1.0, "sine"); // A5
+      tone(698,  0.40, 0.35, 1.0, "sine"); // F5
     }
   } catch (e) {}
 }
