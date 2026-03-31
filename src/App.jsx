@@ -467,7 +467,7 @@ export default function App() {
                 style={{ background: C.card, border: "2px solid " + (inCart ? C.gold : C.bdr), borderRadius: 20, overflow: "hidden", cursor: item.soldOut ? "default" : "pointer", opacity: item.soldOut ? 0.4 : 1, position: "relative", animation: wasAdded ? "bnc .28s ease both" : "none", transition: "border-color .15s" }}>
 
                 {/* Hero */}
-                <div style={{ height: 150, background: "linear-gradient(145deg," + cs.from + "," + cs.to + ")", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
+                <div style={{ height: 300, background: "linear-gradient(145deg," + cs.from + "," + cs.to + ")", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
                   <div style={{ position: "absolute", width: 110, height: 110, borderRadius: "50%", background: "radial-gradient(circle," + cs.accent + "28 0%,transparent 70%)" }} />
                   {item.img
                     ? <img src={item.img} alt={item.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
@@ -536,9 +536,8 @@ export default function App() {
             tp.forEach(function(o){o.items.forEach(function(i){allItems.push(i);});});
             return (
               <div style={{background:"#0d1a0d",borderBottom:"1px solid #1a3a1a",padding:"10px 16px 12px"}}>
-                <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+                <div style={{marginBottom:6}}>
                   <span style={{fontSize:11,fontWeight:700,color:"#4dca4d",letterSpacing:1}}>ORDER SENT</span>
-                  <span style={{fontSize:14,fontWeight:800,color:"#4dca4d"}}>{"$"+tot.toFixed(2)}</span>
                 </div>
                 {allItems.map(function(item,i){return(
                   <div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"#5a9a5a",padding:"2px 0"}}>
@@ -584,7 +583,10 @@ export default function App() {
           <div style={{ padding: "12px 14px 22px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 22, fontWeight: 800, marginBottom: 14 }}>
               <span>Total</span>
-              <span style={{ color: C.gLt }}>{"$" + cartTotal.toFixed(2)}</span>
+              <span style={{ color: C.gLt }}>{(function() {
+                var placed = orders.filter(function(o){return o.table===tableNum&&o.status==="pending";}).reduce(function(s,o){return s+o.total;},0);
+                return "$" + (cartTotal + placed).toFixed(2);
+              })()}</span>
             </div>
             <button style={Object.assign({}, gBtn(true), { padding: "20px", fontSize: 19, opacity: cart.length ? 1 : 0.35, cursor: cart.length ? "pointer" : "default" })}
               onClick={submitOrder} disabled={!cart.length}>
