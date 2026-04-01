@@ -422,13 +422,30 @@ export default function App() {
   // ORDER
   // ══════════════════════════════════════════════
   if (mode === "order") return (
-    <div style={Object.assign({}, pg, { flexDirection: "row", height: "100dvh", overflow: "hidden" })}>
+    <div style={Object.assign({}, pg, { flexDirection: "column", height: "100dvh", overflow: "hidden" })}>
       {detailItem && <DetailModal />}
 
-      {/* Table number badge - top right */}
-      <div style={{ position: "fixed", top: 12, right: 16, zIndex: 150, background: C.red, color: "#fff", borderRadius: 10, padding: "8px 18px", fontWeight: 900, fontSize: 22, boxShadow: "0 3px 12px rgba(192,57,43,.4)", letterSpacing: 1 }}>
-        {"Table " + tableNum}
+      {/* Top header bar */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px 0 0", background: "#fff", borderBottom: "1px solid " + C.bdr, flexShrink: 0, height: 52 }}>
+        <div style={{ display: "flex", alignItems: "center", height: "100%" }}>
+          {/* Logo area matching sidebar width */}
+          <div style={{ width: 150, background: C.red, height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ color: "#fff", fontWeight: 800, fontSize: 16, letterSpacing: 1 }}>SEOUL JIB</span>
+          </div>
+          {/* Breadcrumb */}
+          <div style={{ padding: "0 16px", fontSize: 15, color: C.sub, fontWeight: 500 }}>
+            {curCatObj ? curCatObj.name : ""}
+            {hasSubs && selSub ? " > " + selSub : ""}
+          </div>
+        </div>
+        {/* Table badge - top right like T-order */}
+        <div style={{ background: C.red, color: "#fff", borderRadius: 8, padding: "6px 20px", fontWeight: 900, fontSize: 20, letterSpacing: 1, boxShadow: "0 2px 8px rgba(192,57,43,.3)" }}>
+          {"Table " + tableNum}
+        </div>
       </div>
+
+      {/* Main content row */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "row", overflow: "hidden" }}>
 
       {/* Category sidebar */}
       <div style={{ width: 150, background: C.red, display: "flex", flexDirection: "column", alignItems: "center", padding: "18px 0", gap: 2, flexShrink: 0, overflowY: "auto" }}>
@@ -443,7 +460,6 @@ export default function App() {
           );
         })}
         <div style={{ flex: 1 }} />
-        <div style={{ color: "rgba(255,255,255,.5)", fontSize: 12, fontWeight: 700, marginBottom: 8 }}>{"T." + tableNum}</div>
       </div>
 
       {/* Main area */}
@@ -459,7 +475,7 @@ export default function App() {
         )}
 
         {/* Menu grid */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "14px 12px", display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: 14, alignContent: "start" }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: "14px 12px", display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14, alignContent: "start" }}>
           {displayMenu.length === 0 && <div style={{ gridColumn: "1/-1", textAlign: "center", color: C.sub, marginTop: 60, fontSize: 15 }}>No items in this category</div>}
           {displayMenu.map(function(item) {
             var inCart = cart.find(function(c) { return c.id === item.id; });
@@ -470,8 +486,8 @@ export default function App() {
 
                 {/* Image */}
                 {item.img
-                  ? <div style={{ height: 180, overflow: "hidden" }}><img src={item.img} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /></div>
-                  : <div style={{ height: 180, background: "linear-gradient(145deg,#f8f0e8,#f0e0d0)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 72 }}>{item.emoji}</div>
+                  ? <div style={{ height: 220, overflow: "hidden" }}><img src={item.img} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /></div>
+                  : <div style={{ height: 220, background: "linear-gradient(145deg,#f8f0e8,#f0e0d0)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 72 }}>{item.emoji}</div>
                 }
 
                 {inCart && <div className="sj-bdg" style={{ position: "absolute", top: 8, right: 8, background: C.red, color: "#fff", borderRadius: "50%", width: 30, height: 30, fontSize: 14, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(192,57,43,.4)" }}>{inCart.qty}</div>}
