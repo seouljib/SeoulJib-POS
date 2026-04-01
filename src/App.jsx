@@ -582,7 +582,7 @@ export default function App() {
         </div>
       </div>
       </div>
-      </div>{/* end Main content row */}
+      </div>
     </div>
   );
 
