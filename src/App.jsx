@@ -603,6 +603,7 @@ export default function App() {
   // KITCHEN
   // ══════════════════════════════════════════════
   if (mode === "kitchen") {
+    return (function() {
     var now = Date.now();
     var showOrders = ktab === "pending" ? pending.slice() : doneOrders.slice();
     return (
@@ -685,6 +686,7 @@ export default function App() {
         <Toast />
       </div>
     );
+    })();
   }
 
   // ══════════════════════════════════════════════
