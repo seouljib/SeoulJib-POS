@@ -581,6 +581,8 @@ export default function App() {
           </button>
         </div>
       </div>
+      </div>
+      </div>{/* end Main content row */}
     </div>
   );
 
