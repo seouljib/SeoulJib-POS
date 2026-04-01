@@ -329,8 +329,8 @@ export default function App() {
               <div style={{ marginBottom: 14 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: "#c05020", letterSpacing: 1, marginBottom: 8 }}>SPICE LEVEL</div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  {["Not Spicy", "Mild", "Medium", "Spicy"].map(function(lvl) {
-                    var icons = { "Not Spicy": "⬜", "Mild": "🌶️", "Medium": "🌶️🌶️", "Spicy": "🌶️🌶️🌶️" };
+                  {["Mild", "Medium", "Spicy"].map(function(lvl) {
+                    var icons = { "Mild": "🌶️", "Medium": "🌶️🌶️", "Spicy": "🌶️🌶️🌶️" };
                     var sel = spiceLevel === lvl;
                     return (
                       <button key={lvl} onClick={function() { setSpiceLevel(lvl); }}
@@ -424,6 +424,11 @@ export default function App() {
   if (mode === "order") return (
     <div style={Object.assign({}, pg, { flexDirection: "row", height: "100dvh", overflow: "hidden" })}>
       {detailItem && <DetailModal />}
+
+      {/* Table number badge - top right */}
+      <div style={{ position: "fixed", top: 12, right: 16, zIndex: 150, background: C.red, color: "#fff", borderRadius: 10, padding: "8px 18px", fontWeight: 900, fontSize: 22, boxShadow: "0 3px 12px rgba(192,57,43,.4)", letterSpacing: 1 }}>
+        {"Table " + tableNum}
+      </div>
 
       {/* Category sidebar */}
       <div style={{ width: 150, background: C.red, display: "flex", flexDirection: "column", alignItems: "center", padding: "18px 0", gap: 2, flexShrink: 0, overflowY: "auto" }}>
