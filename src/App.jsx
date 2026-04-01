@@ -248,8 +248,6 @@ export default function App() {
   }
 
   var pending    = orders.filter(function(o) { return o.status === "pending"; });
-  var kitchenNow = Date.now();
-  var showOrders = ktab === "pending" ? pending.slice() : doneOrders.slice();
   var doneOrders = orders.filter(function(o) { return o.status === "done"; });
   var activeCalls = calls.filter(function(c) { return !c.done; });
 
@@ -636,10 +634,10 @@ export default function App() {
         )}
 
         <div style={{ flex: 1, overflowY: "auto", padding: "14px", display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(290px,1fr))", gap: 12, alignContent: "start" }}>
-          {showOrders.length === 0 && <div style={{ gridColumn: "1/-1", textAlign: "center", color: "#444", marginTop: 80, fontSize: 15 }}>{ktab === "pending" ? "No pending orders" : "No completed orders yet"}</div>}
-          {showOrders.map(function(order) {
-            var isNew = order.ts && (kitchenNow - order.ts) < 8000;
-            var mins = order.ts ? Math.floor((kitchenNow - order.ts) / 60000) : null;
+          {(ktab === "pending" ? pending : doneOrders).length === 0 && <div style={{ gridColumn: "1/-1", textAlign: "center", color: "#444", marginTop: 80, fontSize: 15 }}>{ktab === "pending" ? "No pending orders" : "No completed orders yet"}</div>}
+          {(ktab === "pending" ? pending.slice() : doneOrders.slice()).map(function(order) {
+            var isNew = order.ts && (Date.now() - order.ts) < 8000;
+            var mins = order.ts ? Math.floor((Date.now() - order.ts) / 60000) : null;
             var hot = mins !== null && mins >= 10 && ktab === "pending";
             return (
               <div key={order.id} style={{ background: "#2a2a2a", border: "2.5px solid " + (isNew ? C.redLt : hot ? "#e8924a" : ktab === "pending" ? "#d4952c" : "#444"), borderRadius: 16, overflow: "hidden", animation: isNew ? "pls 1s ease 3" : "none" }}>
