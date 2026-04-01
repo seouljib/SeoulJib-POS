@@ -42,8 +42,8 @@ const DEFAULT_CATS = [
 // Menu items: added subcat, ingredients, allergens fields
 const DEFAULT_MENU = [
   { id: "b1", cat: "Set Meals",  subcat: "", name: "Bulgogi Set",          sub: "Korean Beef BBQ",     price: 33, emoji: "\uD83E\uDD69", desc: "Marinated beef, 7 sides, rice, soup",  img: "", soldOut: false, ingredients: "Beef, soy sauce, garlic, sesame oil, spring onion, rice, seasonal vegetables", allergens: "Soy, sesame, gluten" },
-  { id: "b2", cat: "Set Meals",  subcat: "", name: "Spicy Pork Set",       sub: "Jeyuk Bokkeum",       price: 33, emoji: "\uD83C\uDF36\uFE0F", desc: "Spicy stir-fried pork, 7 sides, rice, soup", img: "", soldOut: false, ingredients: "Pork, gochujang, garlic, onion, rice, seasonal vegetables", allergens: "Soy, gluten" },
-  { id: "b3", cat: "Set Meals",  subcat: "", name: "Chicken Galbi Set",    sub: "Chuncheon Style",     price: 33, emoji: "\uD83C\uDF57", desc: "Spicy chicken galbi, 7 sides, rice, soup", img: "", soldOut: false, ingredients: "Chicken, gochujang, soy sauce, garlic, rice cake, sweet potato, rice", allergens: "Soy, gluten" },
+  { id: "b2", cat: "Set Meals",  subcat: "", name: "Spicy Pork Set", hasSpice: true,       sub: "Jeyuk Bokkeum",       price: 33, emoji: "\uD83C\uDF36\uFE0F", desc: "Spicy stir-fried pork, 7 sides, rice, soup", img: "", soldOut: false, ingredients: "Pork, gochujang, garlic, onion, rice, seasonal vegetables", allergens: "Soy, gluten" },
+  { id: "b3", cat: "Set Meals",  subcat: "", name: "Chicken Galbi Set", hasSpice: true,    sub: "Chuncheon Style",     price: 33, emoji: "\uD83C\uDF57", desc: "Spicy chicken galbi, 7 sides, rice, soup", img: "", soldOut: false, ingredients: "Chicken, gochujang, soy sauce, garlic, rice cake, sweet potato, rice", allergens: "Soy, gluten" },
   { id: "b4", cat: "Set Meals",  subcat: "", name: "Tofu Stir-fry Set",    sub: "Dubu Bokkeum",        price: 33, emoji: "\uD83C\uDF3F", desc: "Tofu and kimchi stir-fry, 7 sides, rice, soup", img: "", soldOut: false, ingredients: "Tofu, kimchi, pork, gochujang, sesame oil, rice", allergens: "Soy, sesame, gluten" },
   { id: "e1", cat: "Extras",     subcat: "", name: "Spring Onion Pancake", sub: "Pa-jeon",             price: 16, emoji: "\uD83E\uDD5E", desc: "Crispy Korean green onion pancake", img: "", soldOut: false, ingredients: "Spring onion, flour, egg, seafood mix", allergens: "Gluten, egg, shellfish" },
   { id: "e2", cat: "Extras",     subcat: "", name: "Kimchi Pancake",       sub: "Kimchi-jeon",         price: 16, emoji: "\uD83E\uDED3", desc: "Crispy aged kimchi pancake", img: "", soldOut: false, ingredients: "Kimchi, flour, egg, pork", allergens: "Gluten, egg" },
@@ -119,7 +119,7 @@ var hdr = { display: "flex", alignItems: "center", justifyContent: "space-betwee
 var inp = { width: "100%", background: "#fff", border: "1.5px solid " + C.bdr, color: C.txt, padding: "12px 14px", borderRadius: 10, fontSize: 15, fontFamily: F, boxSizing: "border-box", outline: "none" };
 
 function blankItem(catName) {
-  return { id: "i" + Date.now(), cat: catName, subcat: "", name: "", sub: "", price: 0, emoji: "\uD83C\uDF7D\uFE0F", desc: "", img: "", soldOut: false, ingredients: "", allergens: "" };
+  return { id: "i" + Date.now(), cat: catName, subcat: "", name: "", sub: "", price: 0, emoji: "\uD83C\uDF7D\uFE0F", desc: "", img: "", soldOut: false, ingredients: "", allergens: "", hasSpice: false };
 }
 function blankCat() {
   return { id: "c" + Date.now(), name: "", subs: [] };
@@ -154,11 +154,14 @@ export default function App() {
   var [isNewCat,   setIsNewCat]   = useState(false);
   var [detailItem, setDetailItem] = useState(null);
   var [justAdded,  setJustAdded]  = useState(null);
+
+  function addToCart(item) { addToCartWithSpice(item, ""); }
   var [toast,      setToast]      = useState("");
   var [setupMode,  setSetupMode]  = useState(false);
   var [setupNum,   setSetupNum]   = useState(1);
   var [battery,    setBattery]    = useState(null);
   var [callActive, setCallActive] = useState(false);
+  var [spiceLevel, setSpiceLevel] = useState("");
   var prevCount = useRef(0);
   var pollRef   = useRef(null);
 
@@ -195,12 +198,12 @@ export default function App() {
     return function() { clearInterval(pollRef.current); };
   }, [mode, poll]);
 
-  function addToCart(item) {
+  function addToCartWithSpice(item, spice) {
     if (item.soldOut) return;
     setCart(function(p) {
-      var ex = p.find(function(c) { return c.id === item.id; });
-      return ex ? p.map(function(c) { return c.id === item.id ? Object.assign({}, c, { qty: c.qty + 1 }) : c; })
-                : p.concat([Object.assign({}, item, { qty: 1 })]);
+      var ex = p.find(function(c) { return c.id === item.id && c.spice === (spice||""); });
+      return ex ? p.map(function(c) { return (c.id === item.id && c.spice === (spice||"")) ? Object.assign({}, c, { qty: c.qty + 1 }) : c; })
+                : p.concat([Object.assign({}, item, { qty: 1, spice: spice||"" })]);
     });
     setJustAdded(item.id);
     setTimeout(function() { setJustAdded(null); }, 300);
@@ -220,7 +223,7 @@ export default function App() {
     if (!cart.length) return;
     var order = {
       id: Date.now().toString(), table: tableNum,
-      items: cart.map(function(c) { return { id: c.id, name: c.name, price: c.price, qty: c.qty }; }),
+      items: cart.map(function(c) { return { id: c.id, name: c.name, price: c.price, qty: c.qty, spice: c.spice || "" }; }),
       note: note, total: cartTotal, status: "pending",
       time: new Date().toLocaleTimeString("en-NZ", { hour: "2-digit", minute: "2-digit" }),
       ts: Date.now(),
@@ -294,7 +297,7 @@ export default function App() {
     var inCart = cart.find(function(c) { return c.id === detailItem.id; });
     return (
       <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 200 }}
-        onClick={function(e) { if (e.target === e.currentTarget) setDetailItem(null); }}>
+        onClick={function(e) { if (e.target === e.currentTarget) { setDetailItem(null); setSpiceLevel(""); } }}>
         <div style={{ background: "#fff", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 600, maxHeight: "90dvh", overflow: "auto", boxShadow: "0 -8px 40px rgba(0,0,0,.15)" }}>
           {/* Image */}
           {detailItem.img
@@ -321,6 +324,25 @@ export default function App() {
               </div>
             )}
 
+            {/* Spice Level */}
+            {detailItem.hasSpice && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#c05020", letterSpacing: 1, marginBottom: 8 }}>SPICE LEVEL</div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {["Not Spicy", "Mild", "Medium", "Spicy"].map(function(lvl) {
+                    var icons = { "Not Spicy": "⬜", "Mild": "🌶️", "Medium": "🌶️🌶️", "Spicy": "🌶️🌶️🌶️" };
+                    var sel = spiceLevel === lvl;
+                    return (
+                      <button key={lvl} onClick={function() { setSpiceLevel(lvl); }}
+                        style={{ padding: "8px 14px", borderRadius: 20, border: "1.5px solid " + (sel ? "#c0392b" : "#e0e0e0"), background: sel ? "#fff0f0" : "#fff", color: sel ? "#c0392b" : "#666", fontWeight: sel ? 700 : 400, fontSize: 14, cursor: "pointer", fontFamily: F, transition: "all .15s" }}>
+                        {icons[lvl] + " " + lvl}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Price + Add */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 16 }}>
               <div style={{ fontSize: 26, fontWeight: 900, color: C.red }}>{detailItem.price === 0 ? "Free" : "$" + detailItem.price}</div>
@@ -332,7 +354,13 @@ export default function App() {
                     <button className="sj-q" onClick={function() { addToCart(detailItem); }}
                       style={{ background: C.red, border: "none", color: "#fff", width: 48, height: 48, borderRadius: "50%", fontSize: 24, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: F }}>+</button>
                   </div>
-                : <button style={Object.assign({}, gBtn(), { padding: "14px 32px", fontSize: 16 })} onClick={function() { addToCart(detailItem); setDetailItem(null); }}>Add to Order</button>
+                : <button style={Object.assign({}, gBtn(), { padding: "14px 32px", fontSize: 16 })} onClick={function() {
+                    if (detailItem.hasSpice && !spiceLevel) { return; }
+                    addToCartWithSpice(detailItem, spiceLevel);
+                    setSpiceLevel(""); setDetailItem(null);
+                  }}>
+                    {detailItem.hasSpice && !spiceLevel ? "Select Spice Level" : "Add to Order"}
+                  </button>
               )}
               {detailItem.soldOut && <div style={{ color: C.sub, fontWeight: 700, fontSize: 16 }}>Sold Out</div>}
             </div>
@@ -500,7 +528,7 @@ export default function App() {
             return (
               <div key={item.id} style={{ padding: "12px 14px", borderBottom: "1px solid " + C.bdr, background: "#fff" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                  <span style={{ fontWeight: 600, fontSize: 15, flex: 1, lineHeight: 1.3 }}>{item.name}</span>
+                  <span style={{ fontWeight: 600, fontSize: 15, flex: 1, lineHeight: 1.3 }}>{item.name}{item.spice ? <span style={{ fontSize: 12, color: "#c0392b", marginLeft: 4 }}>{"(" + item.spice + ")"}</span> : null}</span>
                   <span style={{ color: C.red, fontWeight: 700, fontSize: 15, marginLeft: 6 }}>{"$" + (item.price * item.qty).toFixed(2)}</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -607,7 +635,7 @@ export default function App() {
                 </div>
                 <div style={{ padding: "10px 14px" }}>
                   {order.items.map(function(item, i) {
-                    return <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", fontSize: 16, color: "#fff", fontWeight: 500, borderBottom: i < order.items.length - 1 ? "1px solid #3a3a3a" : "none" }}><span>{item.name}</span><span style={{ color: "#d4952c", fontWeight: 800 }}>{"× " + item.qty}</span></div>;
+                    return <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", fontSize: 16, color: "#fff", fontWeight: 500, borderBottom: i < order.items.length - 1 ? "1px solid #3a3a3a" : "none" }}><span>{item.name}{item.spice ? " (" + item.spice + ")" : ""}</span><span style={{ color: "#d4952c", fontWeight: 800 }}>{"× " + item.qty}</span></div>;
                   })}
                   {order.note && <div style={{ marginTop: 8, padding: "6px 10px", background: "#3a2a10", borderRadius: 8, color: "#e8c470", fontSize: 13, borderLeft: "3px solid #d4952c" }}>{"📝 " + order.note}</div>}
                   <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10, paddingTop: 10, borderTop: "1px solid #3a3a3a", color: "#888", fontSize: 13 }}><span>Total</span><span style={{ color: "#fff", fontWeight: 700 }}>{"$" + order.total.toFixed(2)}</span></div>
@@ -708,6 +736,16 @@ export default function App() {
             <div>
               <div style={{ color: C.sub, fontSize: 13, marginBottom: 6, fontWeight: 600 }}>Allergens</div>
               <input value={editItem.allergens||""} onChange={function(e) { setEditItem(Object.assign({}, editItem, { allergens: e.target.value })); }} placeholder="e.g. Soy, sesame, gluten" style={inp}/>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: "#fff8f0", borderRadius: 12, border: "1px solid #f0d0a0" }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 15 }}>Spice Level Option</div>
+                <div style={{ color: C.sub, fontSize: 13, marginTop: 2 }}>Show spice selector when ordering</div>
+              </div>
+              <div onClick={function() { setEditItem(Object.assign({}, editItem, { hasSpice: !editItem.hasSpice })); }}
+                style={{ width: 48, height: 28, borderRadius: 14, background: editItem.hasSpice ? C.red : C.bdr, position: "relative", cursor: "pointer", transition: "background .2s", flexShrink: 0 }}>
+                <div style={{ position: "absolute", top: 3, left: editItem.hasSpice ? 22 : 3, width: 22, height: 22, borderRadius: "50%", background: "#fff", transition: "left .2s", boxShadow: "0 1px 4px rgba(0,0,0,.2)" }}/>
+              </div>
             </div>
             <div>
               <div style={{ color: C.sub, fontSize: 13, marginBottom: 6, fontWeight: 600 }}>Menu Photo</div>
