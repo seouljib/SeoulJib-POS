@@ -466,22 +466,23 @@ export default function App() {
       {detail&&<DetailModal />}
       <CartModal /><HistModal />
       <div style={{display:"flex",flex:1,overflow:"hidden"}}>
-        <div style={{width:140,background:RED,display:"flex",flexDirection:"column",alignItems:"stretch",flexShrink:0,overflowY:"auto"}}>
+        <div style={{width:130,background:RED,display:"flex",flexDirection:"column",alignItems:"stretch",flexShrink:0,overflowY:"auto"}}>
           {activeCats.map(function(c) {
             var on=selCat===c.id;
             return (
               <button key={c.id} onClick={function() { setSelCat(c.id); setSelSub(""); }}
-                style={{padding:"20px 8px",border:"none",borderRight:on?"4px solid #fff":"4px solid transparent",background:on?"rgba(255,255,255,.18)":"transparent",color:"#fff",fontWeight:on?800:500,fontSize:15,cursor:"pointer",fontFamily:F,textAlign:"center",lineHeight:1.3,transition:"all .12s"}}>
-                {c.name}
+                style={{padding:"18px 10px",border:"none",background:"transparent",cursor:"pointer",fontFamily:F,textAlign:"center",lineHeight:1.3,transition:"all .12s",position:"relative"}}>
+                {on&&<div style={{position:"absolute",left:8,right:8,top:4,bottom:4,background:"#fff",borderRadius:8,zIndex:0}} />}
+                <span style={{position:"relative",zIndex:1,color:on?RED:"rgba(255,255,255,.85)",fontWeight:on?800:400,fontSize:14}}>{c.name}</span>
               </button>
             );
           })}
         </div>
         <div style={{flex:1,background:"#fff",display:"flex",flexDirection:"column",overflow:"hidden",position:"relative"}}>
           {/* T-order style table badge */}
-          <div style={{position:"absolute",top:0,right:0,zIndex:10,background:"#fff",border:"2px solid #333",borderTop:"none",borderRight:"none",borderRadius:"0 0 0 8px",padding:"4px 16px 8px",textAlign:"center",minWidth:80,boxShadow:"0 2px 8px rgba(0,0,0,.15)"}}>
-            <div style={{fontSize:10,fontWeight:600,color:"#888",letterSpacing:1,lineHeight:1}}>Table.</div>
-            <div style={{fontSize:26,fontWeight:900,color:"#1a1a1a",lineHeight:1.1}}>{tableNum}</div>
+          <div style={{position:"absolute",top:0,right:0,zIndex:10,background:RED,border:"none",borderRadius:"0 0 0 10px",padding:"6px 18px 10px",textAlign:"center",minWidth:90,boxShadow:"-2px 2px 8px rgba(192,57,43,.3)"}}>
+            <div style={{fontSize:10,fontWeight:600,color:"rgba(255,255,255,.7)",letterSpacing:2,lineHeight:1,marginBottom:2}}>Table.</div>
+            <div style={{fontSize:32,fontWeight:900,color:"#fff",lineHeight:1}}>{tableNum}</div>
           </div>
           {hasSubs&&(
             <div style={{display:"flex",gap:8,padding:"10px 14px",borderBottom:"1px solid #e0e0e0",overflowX:"auto",flexShrink:0,paddingRight:100}}>
