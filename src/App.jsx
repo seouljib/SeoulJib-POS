@@ -201,7 +201,9 @@ export default function App() {
       time:new Date().toLocaleTimeString("en-NZ",{hour:"2-digit",minute:"2-digit"}),
       ts:Date.now(),
     };
-    saveOrders(orders.concat([o]));
+    // Load latest from storage to preserve confirmed flags set by main tablet
+    var latest = db.get(ORDERS_KEY) || orders;
+    saveOrders(latest.concat([o]));
     setCart([]); setNote(""); setCartOpen(false); setMode("done");
   }
 
