@@ -482,9 +482,9 @@ export default function App() {
         </div>
         <div style={{flex:1,background:"#fff",display:"flex",flexDirection:"column",overflow:"hidden",position:"relative"}}>
           {/* T-order style table badge */}
-          <div style={{position:"absolute",top:0,right:0,zIndex:10,background:RED,border:"none",borderRadius:"0 0 0 10px",padding:"6px 18px 10px",textAlign:"center",minWidth:90,boxShadow:"-2px 2px 8px rgba(192,57,43,.3)"}}>
-            <div style={{fontSize:10,fontWeight:600,color:"rgba(255,255,255,.7)",letterSpacing:2,lineHeight:1,marginBottom:2}}>Table.</div>
-            <div style={{fontSize:32,fontWeight:900,color:"#fff",lineHeight:1}}>{tableNum}</div>
+          <div style={{position:"absolute",top:0,right:0,zIndex:10,background:RED,border:"none",borderRadius:"0 0 0 14px",padding:"10px 32px 16px",textAlign:"center",minWidth:160,boxShadow:"-2px 2px 8px rgba(192,57,43,.3)"}}>
+            <div style={{fontSize:14,fontWeight:600,color:"rgba(255,255,255,.7)",letterSpacing:2,lineHeight:1,marginBottom:4}}>Table.</div>
+            <div style={{fontSize:52,fontWeight:900,color:"#fff",lineHeight:1}}>{tableNum}</div>
           </div>
           {hasSubs&&(
             <div style={{display:"flex",gap:8,padding:"10px 14px",borderBottom:"1px solid #e0e0e0",overflowX:"auto",flexShrink:0,paddingRight:100}}>
@@ -503,8 +503,20 @@ export default function App() {
                 <div key={item.id} className="sjc"
                   style={{background:"#fff",border:"1.5px solid "+(ic?RED:"#ebebeb"),borderRadius:12,overflow:"visible",cursor:"pointer",opacity:item.soldOut?.5:1,position:"relative",animation:justAdded===item.id?"bnc .28s ease both":"none",boxShadow:"0 1px 6px rgba(0,0,0,.07)"}}
                   onClick={function() { setDetail(item); setSpice(""); }}>
-                  {item.badge==="best"&&<div style={{position:"absolute",top:0,left:0,zIndex:2,background:"#e74c3c",color:"#fff",fontSize:11,fontWeight:800,padding:"4px 9px",borderRadius:"0 0 8px 0"}}>BEST</div>}
-                  {item.badge==="new"&&<div style={{position:"absolute",top:0,left:0,zIndex:2,background:"#27ae60",color:"#fff",fontSize:11,fontWeight:800,padding:"4px 9px",borderRadius:"0 0 8px 0"}}>NEW</div>}
+                  {item.badge==="best"&&(
+                    <div style={{position:"absolute",top:12,left:-2,zIndex:2,display:"flex",alignItems:"center",gap:4}}>
+                      <div style={{background:"linear-gradient(135deg,#f39c12,#e67e22)",color:"#fff",fontSize:13,fontWeight:900,padding:"6px 14px 6px 10px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 8px rgba(0,0,0,.25)",letterSpacing:1}}>
+                        &#x2B50; BEST
+                      </div>
+                    </div>
+                  )}
+                  {item.badge==="new"&&(
+                    <div style={{position:"absolute",top:12,left:-2,zIndex:2,display:"flex",alignItems:"center",gap:4}}>
+                      <div style={{background:"linear-gradient(135deg,#00b09b,#27ae60)",color:"#fff",fontSize:13,fontWeight:900,padding:"6px 14px 6px 10px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 8px rgba(0,0,0,.25)",letterSpacing:1}}>
+                        &#x2728; NEW
+                      </div>
+                    </div>
+                  )}
                   {item.img
                     ? <div style={{height:"28vh",overflow:"hidden",borderRadius:"12px 12px 0 0"}}><img src={item.img} alt={item.name} style={{width:"100%",height:"100%",objectFit:"cover"}} /></div>
                     : <div style={{height:"28vh",background:"linear-gradient(145deg,#f8f0e8,#f0e0d0)",borderRadius:"12px 12px 0 0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:60}}>{item.emoji}</div>
@@ -821,7 +833,7 @@ export default function App() {
                     {/* Table number column */}
                     <div style={{background:order.confirmed?"#0a2a0a":isNew?"#3a0a0a":"#2a1a0a",padding:"0 20px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",flexShrink:0,minWidth:80}}>
                       <div style={{fontSize:11,color:"rgba(255,255,255,.4)",letterSpacing:1}}>TABLE</div>
-                      <div style={{fontSize:32,fontWeight:900,color:"#fff",lineHeight:1}}>{order.table}</div>
+                      <div style={{fontSize:52,fontWeight:900,color:"#fff",lineHeight:1}}>{order.table}</div>
                       {isNew&&<span style={{background:"#e74c3c",color:"#fff",fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:4,marginTop:4}}>NEW</span>}
                       {mins!==null&&!isNew&&<div style={{fontSize:11,color:"#888",marginTop:2}}>{mins}m</div>}
                     </div>
