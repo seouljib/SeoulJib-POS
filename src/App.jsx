@@ -171,27 +171,35 @@ export default function App() {
     var unsubs = [];
     var keys = ["orders","menu","cats","calls"];
     var setters = {
-      orders: function(v) {
+      orders: function(v, fromRemote) {
         setOrders(v); db.set(ORDERS_KEY,v);
-        // Play order sound only on main tablet
-        var pendingCount = v.filter(function(o) { return o.status==="pending"&&!o.confirmed; }).length;
-        if (db.get(MAIN_KEY) && pendingCount > prevOrderCount.current) playBeep("order");
-        prevOrderCount.current = pendingCount;
+        // Play order sound only on main tablet, and only for remote updates
+        if (fromRemote && db.get(MAIN_KEY)) {
+          var pendingCount = v.filter(function(o) { return o.status==="pending"&&!o.confirmed; }).length;
+          if (pendingCount > prevOrderCount.current) playBeep("order");
+          prevOrderCount.current = pendingCount;
+        } else if (!fromRemote) {
+          prevOrderCount.current = v.filter(function(o) { return o.status==="pending"&&!o.confirmed; }).length;
+        }
       },
       menu:  function(v) { setMenu(v);  db.set(MENU_KEY,v);  },
       cats:  function(v) { setCats(v);  db.set(CATS_KEY,v);  },
-      calls: function(v) {
+      calls: function(v, fromRemote) {
         setCalls(v); db.set(CALLS_KEY,v);
-        // Play call sound only on main tablet
-        var activeCount = v.filter(function(c) { return !c.done; }).length;
-        if (db.get(MAIN_KEY) && activeCount > prevCallCount.current) playBeep("call");
-        prevCallCount.current = activeCount;
+        // Play call sound only on main tablet, and only for remote updates
+        if (fromRemote && db.get(MAIN_KEY)) {
+          var activeCount = v.filter(function(c) { return !c.done; }).length;
+          if (activeCount > prevCallCount.current) playBeep("call");
+          prevCallCount.current = activeCount;
+        } else if (!fromRemote) {
+          prevCallCount.current = v.filter(function(c) { return !c.done; }).length;
+        }
       },
     };
     keys.forEach(function(k) {
       var unsub = onSnapshot(doc(firestore,"pos",k), function(snap) {
         if (snap.exists()) {
-          try { var parsed = JSON.parse(snap.data().data); setters[k](parsed); } catch(e) {}
+          try { var parsed = JSON.parse(snap.data().data); setters[k](parsed, true); } catch(e) {}
         }
       });
       unsubs.push(unsub);
@@ -199,10 +207,20 @@ export default function App() {
     return function() { unsubs.forEach(function(u) { u(); }); };
   }, []);
 
-  var saveOrders = useCallback(function(n) { setOrders(n); db.set(ORDERS_KEY,n); fsSet("pos","orders",{data:JSON.stringify(n),ts:Date.now()}); }, []);
+  var saveOrders = useCallback(function(n) {
+    setOrders(n); db.set(ORDERS_KEY,n);
+    // Pre-update counter so Firebase echo doesn't trigger sound
+    prevOrderCount.current = n.filter(function(o) { return o.status==="pending"&&!o.confirmed; }).length;
+    fsSet("pos","orders",{data:JSON.stringify(n),ts:Date.now()});
+  }, []);
   var saveMenu   = useCallback(function(n) { setMenu(n);   db.set(MENU_KEY,n);   fsSet("pos","menu",{data:JSON.stringify(n),ts:Date.now()}); }, []);
   var saveCats   = useCallback(function(n) { setCats(n);   db.set(CATS_KEY,n);   fsSet("pos","cats",{data:JSON.stringify(n),ts:Date.now()}); }, []);
-  var saveCalls  = useCallback(function(n) { setCalls(n);  db.set(CALLS_KEY,n);  fsSet("pos","calls",{data:JSON.stringify(n),ts:Date.now()}); }, []);
+  var saveCalls  = useCallback(function(n) {
+    setCalls(n);  db.set(CALLS_KEY,n);
+    // Pre-update counter so Firebase echo doesn't trigger sound
+    prevCallCount.current = n.filter(function(c) { return !c.done; }).length;
+    fsSet("pos","calls",{data:JSON.stringify(n),ts:Date.now()});
+  }, []);
 
   function showToast(m) { setToast(m); setTimeout(function() { setToast(""); }, 2000); }
 
