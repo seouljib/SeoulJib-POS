@@ -506,15 +506,15 @@ export default function App() {
                   {item.badge==="best"&&<div style={{position:"absolute",top:0,left:0,zIndex:2,background:"#e74c3c",color:"#fff",fontSize:11,fontWeight:800,padding:"4px 9px",borderRadius:"0 0 8px 0"}}>BEST</div>}
                   {item.badge==="new"&&<div style={{position:"absolute",top:0,left:0,zIndex:2,background:"#27ae60",color:"#fff",fontSize:11,fontWeight:800,padding:"4px 9px",borderRadius:"0 0 8px 0"}}>NEW</div>}
                   {item.img
-                    ? <div style={{height:300,overflow:"hidden"}}><img src={item.img} alt={item.name} style={{width:"100%",height:"100%",objectFit:"cover"}} /></div>
-                    : <div style={{height:300,background:"linear-gradient(145deg,#f8f0e8,#f0e0d0)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:60}}>{item.emoji}</div>
+                    ? <div style={{height:"28vh",overflow:"hidden"}}><img src={item.img} alt={item.name} style={{width:"100%",height:"100%",objectFit:"cover"}} /></div>
+                    : <div style={{height:"28vh",background:"linear-gradient(145deg,#f8f0e8,#f0e0d0)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:60}}>{item.emoji}</div>
                   }
                   {ic&&<div className="sjbdg" style={{position:"absolute",top:6,right:6,background:RED,color:"#fff",borderRadius:"50%",width:28,height:28,fontSize:13,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{ ic.qty}</div>}
                   {item.soldOut&&<div style={{position:"absolute",top:6,left:6,background:"rgba(0,0,0,.7)",color:"#fff",borderRadius:5,padding:"2px 8px",fontSize:11,fontWeight:700}}>SOLD OUT</div>}
-                  <div style={{padding:"8px 10px 10px"}}>
-                    <div style={{fontWeight:700,fontSize:16,lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{item.name}</div>
-                    <div style={{marginTop:6,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                      <div style={{fontWeight:900,fontSize:18,color:RED}}>{item.price===0?"Free":"$"+item.price}</div>
+                  <div style={{padding:"6px 8px 8px"}}>
+                    <div style={{fontWeight:700,fontSize:15,lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{item.name}</div>
+                    <div style={{marginTop:4,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                      <div style={{fontWeight:900,fontSize:17,color:RED}}>{item.price===0?"Free":"$"+item.price}</div>
                       {!item.soldOut&&(
                         <button onClick={function(e) { e.stopPropagation(); if (item.hasSpice) { setDetail(item); setSpice(""); } else addToCart(item,""); }}
                           style={{background:RED,border:"none",color:"#fff",width:36,height:36,borderRadius:"50%",fontSize:22,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(192,57,43,.3)",flexShrink:0}}>+</button>
