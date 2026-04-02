@@ -152,14 +152,24 @@ export default function App() {
   var [setupNum,setSetupNum]       = useState(1);
   var [battery,setBattery]         = useState(null);
   var [callActive,setCallActive]   = useState(false);
+  var [batteryWarn, setBatteryWarn] = useState(null);
   var prevCount = useRef(0);
   var pollRef   = useRef(null);
 
   useEffect(function() {
     if (navigator.getBattery) {
       navigator.getBattery().then(function(b) {
-        setBattery(Math.round(b.level*100));
-        b.addEventListener("levelchange", function() { setBattery(Math.round(b.level*100)); });
+        var pct = Math.round(b.level*100);
+        setBattery(pct);
+        function checkBattery() {
+          var p = Math.round(b.level*100);
+          setBattery(p);
+          // Send low battery warning to Firebase (table tablets only)
+          if (p <= 20 && !db.get(MAIN_KEY) && tableNum) {
+            fsSet("pos","battery_warn",{table:tableNum,pct:p,ts:Date.now()});
+          }
+        }
+        b.addEventListener("levelchange", checkBattery);
       });
     }
   }, []);
@@ -170,6 +180,21 @@ export default function App() {
   useEffect(function() {
     var unsubs = [];
     var keys = ["orders","menu","cats","calls"];
+    // Battery warning listener (main tablet only)
+    if (db.get(MAIN_KEY)) {
+      var bwUnsub = onSnapshot(doc(firestore,"pos","battery_warn"), function(snap) {
+        if (!snap.exists()) return;
+        var d = snap.data();
+        if (!d||!d.ts) return;
+        // Only alert if warning is recent (within 60 seconds)
+        if (Date.now()-d.ts < 60000) {
+          setBatteryWarn({table:d.table,pct:d.pct});
+          playBeep("call");
+          setTimeout(function() { setBatteryWarn(null); }, 8000);
+        }
+      });
+      unsubs.push(bwUnsub);
+    }
     var setters = {
       orders: function(v, fromRemote) {
         setOrders(v); db.set(ORDERS_KEY,v);
@@ -1170,6 +1195,18 @@ export default function App() {
 
       {setupMode&&<SetupModal />}
       <Toast />
+      {batteryWarn&&(
+        <div style={{position:"fixed",top:0,left:0,right:0,zIndex:999,background:"#e74c3c",color:"#fff",padding:"14px 24px",display:"flex",alignItems:"center",justifyContent:"space-between",boxShadow:"0 4px 16px rgba(0,0,0,.3)",animation:"slideup .2s ease"}}>
+          <div style={{display:"flex",alignItems:"center",gap:12}}>
+            <span style={{fontSize:24}}>🔋</span>
+            <div>
+              <div style={{fontWeight:800,fontSize:18}}>Low Battery Warning</div>
+              <div style={{fontSize:15,opacity:.9}}>Table {batteryWarn.table} is at {batteryWarn.pct}% — please charge soon</div>
+            </div>
+          </div>
+          <button onClick={function() { setBatteryWarn(null); }} style={{background:"rgba(255,255,255,.2)",border:"none",color:"#fff",borderRadius:8,padding:"8px 16px",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:F}}>Dismiss</button>
+        </div>
+      )}
     </div>
   );
 
