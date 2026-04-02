@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+\import { useState, useEffect, useCallback, useRef } from "react";
 
 const ADMIN_PIN  = "1004";
 const ORDERS_KEY = "sj-orders-v9";
@@ -507,8 +507,8 @@ export default function App() {
                   style={{background:"#fff",border:"1.5px solid "+(ic?RED:"#ebebeb"),borderRadius:12,overflow:"hidden",cursor:"pointer",opacity:item.soldOut?.5:1,position:"relative",animation:justAdded===item.id?"bnc .28s ease both":"none",boxShadow:"0 1px 6px rgba(0,0,0,.07)"}}
                   onClick={function() { setDetail(item); setSpice(""); }}>
                   {item.img
-                    ? <div style={{height:0,paddingBottom:"75%",position:"relative"}}><img src={item.img} alt={item.name} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}} /></div>
-                    : <div style={{height:0,paddingBottom:"75%",position:"relative",background:"linear-gradient(145deg,#f8f0e8,#f0e0d0)"}}><span style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:60}}>{item.emoji}</span></div>
+                    ? <div style={{height:180,overflow:"hidden"}}><img src={item.img} alt={item.name} style={{width:"100%",height:"100%",objectFit:"cover"}} /></div>
+                    : <div style={{height:180,background:"linear-gradient(145deg,#f8f0e8,#f0e0d0)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:60}}>{item.emoji}</div>
                   }
                   {ic && <div className="sjbdg" style={{position:"absolute",top:6,right:6,background:RED,color:"#fff",borderRadius:"50%",width:28,height:28,fontSize:13,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 6px rgba(192,57,43,.4)"}}>{ic.qty}</div>}
                   {item.soldOut && <div style={{position:"absolute",top:6,left:6,background:"rgba(0,0,0,.7)",color:"#fff",borderRadius:5,padding:"2px 8px",fontSize:11,fontWeight:700}}>SOLD OUT</div>}
