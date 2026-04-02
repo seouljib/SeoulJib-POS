@@ -1,4 +1,23 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { initializeApp } from "firebase/app";
+import { getFirestore, doc, setDoc, onSnapshot, collection } from "firebase/firestore";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBVMWiAcH05UYstTQCxQ8MOQ3k_rZmvq-k",
+  authDomain: "seoul-jib-pos.firebaseapp.com",
+  projectId: "seoul-jib-pos",
+  storageBucket: "seoul-jib-pos.firebasestorage.app",
+  messagingSenderId: "639204700226",
+  appId: "1:639204700226:web:aef5e2f37e6f897433fddb"
+};
+const firebaseApp = initializeApp(firebaseConfig);
+const firestore  = getFirestore(firebaseApp);
+
+// Firestore helpers
+async function fsSet(col, id, data) {
+  try { await setDoc(doc(firestore, col, id), data); } catch(e) { console.error(e); }
+}
+
 
 const ADMIN_PIN  = "1004";
 const ORDERS_KEY = "sj-orders-v10";
@@ -145,10 +164,26 @@ export default function App() {
     }
   }, []);
 
-  var saveOrders = useCallback(function(n) { setOrders(n); db.set(ORDERS_KEY,n); }, []);
-  var saveMenu   = useCallback(function(n) { setMenu(n);   db.set(MENU_KEY,n);   }, []);
-  var saveCats   = useCallback(function(n) { setCats(n);   db.set(CATS_KEY,n);   }, []);
-  var saveCalls  = useCallback(function(n) { setCalls(n);  db.set(CALLS_KEY,n);  }, []);
+  // Firebase real-time sync
+  useEffect(function() {
+    var unsubs = [];
+    var keys = ["orders","menu","cats","calls"];
+    var setters = { orders: function(v) { setOrders(v); db.set(ORDERS_KEY,v); }, menu: function(v) { setMenu(v); db.set(MENU_KEY,v); }, cats: function(v) { setCats(v); db.set(CATS_KEY,v); }, calls: function(v) { setCalls(v); db.set(CALLS_KEY,v); } };
+    keys.forEach(function(k) {
+      var unsub = onSnapshot(doc(firestore,"pos",k), function(snap) {
+        if (snap.exists()) {
+          try { var parsed = JSON.parse(snap.data().data); setters[k](parsed); } catch(e) {}
+        }
+      });
+      unsubs.push(unsub);
+    });
+    return function() { unsubs.forEach(function(u) { u(); }); };
+  }, []);
+
+  var saveOrders = useCallback(function(n) { setOrders(n); db.set(ORDERS_KEY,n); fsSet("pos","orders",{data:JSON.stringify(n),ts:Date.now()}); }, []);
+  var saveMenu   = useCallback(function(n) { setMenu(n);   db.set(MENU_KEY,n);   fsSet("pos","menu",{data:JSON.stringify(n),ts:Date.now()}); }, []);
+  var saveCats   = useCallback(function(n) { setCats(n);   db.set(CATS_KEY,n);   fsSet("pos","cats",{data:JSON.stringify(n),ts:Date.now()}); }, []);
+  var saveCalls  = useCallback(function(n) { setCalls(n);  db.set(CALLS_KEY,n);  fsSet("pos","calls",{data:JSON.stringify(n),ts:Date.now()}); }, []);
 
   function showToast(m) { setToast(m); setTimeout(function() { setToast(""); }, 2000); }
 
