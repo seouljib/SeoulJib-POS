@@ -14,8 +14,19 @@ const firebaseApp = initializeApp(firebaseConfig);
 const firestore  = getFirestore(firebaseApp);
 
 // Firestore helpers
+var _recentWrites = {};
 async function fsSet(col, id, data) {
-  try { await setDoc(doc(firestore, col, id), data); } catch(e) { console.error(e); }
+  try {
+    var key = col+"/"+id;
+    _recentWrites[key] = Date.now();
+    await setDoc(doc(firestore, col, id), data);
+  } catch(e) { console.error(e); }
+}
+function isLocalEcho(col, id, snapTs) {
+  var key = col+"/"+id;
+  var wt = _recentWrites[key];
+  // If we wrote within last 3 seconds, this is likely our own echo
+  return wt && (Date.now()-wt) < 3000;
 }
 
 
@@ -153,26 +164,42 @@ export default function App() {
   var [battery,setBattery]         = useState(null);
   var [callActive,setCallActive]   = useState(false);
   var [batteryWarn, setBatteryWarn] = useState(null);
+  var [devices, setDevices]         = useState({});
   var prevCount = useRef(0);
   var pollRef   = useRef(null);
 
   useEffect(function() {
+    function reportBattery(pct) {
+      setBattery(pct);
+      // All tablets report their battery to Firebase
+      if (tableNum) {
+        fsSet("devices","table_"+tableNum, {
+          table: tableNum,
+          pct: pct,
+          isMain: !!db.get(MAIN_KEY),
+          ts: Date.now(),
+        });
+      }
+    }
     if (navigator.getBattery) {
       navigator.getBattery().then(function(b) {
         var pct = Math.round(b.level*100);
-        setBattery(pct);
-        function checkBattery() {
-          var p = Math.round(b.level*100);
-          setBattery(p);
-          // Send low battery warning to Firebase (table tablets only)
-          if (p <= 20 && !db.get(MAIN_KEY) && tableNum) {
-            fsSet("pos","battery_warn",{table:tableNum,pct:p,ts:Date.now()});
-          }
-        }
-        b.addEventListener("levelchange", checkBattery);
+        reportBattery(pct);
+        b.addEventListener("levelchange", function() {
+          reportBattery(Math.round(b.level*100));
+        });
       });
     }
-  }, []);
+    // Report every 2 minutes
+    var interval = setInterval(function() {
+      if (navigator.getBattery) {
+        navigator.getBattery().then(function(b) {
+          reportBattery(Math.round(b.level*100));
+        });
+      }
+    }, 120000);
+    return function() { clearInterval(interval); };
+  }, [tableNum]);
 
   // Firebase real-time sync
   var prevOrderCount = useRef(0);
@@ -180,20 +207,25 @@ export default function App() {
   useEffect(function() {
     var unsubs = [];
     var keys = ["orders","menu","cats","calls"];
-    // Battery warning listener (main tablet only)
+    // Devices battery listener (main tablet only)
     if (db.get(MAIN_KEY)) {
-      var bwUnsub = onSnapshot(doc(firestore,"pos","battery_warn"), function(snap) {
-        if (!snap.exists()) return;
-        var d = snap.data();
-        if (!d||!d.ts) return;
-        // Only alert if warning is recent (within 60 seconds)
-        if (Date.now()-d.ts < 60000) {
-          setBatteryWarn({table:d.table,pct:d.pct});
-          playBeep("call");
-          setTimeout(function() { setBatteryWarn(null); }, 8000);
-        }
+      var devUnsub = onSnapshot(collection(firestore,"devices"), function(snapshot) {
+        var devMap = {};
+        snapshot.forEach(function(d) { devMap[d.id] = d.data(); });
+        setDevices(devMap);
+        // Check for low battery alerts
+        snapshot.docChanges().forEach(function(change) {
+          if (change.type === "modified" || change.type === "added") {
+            var d = change.doc.data();
+            if (d.pct <= 20 && !d.isMain && d.ts && (Date.now()-d.ts)<180000) {
+              setBatteryWarn({table:d.table,pct:d.pct});
+              playBeep("call");
+              setTimeout(function() { setBatteryWarn(null); }, 8000);
+            }
+          }
+        });
       });
-      unsubs.push(bwUnsub);
+      unsubs.push(devUnsub);
     }
     var setters = {
       orders: function(v, fromRemote) {
@@ -224,7 +256,10 @@ export default function App() {
     keys.forEach(function(k) {
       var unsub = onSnapshot(doc(firestore,"pos",k), function(snap) {
         if (snap.exists()) {
-          try { var parsed = JSON.parse(snap.data().data); setters[k](parsed, true); } catch(e) {}
+          try {
+            if (isLocalEcho("pos", k)) return; // skip own writes
+            var parsed = JSON.parse(snap.data().data); setters[k](parsed, true);
+          } catch(e) {}
         }
       });
       unsubs.push(unsub);
@@ -932,8 +967,8 @@ export default function App() {
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 20px",background:"#222",borderBottom:"1px solid #333",flexShrink:0}}>
         <button style={{background:"none",border:"none",color:"#fff",fontSize:22,cursor:"pointer"}} onClick={function() { setMode("home");setUnlocked(false); }}>←</button>
         <div style={{display:"flex",gap:8}}>
-          {["orders","menu","cats","device"].map(function(tab) {
-            var labels={"orders":"Orders","menu":"Menu","cats":"Categories","device":"Settings"};
+          {["orders","menu","cats","devices","device"].map(function(tab) {
+            var labels={"orders":"Orders","menu":"Menu","cats":"Categories","devices":"Devices","device":"Settings"};
             var on=adminTab===tab;
             return <button key={tab} onClick={function() { setAdminTab(tab); }}
               style={{padding:"8px 16px",borderRadius:20,border:"1.5px solid "+(on?RED:"#444"),background:on?RED:"#2a2a2a",color:"#fff",fontWeight:on?700:400,fontSize:14,cursor:"pointer",fontFamily:F,position:"relative"}}>
@@ -1162,6 +1197,41 @@ export default function App() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* DEVICES TAB */}
+      {adminTab==="devices"&&(
+        <div style={{flex:1,overflowY:"auto",padding:"16px",background:"#f5f5f5"}}>
+          <div style={{maxWidth:700,margin:"0 auto"}}>
+            <div style={{fontSize:11,fontWeight:700,color:"#c0392b",letterSpacing:3,marginBottom:16,paddingBottom:6,borderBottom:"1px solid #e0e0e0"}}>TABLET STATUS</div>
+            {Object.keys(devices).length===0&&(
+              <div style={{textAlign:"center",color:"#999",padding:"60px 0",fontSize:16}}>No tablets reporting yet. Tablets report battery every 2 minutes.</div>
+            )}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:12}}>
+              {Object.values(devices).sort(function(a,b) { return a.table-b.table; }).map(function(d) {
+                var low = d.pct<=20;
+                var med = d.pct<=50&&d.pct>20;
+                var color = low?"#e74c3c":med?"#e8920a":"#27ae60";
+                var ago = Math.floor((Date.now()-d.ts)/60000);
+                return (
+                  <div key={d.table} style={{background:"#fff",borderRadius:14,padding:"18px",border:"2px solid "+(low?"#e74c3c":"#e0e0e0"),boxShadow:low?"0 0 12px rgba(231,76,60,.2)":"none"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                      <div style={{fontWeight:800,fontSize:18}}>{d.isMain?"Main":"Table "+d.table}</div>
+                      {low&&<span style={{background:"#e74c3c",color:"#fff",fontSize:11,fontWeight:700,padding:"3px 8px",borderRadius:6}}>LOW</span>}
+                    </div>
+                    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+                      <div style={{flex:1,height:12,background:"#f0f0f0",borderRadius:6,overflow:"hidden"}}>
+                        <div style={{height:"100%",width:d.pct+"%",background:color,borderRadius:6,transition:"width .3s"}} />
+                      </div>
+                      <span style={{fontWeight:900,fontSize:18,color:color,minWidth:48}}>{d.pct}%</span>
+                    </div>
+                    <div style={{fontSize:12,color:"#999"}}>{ago===0?"Just now":ago+"m ago"}</div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
