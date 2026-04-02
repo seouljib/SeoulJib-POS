@@ -470,7 +470,73 @@ export default function App() {
   // ══ ORDER ══════════════════════════════════════════════════
   if (mode==="order") return (
     <div style={{minHeight:"100dvh",height:"100dvh",background:"#f0f0f0",fontFamily:F,display:"flex",flexDirection:"column",overflow:"hidden",userSelect:"none"}}>
-      {detail&&<DetailModal />}
+      {detail&&(function() {
+        var ic=cart.find(function(c) { return c.id===detail.id&&c.spice===spice; });
+        var needSpice=detail.hasSpice&&!spice;
+        return (
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:250}}
+            onClick={function(e) { if (e.target===e.currentTarget) { setDetail(null); setSpice(""); } }}>
+            <div style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:600,maxHeight:"90dvh",overflow:"auto",animation:"slideup .25s ease"}}>
+              {detail.img
+                ? <div style={{height:260,overflow:"hidden"}}><img src={detail.img} alt={detail.name} style={{width:"100%",height:"100%",objectFit:"cover"}} /></div>
+                : <div style={{height:200,background:"linear-gradient(135deg,#f8f0e8,#f0e0d0)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:80}}>{detail.emoji}</div>
+              }
+              <div style={{padding:"20px 20px 40px"}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                  <div style={{fontSize:22,fontWeight:800}}>{detail.name}</div>
+                  {detail.badge==="best"&&<span style={{background:"linear-gradient(135deg,#f39c12,#e67e22)",color:"#fff",fontSize:12,fontWeight:900,padding:"3px 10px",borderRadius:20}}>⭐ BEST</span>}
+                  {detail.badge==="new"&&<span style={{background:"linear-gradient(135deg,#00b09b,#27ae60)",color:"#fff",fontSize:12,fontWeight:900,padding:"3px 10px",borderRadius:20}}>✨ NEW</span>}
+                </div>
+                <div style={{color:"#666",fontSize:14,marginBottom:10}}>{detail.sub}</div>
+                {detail.desc&&<div style={{fontSize:14,lineHeight:1.6,marginBottom:14}}>{detail.desc}</div>}
+                {detail.ingredients&&(
+                  <div style={{background:"#f9f9f9",borderRadius:10,padding:"12px 14px",marginBottom:10,border:"1px solid #e0e0e0"}}>
+                    <div style={{fontSize:11,fontWeight:700,color:"#666",letterSpacing:1,marginBottom:4}}>INGREDIENTS</div>
+                    <div style={{fontSize:14,lineHeight:1.6}}>{detail.ingredients}</div>
+                  </div>
+                )}
+                {detail.allergens&&(
+                  <div style={{background:"#fff8f0",borderRadius:10,padding:"12px 14px",marginBottom:14,border:"1px solid #f0c080"}}>
+                    <div style={{fontSize:11,fontWeight:700,color:"#e08020",letterSpacing:1,marginBottom:4}}>ALLERGENS</div>
+                    <div style={{fontSize:14,color:"#a06010",lineHeight:1.6}}>{detail.allergens}</div>
+                  </div>
+                )}
+                {detail.hasSpice&&(
+                  <div style={{marginBottom:18}}>
+                    <div style={{fontSize:11,fontWeight:700,color:"#c05020",letterSpacing:1,marginBottom:10}}>SPICE LEVEL</div>
+                    <div style={{display:"flex",gap:10}}>
+                      {["Mild","Medium","Spicy"].map(function(lvl) {
+                        var icons={"Mild":"🌶️","Medium":"🌶️🌶️","Spicy":"🌶️🌶️🌶️"};
+                        var sel=spice===lvl;
+                        return <button key={lvl} onClick={function() { setSpice(lvl); }} style={{padding:"10px 16px",borderRadius:22,border:"1.5px solid "+(sel?RED:"#e0e0e0"),background:sel?"#fff0f0":"#fff",color:sel?RED:"#666",fontWeight:sel?700:400,fontSize:14,cursor:"pointer",fontFamily:F}}>{icons[lvl]+" "+lvl}</button>;
+                      })}
+                    </div>
+                  </div>
+                )}
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:18}}>
+                  <div style={{fontSize:28,fontWeight:900,color:RED}}>{detail.price===0?"Free":"$"+detail.price}</div>
+                  <div>
+                    {detail.soldOut&&<span style={{color:"#999",fontWeight:700}}>Sold Out</span>}
+                    {!detail.soldOut&&ic&&(
+                      <div style={{display:"flex",alignItems:"center",gap:12}}>
+                        <button className="sjq" onClick={function() { setQty(detail.id,spice,-1); }} style={{background:"#f0f0f0",border:"none",color:"#1a1a1a",width:52,height:52,borderRadius:"50%",fontSize:26,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:F}}>−</button>
+                        <span style={{fontWeight:900,fontSize:24,minWidth:30,textAlign:"center"}}>{ic.qty}</span>
+                        <button className="sjq" onClick={function() { addToCart(detail,spice); }} style={{background:RED,border:"none",color:"#fff",width:52,height:52,borderRadius:"50%",fontSize:26,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:F}}>+</button>
+                      </div>
+                    )}
+                    {!detail.soldOut&&!ic&&(
+                      <button style={Object.assign({},RB,{padding:"16px 32px",fontSize:16,opacity:needSpice?.5:1})}
+                        onClick={function() { if (needSpice) return; addToCart(detail,spice); setDetail(null); setSpice(""); }}>
+                        {needSpice?"Select Spice First":"Add to Order"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
       <CartModal /><HistModal />
       <div style={{display:"flex",flex:1,overflow:"hidden"}}>
         <div style={{width:130,background:RED,display:"flex",flexDirection:"column",alignItems:"stretch",flexShrink:0,overflowY:"auto"}}>
