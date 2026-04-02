@@ -263,7 +263,7 @@ export default function App() {
               var c=db.get(CATS_KEY)||DEFAULT_CATS;
               var firstVisible=c.find(function(x){return !x.hidden;});
               setSelCat(firstVisible?firstVisible.id:""); setSelSub(""); setMode("order");
-            }}>Confirm &#x2014; Table {setupNum}</button>
+            }}>Confirm — Table {setupNum}</button>
         </div>
       </div>
     );
@@ -379,7 +379,7 @@ export default function App() {
             </div>
             <button style={Object.assign({},RB,{width:"100%",padding:"18px",fontSize:17,opacity:cart.length?1:.4,cursor:cart.length?"pointer":"default"})}
               onClick={submitOrder} disabled={!cart.length}>
-              {"Place Order &#8212; $"+cartTotal.toFixed(2)}
+              {"Place Order — $"+cartTotal.toFixed(2)}
             </button>
           </div>
         </div>
@@ -445,7 +445,7 @@ export default function App() {
               var fv=c.find(function(x){return !x.hidden;});
               setSelCat(fv?fv.id:""); setSelSub(""); setCart([]); setNote(""); setMode("order");
             } else setSetupMode(true);
-          }}>{tableNum?"Order Now &#xB7; Table "+tableNum:"Order Now"}</button>
+          }}>{tableNum?"Order Now · Table "+tableNum:"Order Now"}</button>
         {isMain&&(
           <button style={{background:"#fff",color:"#1a1a1a",fontWeight:600,border:"1.5px solid #e0e0e0",borderRadius:14,padding:"16px",fontSize:16,cursor:"pointer",fontFamily:F,width:"100%",position:"relative"}}
             onClick={function() { setMode("admin"); setAdminTab("orders"); }}>
@@ -554,7 +554,7 @@ export default function App() {
     <div style={{minHeight:"100dvh",background:"#fdf5f5",fontFamily:F,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:14}}>
       <div style={{fontSize:80,animation:"pop .4s cubic-bezier(.34,1.56,.64,1) both"}}>&#x2705;</div>
       <div style={{fontSize:28,fontWeight:900}}>Order Placed!</div>
-      <div style={{color:"#666",fontSize:15}}>Table {tableNum} &#xB7; We&#x2019;ll be right with you</div>
+      <div style={{color:"#666",fontSize:15}}>Table {tableNum} · We&#x2019;ll be right with you</div>
       <div style={{display:"flex",gap:12,marginTop:20}}>
         <button style={Object.assign({},RB,{fontSize:16})} onClick={function() {
           var c=db.get(CATS_KEY)||DEFAULT_CATS;
@@ -924,7 +924,7 @@ export default function App() {
                   <div style={{flex:1}}>
                     <div style={{fontWeight:700,fontSize:15,color:catObj.hidden?"#bbb":"#1a1a1a"}}>{catObj.name}{catObj.hidden?" (hidden)":""}</div>
                     <div style={{color:"#999",fontSize:12}}>{cnt} item{cnt!==1?"s":""}
-                      {catObj.subs&&catObj.subs.length>0?" &#xB7; "+catObj.subs.length+" subcats":""}
+                      {catObj.subs&&catObj.subs.length>0?" · "+catObj.subs.length+" subcats":""}
                     </div>
                   </div>
                   <div style={{display:"flex",gap:6}}>
