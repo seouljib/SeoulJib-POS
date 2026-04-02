@@ -475,7 +475,7 @@ export default function App() {
               <button key={c.id} onClick={function() { setSelCat(c.id); setSelSub(""); }}
                 style={{padding:"18px 10px",border:"none",background:"transparent",cursor:"pointer",fontFamily:F,textAlign:"center",lineHeight:1.3,transition:"all .12s",position:"relative"}}>
                 {on&&<div style={{position:"absolute",left:8,right:8,top:4,bottom:4,background:"#fff",borderRadius:8,zIndex:0}} />}
-                <span style={{position:"relative",zIndex:1,color:on?RED:"rgba(255,255,255,.85)",fontWeight:on?800:400,fontSize:14}}>{c.name}</span>
+                <span style={{position:"relative",zIndex:1,color:on?RED:"rgba(255,255,255,.85)",fontWeight:on?800:400,fontSize:17}}>{c.name}</span>
               </button>
             );
           })}
@@ -512,10 +512,10 @@ export default function App() {
                   {ic&&<div className="sjbdg" style={{position:"absolute",top:6,right:6,background:RED,color:"#fff",borderRadius:"50%",width:28,height:28,fontSize:13,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{ ic.qty}</div>}
                   {item.soldOut&&<div style={{position:"absolute",top:6,left:6,background:"rgba(0,0,0,.7)",color:"#fff",borderRadius:5,padding:"2px 8px",fontSize:11,fontWeight:700}}>SOLD OUT</div>}
                   <div style={{padding:"8px 10px 12px"}}>
-                    <div style={{fontWeight:700,fontSize:14,lineHeight:1.3}}>{item.name}</div>
-                    <div style={{color:"#999",fontSize:11,marginTop:2}}>{item.sub}</div>
+                    <div style={{fontWeight:700,fontSize:17,lineHeight:1.3}}>{item.name}</div>
+                    <div style={{color:"#999",fontSize:14,marginTop:3}}>{item.sub}</div>
                     <div style={{marginTop:8,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                      <div style={{fontWeight:900,fontSize:17,color:RED}}>{item.price===0?"Free":"$"+item.price}</div>
+                      <div style={{fontWeight:900,fontSize:20,color:RED}}>{item.price===0?"Free":"$"+item.price}</div>
                       {!item.soldOut&&(
                         <button onClick={function(e) { e.stopPropagation(); if (item.hasSpice) { setDetail(item); setSpice(""); } else addToCart(item,""); }}
                           style={{background:RED,border:"none",color:"#fff",width:36,height:36,borderRadius:"50%",fontSize:22,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(192,57,43,.3)",flexShrink:0}}>+</button>
