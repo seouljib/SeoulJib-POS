@@ -892,19 +892,15 @@ export default function App() {
       {/* ORDERS TAB */}
       {adminTab==="orders"&&(
         <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
-          {/* Stats bar */}
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:0,flexShrink:0,borderBottom:"1px solid #333"}}>
-            {[
-              {label:"All Orders",count:allPending.length,color:"#fff",key:"all"},
-              {label:"Unconfirmed",count:unconfirmed.length,color:"#e74c3c",key:"unconfirmed"},
-              {label:"Confirmed",count:confirmed.length,color:"#27ae60",key:"confirmed"},
-            ].map(function(s) {
+          {/* 2 tabs: New Orders / Confirmed */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",flexShrink:0,borderBottom:"1px solid #333"}}>
+            {[{label:"New Orders",count:unconfirmed.length,color:"#e74c3c",key:"unconfirmed"},{label:"Confirmed",count:confirmed.length,color:"#27ae60",key:"confirmed"}].map(function(s) {
               var on=ktab===s.key;
               return (
                 <button key={s.key} onClick={function() { setKtab(s.key); }}
-                  style={{padding:"14px 8px",background:on?"#2a2a2a":"#222",border:"none",borderBottom:on?"2px solid "+RED:"2px solid transparent",cursor:"pointer",fontFamily:F,display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
-                  <span style={{fontSize:28,fontWeight:900,color:s.color}}>{s.count}</span>
-                  <span style={{fontSize:11,color:"#888",letterSpacing:.5}}>{s.label}</span>
+                  style={{padding:"16px 8px",background:on?"#2a2a2a":"#222",border:"none",borderBottom:on?"3px solid "+RED:"3px solid transparent",cursor:"pointer",fontFamily:F,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                  <span style={{fontSize:36,fontWeight:900,color:s.color}}>{s.count}</span>
+                  <span style={{fontSize:14,color:on?"#fff":"#888",fontWeight:on?700:400}}>{s.label}</span>
                 </button>
               );
             })}
@@ -912,64 +908,116 @@ export default function App() {
 
           {/* Call Staff alerts */}
           {activeCalls.length>0&&(
-            <div style={{padding:"8px 14px",borderBottom:"1px solid #333",display:"flex",gap:8,flexWrap:"wrap",background:"#2a1515",flexShrink:0}}>
+            <div style={{padding:"10px 14px",borderBottom:"1px solid #333",display:"flex",gap:10,flexWrap:"wrap",background:"#2a1515",flexShrink:0}}>
               {activeCalls.map(function(c) {
                 return (
-                  <div key={c.id} style={{display:"flex",alignItems:"center",gap:10,background:"#3a1a1a",border:"2px solid "+RED,borderRadius:10,padding:"7px 14px"}}>
-                    <span style={{fontWeight:700,fontSize:15,color:"#fff"}}>🔔 Table {c.table}</span>
-                    <span style={{color:"#888",fontSize:13}}>{c.time}</span>
+                  <div key={c.id} style={{display:"flex",alignItems:"center",gap:12,background:"#3a1a1a",border:"2px solid "+RED,borderRadius:12,padding:"10px 18px"}}>
+                    <span style={{fontWeight:800,fontSize:18,color:"#fff"}}>🔔 Table {c.table}</span>
+                    <span style={{color:"#888",fontSize:15}}>{c.time}</span>
                     <button onClick={function() { saveCalls(calls.map(function(x) { return x.id===c.id?Object.assign({},x,{done:true}):x; })); stopBeep(); }}
-                      style={{background:"#27ae60",border:"none",color:"#fff",borderRadius:8,padding:"5px 12px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:F}}>Done</button>
+                      style={{background:"#27ae60",border:"none",color:"#fff",borderRadius:8,padding:"8px 18px",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:F}}>Done</button>
                   </div>
                 );
               })}
             </div>
           )}
 
-          {/* Orders list */}
-          <div style={{flex:1,overflowY:"auto",padding:"12px 14px",display:"flex",flexDirection:"column",gap:10}}>
-            {(function() {
-              var show = ktab==="all"?allPending : ktab==="unconfirmed"?unconfirmed : confirmed;
-              if (show.length===0) return <div style={{textAlign:"center",color:"#444",marginTop:80,fontSize:15}}>No orders</div>;
-              return show.map(function(order) {
+          {/* NEW ORDERS — card grid */}
+          {ktab==="unconfirmed"&&(
+            <div style={{flex:1,overflowY:"auto",padding:"14px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14,alignContent:"start"}}>
+              {unconfirmed.length===0&&<div style={{gridColumn:"1/-1",textAlign:"center",color:"#444",marginTop:80,fontSize:18}}>No new orders</div>}
+              {unconfirmed.map(function(order) {
                 var isNew=order.ts&&(Date.now()-order.ts)<8000;
                 var mins=order.ts?Math.floor((Date.now()-order.ts)/60000):null;
                 return (
-                  <div key={order.id} style={{background:"#2a2a2a",borderRadius:14,border:"1.5px solid "+(isNew?"#e74c3c":order.confirmed?"#27ae60":"#d4952c"),overflow:"hidden",display:"flex",alignItems:"stretch"}}>
-                    {/* Table number column */}
-                    <div style={{background:order.confirmed?"#0a2a0a":isNew?"#3a0a0a":"#2a1a0a",padding:"0 20px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",flexShrink:0,minWidth:80}}>
-                      <div style={{fontSize:11,color:"rgba(255,255,255,.4)",letterSpacing:1}}>TABLE</div>
-                      <div style={{fontSize:52,fontWeight:900,color:"#fff",lineHeight:1}}>{order.table}</div>
-                      {isNew&&<span style={{background:"#e74c3c",color:"#fff",fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:4,marginTop:4}}>NEW</span>}
-                      {mins!==null&&!isNew&&<div style={{fontSize:11,color:"#888",marginTop:2}}>{mins}m</div>}
-                    </div>
-                    {/* Items */}
-                    <div style={{flex:1,padding:"12px 14px",borderLeft:"1px solid #333"}}>
-                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:8,alignItems:"center"}}>
-                        <span style={{color:"#888",fontSize:12}}>{order.time} #{order.id.slice(-4)}</span>
-                        <span style={{color:"#d4952c",fontWeight:700,fontSize:14}}>${order.total.toFixed(2)}</span>
+                  <div key={order.id} style={{background:"#2a2a2a",borderRadius:16,border:"2px solid "+(isNew?"#e74c3c":"#d4952c"),display:"flex",flexDirection:"column"}}>
+                    <div style={{background:isNew?"#3a0a0a":"#2a1a0a",padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",borderRadius:"14px 14px 0 0"}}>
+                      <div style={{display:"flex",alignItems:"center",gap:10}}>
+                        <span style={{fontSize:32,fontWeight:900,color:"#fff"}}>T.{order.table}</span>
+                        {isNew&&<span style={{background:"#e74c3c",color:"#fff",fontSize:12,fontWeight:800,padding:"3px 8px",borderRadius:6}}>NEW</span>}
+                        {mins!==null&&!isNew&&<span style={{color:"#888",fontSize:14}}>{mins}m</span>}
                       </div>
-                      {order.items.map(function(item,i) {
-                        return <div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:15,color:"#fff",padding:"3px 0"}}><span>{item.name}{item.spice?" ("+item.spice+")":""}</span><span style={{color:"#d4952c",fontWeight:700}}>x{item.qty}</span></div>;
-                      })}
-                      {order.note&&<div style={{marginTop:6,padding:"5px 8px",background:"#3a2a10",borderRadius:6,color:"#e8c470",fontSize:12}}>📝 {order.note}</div>}
+                      <div style={{textAlign:"right"}}>
+                        <div style={{color:"#d4952c",fontWeight:900,fontSize:20}}>${order.total.toFixed(2)}</div>
+                        <div style={{color:"#666",fontSize:13}}>{order.time}</div>
+                      </div>
                     </div>
-                    {/* Actions */}
-                    <div style={{display:"flex",flexDirection:"column",gap:6,padding:"10px 10px",justifyContent:"center",flexShrink:0,borderLeft:"1px solid #333"}}>
-                      {!order.confirmed&&(
-                        <button onClick={function() { saveOrders(orders.map(function(o) { return o.id===order.id?Object.assign({},o,{confirmed:true}):o; })); stopBeep(); }}
-                          style={{background:"#27ae60",border:"none",color:"#fff",borderRadius:8,padding:"8px 12px",fontWeight:700,cursor:"pointer",fontSize:13,fontFamily:F,whiteSpace:"nowrap"}}>✓ Confirm</button>
-                      )}
-                      <button onClick={function() { saveOrders(orders.map(function(o) { return o.id===order.id?Object.assign({},o,{status:"done"}):o; })); stopBeep(); }}
-                        style={{background:"#0a1525",border:"1px solid #1a2a4a",color:"#5a8acc",borderRadius:8,padding:"8px 12px",fontWeight:700,cursor:"pointer",fontSize:13,fontFamily:F,whiteSpace:"nowrap"}}>Done</button>
+                    <div style={{padding:"12px 18px",flex:1}}>
+                      {order.items.map(function(item,i) {
+                        return (
+                          <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<order.items.length-1?"1px solid #3a3a3a":"none"}}>
+                            <span style={{fontSize:17,color:"#fff",fontWeight:500,flex:1}}>{item.name}{item.spice?" ("+item.spice+")":""}</span>
+                            <span style={{fontSize:17,color:"#d4952c",fontWeight:800,marginLeft:8,whiteSpace:"nowrap"}}>x {item.qty}</span>
+                          </div>
+                        );
+                      })}
+                      {order.note&&<div style={{marginTop:8,padding:"7px 10px",background:"#3a2a10",borderRadius:8,color:"#e8c470",fontSize:14}}>📝 {order.note}</div>}
+                    </div>
+                    <div style={{padding:"12px 14px",display:"flex",gap:8,borderTop:"1px solid #333"}}>
+                      <button onClick={function() { saveOrders(orders.map(function(o) { return o.id===order.id?Object.assign({},o,{confirmed:true}):o; })); stopBeep(); }}
+                        style={{flex:2,background:"#27ae60",border:"none",color:"#fff",borderRadius:10,padding:"14px",fontWeight:800,cursor:"pointer",fontSize:16,fontFamily:F}}>✓ Confirm</button>
                       <button onClick={function() { var w=window.open("","_blank","width=430,height=640"); if(w){w.document.write(makeReceipt(order));w.document.close();} }}
-                        style={{background:"#222",border:"1px solid #333",color:"#888",borderRadius:8,padding:"8px 12px",fontWeight:600,cursor:"pointer",fontSize:14,fontFamily:F}}>🖨️</button>
+                        style={{flex:1,background:"#222",border:"1px solid #444",color:"#888",borderRadius:10,padding:"14px",cursor:"pointer",fontSize:16,fontFamily:F}}>🖨</button>
                     </div>
                   </div>
                 );
-              });
-            })()}
-          </div>
+              })}
+            </div>
+          )}
+
+          {/* CONFIRMED — grouped by table */}
+          {ktab==="confirmed"&&(function() {
+            var tableMap = {};
+            confirmed.forEach(function(o) {
+              var k = String(o.table);
+              if (!tableMap[k]) tableMap[k] = [];
+              tableMap[k].push(o);
+            });
+            var tableNums = Object.keys(tableMap).sort(function(a,b) { return Number(a)-Number(b); });
+            if (tableNums.length===0) return (
+              <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",color:"#444",fontSize:18}}>No confirmed orders</div>
+            );
+            return (
+              <div style={{flex:1,overflowY:"auto",padding:"14px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14,alignContent:"start"}}>
+                {tableNums.map(function(tbl) {
+                  var tOrders = tableMap[tbl];
+                  var allItems = [];
+                  tOrders.forEach(function(o) { o.items.forEach(function(i) { allItems.push(Object.assign({},i)); }); });
+                  var tableTotal = tOrders.reduce(function(s,o) { return s+o.total; }, 0);
+                  return (
+                    <div key={tbl} style={{background:"#2a2a2a",borderRadius:16,border:"2px solid #27ae60",display:"flex",flexDirection:"column"}}>
+                      <div style={{background:"#0a2a0a",padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",borderRadius:"14px 14px 0 0"}}>
+                        <div style={{display:"flex",alignItems:"center",gap:8}}>
+                          <span style={{fontSize:28,fontWeight:900,color:"#fff"}}>Table {tbl}</span>
+                          <span style={{background:"#27ae60",color:"#fff",fontSize:12,fontWeight:700,padding:"3px 8px",borderRadius:6}}>{tOrders.length} order{tOrders.length>1?"s":""}</span>
+                        </div>
+                        <div style={{color:"#27ae60",fontWeight:900,fontSize:20}}>${tableTotal.toFixed(2)}</div>
+                      </div>
+                      <div style={{padding:"12px 18px",flex:1}}>
+                        {allItems.map(function(item,i) {
+                          return (
+                            <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<allItems.length-1?"1px solid #3a3a3a":"none"}}>
+                              <span style={{fontSize:16,color:"#fff",flex:1}}>{item.name}{item.spice?" ("+item.spice+")":""}</span>
+                              <span style={{fontSize:16,color:"#27ae60",fontWeight:800,marginLeft:8,whiteSpace:"nowrap"}}>x {item.qty}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div style={{padding:"12px 14px",borderTop:"1px solid #333"}}>
+                        <button onClick={function() {
+                          saveOrders(orders.map(function(o) {
+                            return (String(o.table)===tbl&&o.status==="pending"&&o.confirmed)?Object.assign({},o,{status:"done"}):o;
+                          }));
+                        }} style={{width:"100%",background:"#0a1525",border:"1px solid #1a2a4a",color:"#5a8acc",borderRadius:10,padding:"14px",fontWeight:700,cursor:"pointer",fontSize:16,fontFamily:F}}>
+                          Done — Table {tbl}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
       )}
 
