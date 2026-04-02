@@ -495,19 +495,19 @@ export default function App() {
               })}
             </div>
           )}
-          <div style={{flex:1,overflowY:"auto",padding:"12px",display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,alignContent:"start"}}>
+          <div style={{flex:1,overflowY:"auto",padding:"12px",paddingTop:"14px",display:"grid",gridTemplateColumns:"repeat(3,1fr)",gridAutoRows:"min-content",gap:10,alignContent:"start"}}>
             {dispMenu.length===0&&<div style={{gridColumn:"1/-1",textAlign:"center",color:"#ccc",marginTop:60,fontSize:15}}>No items</div>}
             {dispMenu.map(function(item) {
               var ic=cart.find(function(c) { return c.id===item.id; });
               return (
                 <div key={item.id} className="sjc"
-                  style={{background:"#fff",border:"1.5px solid "+(ic?RED:"#ebebeb"),borderRadius:12,overflow:"hidden",cursor:"pointer",opacity:item.soldOut?.5:1,position:"relative",animation:justAdded===item.id?"bnc .28s ease both":"none",boxShadow:"0 1px 6px rgba(0,0,0,.07)"}}
+                  style={{background:"#fff",border:"1.5px solid "+(ic?RED:"#ebebeb"),borderRadius:12,overflow:"visible",cursor:"pointer",opacity:item.soldOut?.5:1,position:"relative",animation:justAdded===item.id?"bnc .28s ease both":"none",boxShadow:"0 1px 6px rgba(0,0,0,.07)"}}
                   onClick={function() { setDetail(item); setSpice(""); }}>
                   {item.badge==="best"&&<div style={{position:"absolute",top:0,left:0,zIndex:2,background:"#e74c3c",color:"#fff",fontSize:11,fontWeight:800,padding:"4px 9px",borderRadius:"0 0 8px 0"}}>BEST</div>}
                   {item.badge==="new"&&<div style={{position:"absolute",top:0,left:0,zIndex:2,background:"#27ae60",color:"#fff",fontSize:11,fontWeight:800,padding:"4px 9px",borderRadius:"0 0 8px 0"}}>NEW</div>}
                   {item.img
-                    ? <div style={{height:"28vh",overflow:"hidden"}}><img src={item.img} alt={item.name} style={{width:"100%",height:"100%",objectFit:"cover"}} /></div>
-                    : <div style={{height:"28vh",background:"linear-gradient(145deg,#f8f0e8,#f0e0d0)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:60}}>{item.emoji}</div>
+                    ? <div style={{height:"28vh",overflow:"hidden",borderRadius:"12px 12px 0 0"}}><img src={item.img} alt={item.name} style={{width:"100%",height:"100%",objectFit:"cover"}} /></div>
+                    : <div style={{height:"28vh",background:"linear-gradient(145deg,#f8f0e8,#f0e0d0)",borderRadius:"12px 12px 0 0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:60}}>{item.emoji}</div>
                   }
                   {ic&&<div className="sjbdg" style={{position:"absolute",top:6,right:6,background:RED,color:"#fff",borderRadius:"50%",width:28,height:28,fontSize:13,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{ ic.qty}</div>}
                   {item.soldOut&&<div style={{position:"absolute",top:6,left:6,background:"rgba(0,0,0,.7)",color:"#fff",borderRadius:5,padding:"2px 8px",fontSize:11,fontWeight:700}}>SOLD OUT</div>}
