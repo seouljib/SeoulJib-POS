@@ -14,19 +14,17 @@ const firebaseApp = initializeApp(firebaseConfig);
 const firestore  = getFirestore(firebaseApp);
 
 // Firestore helpers
-var _recentWrites = {};
+// Unique device ID per browser session
+var DEVICE_ID = (function() {
+  var id = sessionStorage.getItem("sj_device_id");
+  if (!id) { id = Math.random().toString(36).slice(2); sessionStorage.setItem("sj_device_id", id); }
+  return id;
+})();
+
 async function fsSet(col, id, data) {
   try {
-    var key = col+"/"+id;
-    _recentWrites[key] = Date.now();
-    await setDoc(doc(firestore, col, id), data);
+    await setDoc(doc(firestore, col, id), Object.assign({}, data, { _writer: DEVICE_ID }));
   } catch(e) { console.error(e); }
-}
-function isLocalEcho(col, id, snapTs) {
-  var key = col+"/"+id;
-  var wt = _recentWrites[key];
-  // If we wrote within last 3 seconds, this is likely our own echo
-  return wt && (Date.now()-wt) < 3000;
 }
 
 
@@ -213,10 +211,11 @@ export default function App() {
         var devMap = {};
         snapshot.forEach(function(d) { devMap[d.id] = d.data(); });
         setDevices(devMap);
-        // Check for low battery alerts
+        // Check for low battery alerts - only from OTHER devices
         snapshot.docChanges().forEach(function(change) {
           if (change.type === "modified" || change.type === "added") {
             var d = change.doc.data();
+            if (d._writer === DEVICE_ID) return; // skip own writes
             if (d.pct <= 20 && !d.isMain && d.ts && (Date.now()-d.ts)<180000) {
               setBatteryWarn({table:d.table,pct:d.pct});
               playBeep("call");
@@ -257,8 +256,10 @@ export default function App() {
       var unsub = onSnapshot(doc(firestore,"pos",k), function(snap) {
         if (snap.exists()) {
           try {
-            if (isLocalEcho("pos", k)) return; // skip own writes
-            var parsed = JSON.parse(snap.data().data); setters[k](parsed, true);
+            var d = snap.data();
+            var fromSelf = d._writer === DEVICE_ID;
+            var parsed = JSON.parse(d.data);
+            setters[k](parsed, !fromSelf); // fromRemote=true only if different device
           } catch(e) {}
         }
       });
