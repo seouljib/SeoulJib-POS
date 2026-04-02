@@ -374,8 +374,8 @@ export default function App() {
           )}
           <div style={{padding:"12px 20px 28px",borderTop:"1px solid #e0e0e0"}}>
             <div style={{display:"flex",justifyContent:"space-between",fontSize:20,fontWeight:800,marginBottom:14}}>
-              <span>Total</span>
-              <span style={{color:RED}}>{"$"+(cartTotal+placedTotal).toFixed(2)}</span>
+              <span>Subtotal</span>
+              <span style={{color:RED}}>{"$"+cartTotal.toFixed(2)}</span>
             </div>
             <button style={Object.assign({},RB,{width:"100%",padding:"18px",fontSize:17,opacity:cart.length?1:.4,cursor:cart.length?"pointer":"default"})}
               onClick={submitOrder} disabled={!cart.length}>
@@ -393,29 +393,34 @@ export default function App() {
     return (
       <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:200}}
         onClick={function(e) { if (e.target===e.currentTarget) setHistOpen(false); }}>
-        <div style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:520,maxHeight:"80dvh",display:"flex",flexDirection:"column",animation:"slideup .25s ease"}}>
-          <div style={{padding:"18px 20px 14px",borderBottom:"1px solid #e0e0e0",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <div style={{fontWeight:800,fontSize:18}}>Order History</div>
-            <button style={{background:"none",border:"none",fontSize:22,cursor:"pointer",color:"#999"}} onClick={function() { setHistOpen(false); }}>✕</button>
+        <div style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:700,maxHeight:"90dvh",display:"flex",flexDirection:"column",animation:"slideup .25s ease"}}>
+          <div style={{padding:"22px 28px 16px",borderBottom:"1px solid #e0e0e0",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{fontWeight:800,fontSize:24}}>Order History</div>
+            <button style={{background:"none",border:"none",fontSize:28,cursor:"pointer",color:"#999"}} onClick={function() { setHistOpen(false); }}>✕</button>
           </div>
-          <div style={{flex:1,overflowY:"auto",padding:"0 0 20px"}}>
-            {myOrders.length===0&&<div style={{textAlign:"center",color:"#ccc",padding:"48px 0",fontSize:15}}>No orders yet</div>}
+          <div style={{flex:1,overflowY:"auto"}}>
+            {myOrders.length===0&&<div style={{textAlign:"center",color:"#ccc",padding:"60px 0",fontSize:18}}>No orders yet</div>}
             {myOrders.map(function(o) {
               return (
-                <div key={o.id} style={{padding:"14px 20px",borderBottom:"1px solid #f0f0f0"}}>
-                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
-                    <span style={{fontWeight:700,fontSize:15,color:"#27ae60"}}>✓ Order sent</span>
-                    <span style={{color:"#999",fontSize:13}}>{o.time}</span>
+                <div key={o.id} style={{padding:"18px 28px",borderBottom:"1px solid #f0f0f0"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}>
+                    <span style={{fontWeight:700,fontSize:18,color:"#27ae60"}}>✓ Order sent</span>
+                    <span style={{color:"#999",fontSize:16}}>{o.time}</span>
                   </div>
                   {o.items.map(function(item,i) {
-                    return <div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:14,color:"#444",padding:"3px 0"}}><span>{item.name}{item.spice?" ("+item.spice+")":""}</span><span>x{item.qty}</span></div>;
+                    return (
+                      <div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:17,color:"#333",padding:"5px 0",borderBottom:"1px solid #f8f8f8"}}>
+                        <span>{item.name}{item.spice?" ("+item.spice+")":""}</span>
+                        <span style={{fontWeight:600}}>x{item.qty}</span>
+                      </div>
+                    );
                   })}
-                  <div style={{display:"flex",justifyContent:"space-between",marginTop:8,paddingTop:8,borderTop:"1px solid #f0f0f0",fontWeight:700}}><span>Subtotal</span><span style={{color:RED}}>{"$"+o.total.toFixed(2)}</span></div>
+                  <div style={{display:"flex",justifyContent:"space-between",marginTop:10,paddingTop:10,borderTop:"1px solid #e0e0e0",fontWeight:800,fontSize:17}}><span>Subtotal</span><span style={{color:RED}}>{"$"+o.total.toFixed(2)}</span></div>
                 </div>
               );
             })}
           </div>
-          {placedTotal>0&&<div style={{padding:"14px 20px 28px",borderTop:"1px solid #e0e0e0",display:"flex",justifyContent:"space-between",fontSize:18,fontWeight:800}}><span>Total Spent</span><span style={{color:RED}}>{"$"+placedTotal.toFixed(2)}</span></div>}
+          {placedTotal>0&&<div style={{padding:"18px 28px 32px",borderTop:"2px solid #e0e0e0",display:"flex",justifyContent:"space-between",fontSize:22,fontWeight:900}}><span>Total Spent</span><span style={{color:RED}}>{"$"+placedTotal.toFixed(2)}</span></div>}
         </div>
       </div>
     );
