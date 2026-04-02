@@ -518,7 +518,7 @@ export default function App() {
           )}
 
           {/* Menu grid */}
-          <div style={{flex:1,overflowY:"auto",padding:"12px",display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,alignContent:"start"}}>
+          <div style={{flex:1,overflowY:"auto",padding:"10px",display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,alignContent:"start"}}>
             {dispMenu.length===0 && <div style={{gridColumn:"1/-1",textAlign:"center",color:"#ccc",marginTop:60,fontSize:15}}>No items</div>}
             {dispMenu.map(function(item) {
               var ic = cart.find(function(c) { return c.id===item.id; });
@@ -527,19 +527,19 @@ export default function App() {
                   style={{background:"#fff",border:"1.5px solid "+(ic?RED:"#ebebeb"),borderRadius:12,overflow:"hidden",cursor:"pointer",opacity:item.soldOut?.5:1,position:"relative",animation:justAdded===item.id?"bnc .28s ease both":"none",boxShadow:"0 1px 6px rgba(0,0,0,.07)"}}
                   onClick={function() { setDetail(item); setSpice(""); }}>
                   {item.img
-                    ? <div style={{height:180,overflow:"hidden"}}><img src={item.img} alt={item.name} style={{width:"100%",height:"100%",objectFit:"cover"}} /></div>
-                    : <div style={{height:180,background:"linear-gradient(145deg,#f8f0e8,#f0e0d0)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:60}}>{item.emoji}</div>
+                    ? <div style={{height:160,overflow:"hidden"}}><img src={item.img} alt={item.name} style={{width:"100%",height:"100%",objectFit:"cover"}} /></div>
+                    : <div style={{height:160,background:"linear-gradient(145deg,#f8f0e8,#f0e0d0)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:56}}>{item.emoji}</div>
                   }
                   {ic && <div className="sjbdg" style={{position:"absolute",top:6,right:6,background:RED,color:"#fff",borderRadius:"50%",width:28,height:28,fontSize:13,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 6px rgba(192,57,43,.4)"}}>{ic.qty}</div>}
                   {item.soldOut && <div style={{position:"absolute",top:6,left:6,background:"rgba(0,0,0,.7)",color:"#fff",borderRadius:5,padding:"2px 8px",fontSize:11,fontWeight:700}}>SOLD OUT</div>}
-                  <div style={{padding:"8px 10px 10px"}}>
+                  <div style={{padding:"6px 10px 8px"}}>
                     <div style={{fontWeight:700,fontSize:14,lineHeight:1.3,color:"#1a1a1a"}}>{item.name}</div>
                     <div style={{color:"#999",fontSize:11,marginTop:2}}>{item.sub}</div>
-                    <div style={{marginTop:8,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                    <div style={{marginTop:6,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                       <div style={{fontWeight:900,fontSize:17,color:RED}}>{item.price===0?"Free":"$"+item.price}</div>
                       {!item.soldOut && (
                         <button onClick={function(e) { e.stopPropagation(); if (item.hasSpice) { setDetail(item); setSpice(""); } else addToCart(item,""); }}
-                          style={{background:RED,border:"none",color:"#fff",width:34,height:34,borderRadius:"50%",fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(192,57,43,.3)"}}>+</button>
+                          style={{background:RED,border:"none",color:"#fff",width:36,height:36,borderRadius:"50%",fontSize:22,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(192,57,43,.3)",flexShrink:0}}>+</button>
                       )}
                     </div>
                   </div>
