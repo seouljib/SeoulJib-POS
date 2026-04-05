@@ -125,6 +125,46 @@ function blankItem(cat) {
 }
 function blankCat() { return { id:"c"+Date.now(), name:"", subs:[], hidden:false }; }
 
+// ESC/POS helpers
+function escPos(items, table, time, total, note) {
+  var ESC=0x1B, GS=0x1D;
+  var bytes=[];
+  function txt(s) { for(var i=0;i<s.length;i++) bytes.push(s.charCodeAt(i)); }
+  function cmd() { for(var i=0;i<arguments.length;i++) bytes.push(arguments[i]); }
+  // Init
+  cmd(ESC,0x40);
+  // Center + double size
+  cmd(ESC,0x61,1); cmd(GS,0x21,0x11);
+  txt("SEOUL JIB\n");
+  // Normal size
+  cmd(GS,0x21,0x00); cmd(ESC,0x61,1);
+  txt("270 St Asaph St, Christchurch\n");
+  txt("--------------------------------\n");
+  // Left align
+  cmd(ESC,0x61,0);
+  txt("Table: "+table+"\n");
+  txt("Time:  "+time+"\n");
+  txt("--------------------------------\n");
+  items.forEach(function(i) {
+    var line=(i.name+(i.spice?" ("+i.spice+")":"")).padEnd(20).slice(0,20);
+    var qty="x"+i.qty;
+    var price="$"+(i.price*i.qty).toFixed(2);
+    txt(line+" "+qty.padStart(3)+" "+price.padStart(6)+"\n");
+  });
+  if(note) { txt("Note: "+note+"\n"); }
+  txt("--------------------------------\n");
+  // Bold total
+  cmd(ESC,0x45,1);
+  txt("TOTAL:               $"+total.toFixed(2)+"\n");
+  cmd(ESC,0x45,0);
+  // Center footer
+  cmd(ESC,0x61,1);
+  txt("\nThank you!\n\n\n");
+  // Cut
+  cmd(GS,0x56,0x41,0x00);
+  return new Uint8Array(bytes);
+}
+
 export default function App() {
   useEffect(function() {
     if (document.getElementById("sj-css")) return;
@@ -161,7 +201,11 @@ export default function App() {
   var [setupNum,setSetupNum]       = useState(1);
   var [battery,setBattery]         = useState(null);
   var [callActive,setCallActive]   = useState(false);
-  var [batteryWarn, setBatteryWarn] = useState(null);
+  var [batteryWarn, setBatteryWarn]   = useState(null);
+  var [printerStatus, setPrinterStatus] = useState("disconnected");
+  var [printerDevice, setPrinterDevice] = useState(null);
+  var [printerChar, setPrinterChar]     = useState(null);
+  var [autoPrint, setAutoPrint]         = useState(function() { return !!db.get("sj-autoprint"); });
   var [devices, setDevices]         = useState({});
   var prevCount = useRef(0);
   var pollRef   = useRef(null);
@@ -284,6 +328,65 @@ export default function App() {
   }, []);
 
   function showToast(m) { setToast(m); setTimeout(function() { setToast(""); }, 2000); }
+
+  async function connectPrinter() {
+    if (!navigator.bluetooth) { showToast("Bluetooth not supported"); return; }
+    try {
+      setPrinterStatus("connecting");
+      var device = await navigator.bluetooth.requestDevice({
+        filters: [{namePrefix:"Sewoo"},{namePrefix:"SLK"},{namePrefix:"SEWOO"}],
+        optionalServices: ["000018f0-0000-1000-8000-00805f9b34fb"]
+      });
+      var server  = await device.gatt.connect();
+      var service = await server.getPrimaryService("000018f0-0000-1000-8000-00805f9b34fb");
+      var char    = await service.getCharacteristic("00002af1-0000-1000-8000-00805f9b34fb");
+      setPrinterDevice(device);
+      setPrinterChar(char);
+      setPrinterStatus("connected");
+      device.addEventListener("gattserverdisconnected", function() {
+        setPrinterStatus("disconnected"); setPrinterChar(null); setPrinterDevice(null);
+      });
+      showToast("Printer connected!");
+    } catch(e) {
+      console.error(e);
+      setPrinterStatus("error");
+      setTimeout(function() { setPrinterStatus("disconnected"); }, 3000);
+      showToast("Connection failed: "+e.message);
+    }
+  }
+
+  async function sendToPrinter(data) {
+    if (!printerChar) return false;
+    try {
+      var chunk = 512;
+      for (var i=0; i<data.length; i+=chunk) {
+        await printerChar.writeValue(data.slice(i, i+chunk));
+      }
+      return true;
+    } catch(e) {
+      setPrinterStatus("error");
+      showToast("Print failed");
+      return false;
+    }
+  }
+
+  async function testPrint() {
+    var data = escPos([{name:"Test Item",price:10,qty:1,spice:""}], "TEST", new Date().toLocaleTimeString("en-NZ",{hour:"2-digit",minute:"2-digit"}), 10, "");
+    var ok = await sendToPrinter(data);
+    if (ok) showToast("Test print sent!");
+  }
+
+  async function printOrder(order) {
+    if (!printerChar) return;
+    var data = escPos(order.items, order.table, order.time, order.total, order.note);
+    await sendToPrinter(data);
+  }
+
+  function disconnectPrinter() {
+    if (printerDevice && printerDevice.gatt.connected) printerDevice.gatt.disconnect();
+    setPrinterStatus("disconnected"); setPrinterChar(null); setPrinterDevice(null);
+    showToast("Printer disconnected");
+  }
 
   var poll = useCallback(function() {
     // Poll kept for fallback refresh only - sound handled by Firebase listener
@@ -1098,11 +1201,15 @@ export default function App() {
                       </div>
                       <div style={{padding:"12px 14px",borderTop:"1px solid #333"}}>
                         <button onClick={function() {
+                          var toComplete = orders.filter(function(o) { return String(o.table)===tbl&&o.status==="pending"&&o.confirmed; });
                           saveOrders(orders.map(function(o) {
                             return (String(o.table)===tbl&&o.status==="pending"&&o.confirmed)?Object.assign({},o,{status:"done"}):o;
                           }));
+                          if (autoPrint && toComplete.length>0) {
+                            toComplete.forEach(function(o) { printOrder(o); });
+                          }
                         }} style={{width:"100%",background:"#0a1525",border:"1px solid #1a2a4a",color:"#5a8acc",borderRadius:10,padding:"14px",fontWeight:700,cursor:"pointer",fontSize:16,fontFamily:F}}>
-                          Done — Table {tbl}
+                          {autoPrint?"🖨️ Done & Print — Table "+tbl:"Done — Table "+tbl}
                         </button>
                       </div>
                     </div>
@@ -1241,6 +1348,52 @@ export default function App() {
       {adminTab==="device"&&(
         <div style={{flex:1,overflowY:"auto",padding:"20px",background:"#f5f5f5"}}>
           <div style={{maxWidth:500,margin:"0 auto"}}>
+
+            <div style={{fontSize:11,fontWeight:700,color:RED,letterSpacing:3,marginBottom:16,paddingBottom:6,borderBottom:"1px solid #e0e0e0"}}>RECEIPT PRINTER</div>
+            <div style={{background:"#fff",borderRadius:14,padding:"20px",border:"1.5px solid "+(printerStatus==="connected"?"#27ae60":printerStatus==="error"?"#e74c3c":"#e0e0e0"),marginBottom:24}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+                <div>
+                  <div style={{fontWeight:700,fontSize:17}}>Sewoo SLK-TS400B</div>
+                  <div style={{fontSize:14,marginTop:4,fontWeight:600,color:printerStatus==="connected"?"#27ae60":printerStatus==="connecting"?"#e8920a":printerStatus==="error"?"#e74c3c":"#999"}}>
+                    {printerStatus==="connected"?"● Connected":printerStatus==="connecting"?"● Connecting...":printerStatus==="error"?"● Failed — try again":"● Not connected"}
+                  </div>
+                </div>
+                <span style={{fontSize:36}}>{printerStatus==="connected"?"🖨️":"📵"}</span>
+              </div>
+              <div style={{display:"flex",gap:10}}>
+                {printerStatus!=="connected"&&(
+                  <button onClick={connectPrinter}
+                    style={{flex:1,background:"linear-gradient(135deg,"+RED+","+REDK+")",color:"#fff",border:"none",borderRadius:10,padding:"16px",fontWeight:700,fontSize:17,cursor:"pointer",fontFamily:F}}>
+                    {printerStatus==="connecting"?"Connecting...":"Connect Printer"}
+                  </button>
+                )}
+                {printerStatus==="connected"&&(
+                  <button onClick={testPrint}
+                    style={{flex:1,background:"#f0fff0",color:"#27ae60",border:"1.5px solid #27ae60",borderRadius:10,padding:"16px",fontWeight:700,fontSize:17,cursor:"pointer",fontFamily:F}}>
+                    🖨️ Test Print
+                  </button>
+                )}
+                {printerStatus==="connected"&&(
+                  <button onClick={disconnectPrinter}
+                    style={{background:"#fff0f0",color:RED,border:"1.5px solid #ffc0c0",borderRadius:10,padding:"16px 20px",fontWeight:600,fontSize:16,cursor:"pointer",fontFamily:F}}>
+                    Disconnect
+                  </button>
+                )}
+              </div>
+              {printerStatus==="connected"&&(
+                <div style={{marginTop:16,padding:"14px 16px",background:"#f9f9f9",borderRadius:10,border:"1px solid #e0e0e0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                  <div>
+                    <div style={{fontWeight:700,fontSize:16}}>Auto Print on Done</div>
+                    <div style={{color:"#666",fontSize:13,marginTop:2}}>Print receipt when order marked Done</div>
+                  </div>
+                  <div onClick={function() { var n=!autoPrint; setAutoPrint(n); db.set("sj-autoprint",n); }}
+                    style={{width:52,height:30,borderRadius:15,background:autoPrint?RED:"#e0e0e0",position:"relative",cursor:"pointer",flexShrink:0,transition:"background .2s"}}>
+                    <div style={{position:"absolute",top:3,left:autoPrint?24:3,width:24,height:24,borderRadius:"50%",background:"#fff",transition:"left .2s"}} />
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div style={{fontSize:11,fontWeight:700,color:RED,letterSpacing:3,marginBottom:16,paddingBottom:6,borderBottom:"1px solid #e0e0e0"}}>THIS TABLET</div>
             <div style={{padding:"18px",background:"#fff",borderRadius:14,border:"1.5px solid #e0e0e0",marginBottom:14}}>
               <div style={{color:"#666",fontSize:13,marginBottom:4}}>Current table</div>
