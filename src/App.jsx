@@ -972,7 +972,7 @@ export default function App() {
             var labels={"orders":"Orders","menu":"Menu","cats":"Categories","devices":"Devices","device":"Settings"};
             var on=adminTab===tab;
             return <button key={tab} onClick={function() { setAdminTab(tab); }}
-              style={{padding:"8px 16px",borderRadius:20,border:"1.5px solid "+(on?RED:"#444"),background:on?RED:"#2a2a2a",color:"#fff",fontWeight:on?700:400,fontSize:14,cursor:"pointer",fontFamily:F,position:"relative"}}>
+              style={{padding:"14px 26px",borderRadius:20,border:"1.5px solid "+(on?RED:"#444"),background:on?RED:"#2a2a2a",color:"#fff",fontWeight:on?700:400,fontSize:22,cursor:"pointer",fontFamily:F,position:"relative"}}>
               {labels[tab]}
               {tab==="orders"&&unconfirmed.length>0&&<span style={{position:"absolute",top:-6,right:-6,background:"#e74c3c",color:"#fff",borderRadius:"50%",minWidth:18,height:18,fontSize:11,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 3px"}}>{unconfirmed.length}</span>}
             </button>;
@@ -1026,12 +1026,12 @@ export default function App() {
                   <div key={order.id} style={{background:"#2a2a2a",borderRadius:16,border:"2px solid "+(isNew?"#e74c3c":"#d4952c"),display:"flex",flexDirection:"column"}}>
                     <div style={{background:isNew?"#3a0a0a":"#2a1a0a",padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",borderRadius:"14px 14px 0 0"}}>
                       <div style={{display:"flex",alignItems:"center",gap:10}}>
-                        <span style={{fontSize:32,fontWeight:900,color:"#fff"}}>T.{order.table}</span>
+                        <span style={{fontSize:40,fontWeight:900,color:"#fff"}}>T.{order.table}</span>
                         {isNew&&<span style={{background:"#e74c3c",color:"#fff",fontSize:12,fontWeight:800,padding:"3px 8px",borderRadius:6}}>NEW</span>}
                         {mins!==null&&!isNew&&<span style={{color:"#888",fontSize:14}}>{mins}m</span>}
                       </div>
                       <div style={{textAlign:"right"}}>
-                        <div style={{color:"#d4952c",fontWeight:900,fontSize:20}}>${order.total.toFixed(2)}</div>
+                        <div style={{color:"#d4952c",fontWeight:900,fontSize:24}}>${order.total.toFixed(2)}</div>
                         <div style={{color:"#666",fontSize:13}}>{order.time}</div>
                       </div>
                     </div>
@@ -1039,8 +1039,8 @@ export default function App() {
                       {order.items.map(function(item,i) {
                         return (
                           <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<order.items.length-1?"1px solid #3a3a3a":"none"}}>
-                            <span style={{fontSize:17,color:"#fff",fontWeight:500,flex:1}}>{item.name}{item.spice?" ("+item.spice+")":""}</span>
-                            <span style={{fontSize:17,color:"#d4952c",fontWeight:800,marginLeft:8,whiteSpace:"nowrap"}}>x {item.qty}</span>
+                            <span style={{fontSize:20,color:"#fff",fontWeight:500,flex:1}}>{item.name}{item.spice?" ("+item.spice+")":""}</span>
+                            <span style={{fontSize:20,color:"#d4952c",fontWeight:800,marginLeft:8,whiteSpace:"nowrap"}}>x {item.qty}</span>
                           </div>
                         );
                       })}
@@ -1048,7 +1048,7 @@ export default function App() {
                     </div>
                     <div style={{padding:"12px 14px",display:"flex",gap:8,borderTop:"1px solid #333"}}>
                       <button onClick={function() { saveOrders(orders.map(function(o) { return o.id===order.id?Object.assign({},o,{confirmed:true}):o; })); stopBeep(); }}
-                        style={{flex:2,background:"#27ae60",border:"none",color:"#fff",borderRadius:10,padding:"14px",fontWeight:800,cursor:"pointer",fontSize:16,fontFamily:F}}>✓ Confirm</button>
+                        style={{flex:2,background:"#27ae60",border:"none",color:"#fff",borderRadius:10,padding:"16px",fontWeight:800,cursor:"pointer",fontSize:18,fontFamily:F}}>✓ Confirm</button>
                       <button onClick={function() { var w=window.open("","_blank","width=430,height=640"); if(w){w.document.write(makeReceipt(order));w.document.close();} }}
                         style={{flex:1,background:"#222",border:"1px solid #444",color:"#888",borderRadius:10,padding:"14px",cursor:"pointer",fontSize:16,fontFamily:F}}>🖨</button>
                     </div>
@@ -1081,7 +1081,7 @@ export default function App() {
                     <div key={tbl} style={{background:"#2a2a2a",borderRadius:16,border:"2px solid #27ae60",display:"flex",flexDirection:"column"}}>
                       <div style={{background:"#0a2a0a",padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",borderRadius:"14px 14px 0 0"}}>
                         <div style={{display:"flex",alignItems:"center",gap:8}}>
-                          <span style={{fontSize:28,fontWeight:900,color:"#fff"}}>Table {tbl}</span>
+                          <span style={{fontSize:34,fontWeight:900,color:"#fff"}}>Table {tbl}</span>
                           <span style={{background:"#27ae60",color:"#fff",fontSize:12,fontWeight:700,padding:"3px 8px",borderRadius:6}}>{tOrders.length} order{tOrders.length>1?"s":""}</span>
                         </div>
                         <div style={{color:"#27ae60",fontWeight:900,fontSize:20}}>${tableTotal.toFixed(2)}</div>
@@ -1090,8 +1090,8 @@ export default function App() {
                         {allItems.map(function(item,i) {
                           return (
                             <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<allItems.length-1?"1px solid #3a3a3a":"none"}}>
-                              <span style={{fontSize:16,color:"#fff",flex:1}}>{item.name}{item.spice?" ("+item.spice+")":""}</span>
-                              <span style={{fontSize:16,color:"#27ae60",fontWeight:800,marginLeft:8,whiteSpace:"nowrap"}}>x {item.qty}</span>
+                              <span style={{fontSize:19,color:"#fff",flex:1}}>{item.name}{item.spice?" ("+item.spice+")":""}</span>
+                              <span style={{fontSize:19,color:"#27ae60",fontWeight:800,marginLeft:8,whiteSpace:"nowrap"}}>x {item.qty}</span>
                             </div>
                           );
                         })}
@@ -1139,15 +1139,15 @@ export default function App() {
                       <div key={item.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 16px",borderBottom:"1px solid #f5f5f5",opacity:item.hidden?.5:1}}>
                         {item.img?<img src={item.img} alt="" style={{width:44,height:44,borderRadius:8,objectFit:"cover",flexShrink:0}} />:<div style={{width:44,height:44,borderRadius:8,background:"#f5f5f5",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{item.emoji}</div>}
                         <div style={{flex:1,minWidth:0}}>
-                          <div style={{fontWeight:700,fontSize:14,display:"flex",alignItems:"center",gap:6}}>
+                          <div style={{fontWeight:700,fontSize:17,display:"flex",alignItems:"center",gap:6}}>
                             {item.name}
                             {item.badge==="best"&&<span style={{background:"#e74c3c",color:"#fff",fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:4}}>BEST</span>}
                             {item.badge==="new"&&<span style={{background:"#27ae60",color:"#fff",fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:4}}>NEW</span>}
                             {item.hasSpice&&<span style={{fontSize:12}}>🌶</span>}
                           </div>
-                          <div style={{color:"#999",fontSize:12}}>{item.subcat?catObj.name+" > "+item.subcat:catObj.name}</div>
+                          <div style={{color:"#999",fontSize:15}}>{item.subcat?catObj.name+" > "+item.subcat:catObj.name}</div>
                         </div>
-                        <div style={{color:RED,fontWeight:700,fontSize:14,flexShrink:0}}>{item.price===0?"Free":"$"+item.price}</div>
+                        <div style={{color:RED,fontWeight:700,fontSize:17,flexShrink:0}}>{item.price===0?"Free":"$"+item.price}</div>
                         {/* Quick controls */}
                         <button onClick={function() { saveMenu(menu.map(function(m) { return m.id===item.id?Object.assign({},m,{soldOut:!m.soldOut}):m; })); }}
                           style={{padding:"5px 8px",borderRadius:6,border:"1px solid "+(item.soldOut?"#27ae60":RED),background:item.soldOut?"#f0fff0":"#fff0f0",color:item.soldOut?"#27ae60":RED,fontWeight:600,cursor:"pointer",fontSize:11,fontFamily:F,whiteSpace:"nowrap",flexShrink:0}}>
