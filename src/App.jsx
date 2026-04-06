@@ -705,6 +705,7 @@ export default function App() {
       <div style={{display:"flex",flexDirection:"column",gap:12,width:"100%",maxWidth:360,padding:"0 24px",animation:"spu .45s .08s ease both"}}>
         <button style={Object.assign({},RB,{width:"100%",padding:"18px",fontSize:17})}
           onClick={function() {
+            if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
             if (tableNum) {
               var c=db.get(CATS_KEY)||DEFAULT_CATS;
               var fv=c.find(function(x){return !x.hidden;});
