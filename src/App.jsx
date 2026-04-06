@@ -235,6 +235,8 @@ export default function App() {
   var [printerDevice, setPrinterDevice] = useState(null);
   var [printerChar, setPrinterChar]     = useState(null);
   var [autoPrint, setAutoPrint]         = useState(function() { return !!db.get("sj-autoprint"); });
+  var [printerIP, setPrinterIP]         = useState(function() { return db.get("sj-printer-ip")||"192.168.68.50"; });
+  var eposRef = useRef(null);
   var [devices, setDevices]         = useState({});
   var prevCount = useRef(0);
   var pollRef   = useRef(null);
@@ -358,55 +360,38 @@ export default function App() {
 
   function showToast(m) { setToast(m); setTimeout(function() { setToast(""); }, 2000); }
 
-  async function connectPrinter() {
-    if (!navigator.bluetooth) { showToast("Bluetooth not supported"); return; }
-    try {
-      setPrinterStatus("connecting");
-      // Sewoo BLE printer UUIDs (ESC/POS over BLE)
-      var SEWOO_SERVICE = "000018f0-0000-1000-8000-00805f9b34fb";
-      var SEWOO_CHAR    = "00002af1-0000-1000-8000-00805f9b34fb";
-      var device = await navigator.bluetooth.requestDevice({
-        acceptAllDevices: true,
-        optionalServices: [
-          SEWOO_SERVICE,
-          "e7810a71-73ae-499d-8c15-faa9aef0c3f2",
-          "49535343-fe7d-4ae5-8fa9-9fafd205e455",
-          "000018f0-0000-1000-8000-00805f9b34fb"
-        ]
-      });
-      var server = await device.gatt.connect();
-      // Try multiple service UUIDs
-      var service = null;
-      var char = null;
-      var uuids = [
-        {s:"000018f0-0000-1000-8000-00805f9b34fb", c:"00002af1-0000-1000-8000-00805f9b34fb"},
-        {s:"e7810a71-73ae-499d-8c15-faa9aef0c3f2", c:"bef8d6c9-9c21-4c9e-b632-bd58c1009f9f"},
-        {s:"49535343-fe7d-4ae5-8fa9-9fafd205e455", c:"49535343-8841-43f4-a8d4-ecbe34729bb3"},
-      ];
-      for (var i=0; i<uuids.length; i++) {
-        try {
-          service = await server.getPrimaryService(uuids[i].s);
-          char = await service.getCharacteristic(uuids[i].c);
-          break;
-        } catch(e) { continue; }
-      }
-      if (!char) throw new Error("No compatible print service found");
-      setPrinterDevice(device);
-      setPrinterChar(char);
-      setPrinterStatus("connected");
-      device.addEventListener("gattserverdisconnected", function() {
-        setPrinterStatus("disconnected"); setPrinterChar(null); setPrinterDevice(null);
-      });
-      showToast("Printer connected!");
-    } catch(e) {
-      console.error(e);
-      setPrinterStatus("error");
-      setTimeout(function() { setPrinterStatus("disconnected"); }, 3000);
-      showToast("Connection failed: "+e.message);
+  function connectPrinter() {
+    if (!window.epson || !window.epson.ePOSDevice) {
+      showToast("Loading Epson SDK...");
+      return;
     }
+    setPrinterStatus("connecting");
+    var eposDevice = new window.epson.ePOSDevice();
+    eposDevice.connect(printerIP, 8008, function(data) {
+      if (data === "OK" || data === "SSL_CONNECT_OK") {
+        eposDevice.createDevice("local_printer", eposDevice.DEVICE_TYPE_PRINTER,
+          {"crypto":false, "buffer":false},
+          function(devobj, code) {
+            if (code === "OK") {
+              eposRef.current = devobj;
+              setPrinterStatus("connected");
+              showToast("Printer connected!");
+            } else {
+              setPrinterStatus("error");
+              showToast("Printer error: "+code);
+              setTimeout(function() { setPrinterStatus("disconnected"); }, 3000);
+            }
+          }
+        );
+      } else {
+        setPrinterStatus("error");
+        showToast("Cannot reach printer: "+data);
+        setTimeout(function() { setPrinterStatus("disconnected"); }, 3000);
+      }
+    });
   }
 
-  async function sendToPrinter(data) {
+  function sendToPrinter(data) {
     if (!printerChar) return false;
     try {
       var chunk = 512;
@@ -421,21 +406,51 @@ export default function App() {
     }
   }
 
-  async function testPrint() {
-    var data = escPos([{name:"Test Item",price:10,qty:1,spice:""}], "TEST", new Date().toLocaleTimeString("en-NZ",{hour:"2-digit",minute:"2-digit"}), 10, "");
-    var ok = await sendToPrinter(data);
-    if (ok) showToast("Test print sent!");
+  function testPrint() {
+    if (!eposRef.current) { showToast("Printer not connected"); return; }
+    var printer = eposRef.current;
+    printer.addTextAlign(printer.ALIGN_CENTER);
+    printer.addTextSize(2, 2);
+    printer.addText("SEOUL JIB\n");
+    printer.addTextSize(1, 1);
+    printer.addText("Test Print OK\n");
+    printer.addText(new Date().toLocaleTimeString("en-NZ",{hour:"2-digit",minute:"2-digit"})+"\n");
+    printer.addCut(printer.CUT_FEED);
+    printer.send();
+    showToast("Test print sent!");
   }
 
-  async function printOrder(order) {
-    if (!printerChar) return;
-    var data = escPos(order.items, order.table, order.time, order.total, order.note);
-    await sendToPrinter(data);
+  function printOrder(order) {
+    if (!eposRef.current) return;
+    var printer = eposRef.current;
+    printer.addTextAlign(printer.ALIGN_CENTER);
+    printer.addTextSize(2, 2);
+    printer.addText("SEOUL JIB\n");
+    printer.addTextSize(1, 1);
+    printer.addText("270 St Asaph St, Christchurch\n");
+    printer.addText("--------------------------------\n");
+    printer.addTextAlign(printer.ALIGN_LEFT);
+    printer.addText("Table: "+order.table+"   "+order.time+"\n");
+    printer.addText("--------------------------------\n");
+    order.items.forEach(function(item) {
+      var name = (item.name+(item.spice?" ("+item.spice+")":"")).substring(0,24);
+      var price = "$"+(item.price*item.qty).toFixed(2);
+      printer.addText(name.padEnd(24)+("x"+item.qty).padStart(3)+" "+price.padStart(6)+"\n");
+    });
+    if (order.note) { printer.addText("Note: "+order.note+"\n"); }
+    printer.addText("--------------------------------\n");
+    printer.addTextStyle(false, false, true, printer.COLOR_1);
+    printer.addText("TOTAL: $"+order.total.toFixed(2)+"\n");
+    printer.addTextStyle(false, false, false, printer.COLOR_1);
+    printer.addTextAlign(printer.ALIGN_CENTER);
+    printer.addText("\nThank you!\n\n\n");
+    printer.addCut(printer.CUT_FEED);
+    printer.send();
   }
 
   function disconnectPrinter() {
-    if (printerDevice && printerDevice.gatt.connected) printerDevice.gatt.disconnect();
-    setPrinterStatus("disconnected"); setPrinterChar(null); setPrinterDevice(null);
+    eposRef.current = null;
+    setPrinterStatus("disconnected");
     showToast("Printer disconnected");
   }
 
@@ -1418,6 +1433,13 @@ export default function App() {
                   </div>
                 </div>
                 <span style={{fontSize:36}}>{printerStatus==="connected"?"🖨️":"📵"}</span>
+              </div>
+              <div style={{marginBottom:12}}>
+                <div style={{fontSize:13,color:"#666",marginBottom:6,fontWeight:600}}>Printer IP Address</div>
+                <input value={printerIP}
+                  onChange={function(e) { setPrinterIP(e.target.value); db.set("sj-printer-ip",e.target.value); }}
+                  placeholder="192.168.68.50"
+                  style={{width:"100%",background:"#f9f9f9",border:"1.5px solid #e0e0e0",borderRadius:10,padding:"10px 14px",fontSize:16,fontFamily:F,outline:"none"}} />
               </div>
               <div style={{display:"flex",gap:10}}>
                 {printerStatus!=="connected"&&(
