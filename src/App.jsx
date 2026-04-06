@@ -165,6 +165,35 @@ function escPos(items, table, time, total, note) {
   return new Uint8Array(bytes);
 }
 
+// Cloudinary upload
+var CLOUDINARY_CLOUD = "dm20nouu3";
+var CLOUDINARY_PRESET = "dmjtsh8s";
+
+async function uploadToCloudinary(base64DataUrl) {
+  try {
+    var formData = new FormData();
+    // Convert base64 to blob
+    var arr = base64DataUrl.split(',');
+    var mime = arr[0].match(/:(.*?);/)[1];
+    var bstr = atob(arr[1]);
+    var n = bstr.length;
+    var u8arr = new Uint8Array(n);
+    while(n--) u8arr[n] = bstr.charCodeAt(n);
+    var blob = new Blob([u8arr], {type: mime});
+    formData.append('file', blob);
+    formData.append('upload_preset', CLOUDINARY_PRESET);
+    var res = await fetch('https://api.cloudinary.com/v1_1/'+CLOUDINARY_CLOUD+'/image/upload', {
+      method: 'POST',
+      body: formData
+    });
+    var data = await res.json();
+    return data.secure_url;
+  } catch(e) {
+    console.error('Cloudinary upload failed:', e);
+    return null;
+  }
+}
+
 export default function App() {
   useEffect(function() {
     if (document.getElementById("sj-css")) return;
@@ -976,7 +1005,14 @@ export default function App() {
               <label style={{display:"block",cursor:"pointer"}}>
                 <input type="file" accept="image/*" style={{display:"none"}} onChange={function(e) {
                   var file=e.target.files[0]; if (!file) return;
-                  var r=new FileReader(); r.onload=function(ev) { setEditItem(Object.assign({},editItem,{img:ev.target.result})); }; r.readAsDataURL(file);
+                  showToast("Uploading...");
+                  var r=new FileReader();
+                  r.onload=async function(ev) {
+                    var url=await uploadToCloudinary(ev.target.result);
+                    if (url) { setEditItem(Object.assign({},editItem,{img:url})); showToast("Photo uploaded!"); }
+                    else { showToast("Upload failed - try again"); }
+                  };
+                  r.readAsDataURL(file);
                 }} />
                 <div style={{background:"#f9f9f9",border:"1.5px dashed "+(editItem.img?RED:"#e0e0e0"),borderRadius:12,padding:"18px",textAlign:"center",color:editItem.img?RED:"#666",fontSize:15,fontWeight:600}}>
                   {editItem.img?"📷 Change Photo":"📷 Choose Photo from Device"}
