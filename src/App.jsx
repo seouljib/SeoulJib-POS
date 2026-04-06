@@ -392,18 +392,8 @@ export default function App() {
   }
 
   function sendToPrinter(data) {
-    if (!printerChar) return false;
-    try {
-      var chunk = 512;
-      for (var i=0; i<data.length; i+=chunk) {
-        await printerChar.writeValue(data.slice(i, i+chunk));
-      }
-      return true;
-    } catch(e) {
-      setPrinterStatus("error");
-      showToast("Print failed");
-      return false;
-    }
+    // Legacy BT function - not used with ePOS
+    return false;
   }
 
   function testPrint() {
