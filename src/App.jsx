@@ -366,7 +366,13 @@ export default function App() {
       var SEWOO_SERVICE = "000018f0-0000-1000-8000-00805f9b34fb";
       var SEWOO_CHAR    = "00002af1-0000-1000-8000-00805f9b34fb";
       var device = await navigator.bluetooth.requestDevice({
-        acceptAllDevices: true,
+        filters: [
+          {name: "POS Printer"},
+          {namePrefix: "Sewoo"},
+          {namePrefix: "SLK"},
+          {namePrefix: "SEWOO"},
+          {namePrefix: "POS"},
+        ],
         optionalServices: [
           SEWOO_SERVICE,
           "e7810a71-73ae-499d-8c15-faa9aef0c3f2",
