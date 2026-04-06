@@ -362,13 +362,35 @@ export default function App() {
     if (!navigator.bluetooth) { showToast("Bluetooth not supported"); return; }
     try {
       setPrinterStatus("connecting");
+      // Sewoo BLE printer UUIDs (ESC/POS over BLE)
+      var SEWOO_SERVICE = "000018f0-0000-1000-8000-00805f9b34fb";
+      var SEWOO_CHAR    = "00002af1-0000-1000-8000-00805f9b34fb";
       var device = await navigator.bluetooth.requestDevice({
-        filters: [{namePrefix:"Sewoo"},{namePrefix:"SLK"},{namePrefix:"SEWOO"}],
-        optionalServices: ["000018f0-0000-1000-8000-00805f9b34fb"]
+        acceptAllDevices: true,
+        optionalServices: [
+          SEWOO_SERVICE,
+          "e7810a71-73ae-499d-8c15-faa9aef0c3f2",
+          "49535343-fe7d-4ae5-8fa9-9fafd205e455",
+          "000018f0-0000-1000-8000-00805f9b34fb"
+        ]
       });
-      var server  = await device.gatt.connect();
-      var service = await server.getPrimaryService("000018f0-0000-1000-8000-00805f9b34fb");
-      var char    = await service.getCharacteristic("00002af1-0000-1000-8000-00805f9b34fb");
+      var server = await device.gatt.connect();
+      // Try multiple service UUIDs
+      var service = null;
+      var char = null;
+      var uuids = [
+        {s:"000018f0-0000-1000-8000-00805f9b34fb", c:"00002af1-0000-1000-8000-00805f9b34fb"},
+        {s:"e7810a71-73ae-499d-8c15-faa9aef0c3f2", c:"bef8d6c9-9c21-4c9e-b632-bd58c1009f9f"},
+        {s:"49535343-fe7d-4ae5-8fa9-9fafd205e455", c:"49535343-8841-43f4-a8d4-ecbe34729bb3"},
+      ];
+      for (var i=0; i<uuids.length; i++) {
+        try {
+          service = await server.getPrimaryService(uuids[i].s);
+          char = await service.getCharacteristic(uuids[i].c);
+          break;
+        } catch(e) { continue; }
+      }
+      if (!char) throw new Error("No compatible print service found");
       setPrinterDevice(device);
       setPrinterChar(char);
       setPrinterStatus("connected");
