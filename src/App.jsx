@@ -367,7 +367,7 @@ export default function App() {
     }
     setPrinterStatus("connecting");
     var eposDevice = new window.epson.ePOSDevice();
-    eposDevice.connect(printerIP, 8008, function(data) {
+    eposDevice.connect(printerIP, 8043, function(data) {
       if (data === "OK" || data === "SSL_CONNECT_OK") {
         eposDevice.createDevice("local_printer", eposDevice.DEVICE_TYPE_PRINTER,
           {"crypto":false, "buffer":false},
