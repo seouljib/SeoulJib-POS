@@ -363,7 +363,7 @@ export default function App() {
   async function connectPrinter() {
     setPrinterStatus("connecting");
     try {
-      var bridgeUrl = "http://"+printerIP+":3000/print";
+      var bridgeUrl = "https://"+printerIP+":3000/print";
       var testData = new Uint8Array([0x1B,0x40]); // ESC @ init
       var res = await fetch(bridgeUrl, {method:"POST", body:testData});
       if (res.ok) {
@@ -388,7 +388,7 @@ export default function App() {
   async function testPrint() {
     if (!eposRef.current) { showToast("Printer not connected"); return; }
     var data = escPos([{name:"Test Item",price:10,qty:1,spice:""}],"TEST",new Date().toLocaleTimeString("en-NZ",{hour:"2-digit",minute:"2-digit"}),10,"");
-    var bridgeUrl = "http://"+printerIP+":3000/print";
+    var bridgeUrl = "https://"+printerIP+":3000/print";
     try {
       var res = await fetch(bridgeUrl, {method:"POST", body:data});
       if (res.ok) showToast("Test print sent!");
@@ -399,7 +399,7 @@ export default function App() {
   async function printOrder(order) {
     if (!eposRef.current) return;
     var data = escPos(order.items, order.table, order.time, order.total, order.note);
-    var bridgeUrl = "http://"+printerIP+":3000/print";
+    var bridgeUrl = "https://"+printerIP+":3000/print";
     try {
       await fetch(bridgeUrl, {method:"POST", body:data});
     } catch(e) { console.error("Print error:", e); }
