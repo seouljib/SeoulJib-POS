@@ -235,7 +235,7 @@ export default function App() {
   var [printerDevice, setPrinterDevice] = useState(null);
   var [printerChar, setPrinterChar]     = useState(null);
   var [autoPrint, setAutoPrint]         = useState(function() { return !!db.get("sj-autoprint"); });
-  var [printerIP, setPrinterIP]         = useState(function() { return db.get("sj-printer-ip")||"192.168.68.50"; });
+  var [printerIP, setPrinterIP]         = useState(function() { return db.get("sj-printer-ip")||"192.168.68.62"; });
   var eposRef = useRef(null);
   var [devices, setDevices]         = useState({});
   var prevCount = useRef(0);
@@ -360,35 +360,24 @@ export default function App() {
 
   function showToast(m) { setToast(m); setTimeout(function() { setToast(""); }, 2000); }
 
-  function connectPrinter() {
-    if (!window.epson || !window.epson.ePOSDevice) {
-      showToast("Loading Epson SDK...");
-      return;
-    }
+  async function connectPrinter() {
     setPrinterStatus("connecting");
-    var eposDevice = new window.epson.ePOSDevice();
-    eposDevice.connect(printerIP, 80, function(data) {
-      if (data === "OK" || data === "SSL_CONNECT_OK") {
-        eposDevice.createDevice("local_printer", eposDevice.DEVICE_TYPE_PRINTER,
-          {"crypto":false, "buffer":false},
-          function(devobj, code) {
-            if (code === "OK") {
-              eposRef.current = devobj;
-              setPrinterStatus("connected");
-              showToast("Printer connected!");
-            } else {
-              setPrinterStatus("error");
-              showToast("Printer error: "+code);
-              setTimeout(function() { setPrinterStatus("disconnected"); }, 3000);
-            }
-          }
-        );
+    try {
+      var bridgeUrl = "http://"+printerIP+":3000/print";
+      var testData = new Uint8Array([0x1B,0x40]); // ESC @ init
+      var res = await fetch(bridgeUrl, {method:"POST", body:testData});
+      if (res.ok) {
+        eposRef.current = true;
+        setPrinterStatus("connected");
+        showToast("Printer connected!");
       } else {
-        setPrinterStatus("error");
-        showToast("Cannot reach printer: "+data);
-        setTimeout(function() { setPrinterStatus("disconnected"); }, 3000);
+        throw new Error("HTTP "+res.status);
       }
-    });
+    } catch(e) {
+      setPrinterStatus("error");
+      showToast("Cannot reach printer: "+e.message);
+      setTimeout(function() { setPrinterStatus("disconnected"); }, 3000);
+    }
   }
 
   function sendToPrinter(data) {
@@ -396,46 +385,24 @@ export default function App() {
     return false;
   }
 
-  function testPrint() {
+  async function testPrint() {
     if (!eposRef.current) { showToast("Printer not connected"); return; }
-    var printer = eposRef.current;
-    printer.addTextAlign(printer.ALIGN_CENTER);
-    printer.addTextSize(2, 2);
-    printer.addText("SEOUL JIB\n");
-    printer.addTextSize(1, 1);
-    printer.addText("Test Print OK\n");
-    printer.addText(new Date().toLocaleTimeString("en-NZ",{hour:"2-digit",minute:"2-digit"})+"\n");
-    printer.addCut(printer.CUT_FEED);
-    printer.send();
-    showToast("Test print sent!");
+    var data = escPos([{name:"Test Item",price:10,qty:1,spice:""}],"TEST",new Date().toLocaleTimeString("en-NZ",{hour:"2-digit",minute:"2-digit"}),10,"");
+    var bridgeUrl = "http://"+printerIP+":3000/print";
+    try {
+      var res = await fetch(bridgeUrl, {method:"POST", body:data});
+      if (res.ok) showToast("Test print sent!");
+      else showToast("Print failed");
+    } catch(e) { showToast("Error: "+e.message); }
   }
 
-  function printOrder(order) {
+  async function printOrder(order) {
     if (!eposRef.current) return;
-    var printer = eposRef.current;
-    printer.addTextAlign(printer.ALIGN_CENTER);
-    printer.addTextSize(2, 2);
-    printer.addText("SEOUL JIB\n");
-    printer.addTextSize(1, 1);
-    printer.addText("270 St Asaph St, Christchurch\n");
-    printer.addText("--------------------------------\n");
-    printer.addTextAlign(printer.ALIGN_LEFT);
-    printer.addText("Table: "+order.table+"   "+order.time+"\n");
-    printer.addText("--------------------------------\n");
-    order.items.forEach(function(item) {
-      var name = (item.name+(item.spice?" ("+item.spice+")":"")).substring(0,24);
-      var price = "$"+(item.price*item.qty).toFixed(2);
-      printer.addText(name.padEnd(24)+("x"+item.qty).padStart(3)+" "+price.padStart(6)+"\n");
-    });
-    if (order.note) { printer.addText("Note: "+order.note+"\n"); }
-    printer.addText("--------------------------------\n");
-    printer.addTextStyle(false, false, true, printer.COLOR_1);
-    printer.addText("TOTAL: $"+order.total.toFixed(2)+"\n");
-    printer.addTextStyle(false, false, false, printer.COLOR_1);
-    printer.addTextAlign(printer.ALIGN_CENTER);
-    printer.addText("\nThank you!\n\n\n");
-    printer.addCut(printer.CUT_FEED);
-    printer.send();
+    var data = escPos(order.items, order.table, order.time, order.total, order.note);
+    var bridgeUrl = "http://"+printerIP+":3000/print";
+    try {
+      await fetch(bridgeUrl, {method:"POST", body:data});
+    } catch(e) { console.error("Print error:", e); }
   }
 
   function disconnectPrinter() {
