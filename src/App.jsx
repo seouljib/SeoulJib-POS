@@ -1225,7 +1225,7 @@ export default function App() {
                     <div style={{padding:"12px 14px",display:"flex",gap:8,borderTop:"1px solid #333"}}>
                       <button onClick={function() { saveOrders(orders.map(function(o) { return o.id===order.id?Object.assign({},o,{confirmed:true}):o; })); stopBeep(); }}
                         style={{flex:2,background:"#27ae60",border:"none",color:"#fff",borderRadius:10,padding:"16px",fontWeight:800,cursor:"pointer",fontSize:18,fontFamily:F}}>✓ Confirm</button>
-                      <button onClick={function() { var w=window.open("","_blank","width=430,height=640"); if(w){w.document.write(makeReceipt(order));w.document.close();} }}
+                      <button onClick={function() { printOrder(order); showToast("Printing..."); }}
                         style={{flex:1,background:"#222",border:"1px solid #444",color:"#888",borderRadius:10,padding:"14px",cursor:"pointer",fontSize:16,fontFamily:F}}>🖨</button>
                     </div>
                   </div>
