@@ -360,20 +360,34 @@ export default function App() {
 
   function showToast(m) { setToast(m); setTimeout(function() { setToast(""); }, 2000); }
 
-  async function connectPrinter() {
+  function connectPrinter() {
     setPrinterStatus("connecting");
     try {
-      var bridgeUrl = "https://"+printerIP+":3000/print";
-      var testData = new Uint8Array([0x1B,0x40]); // ESC @ init
-      var res = await fetch(bridgeUrl, {method:"POST", body:testData});
-      if (res.ok) {
-        eposRef.current = true;
-        setPrinterStatus("connected");
-        showToast("Printer connected!");
-      } else {
-        throw new Error("HTTP "+res.status);
-      }
+      var epos = new window.epson.ePOSDevice();
+      eposRef.current = epos;
+      epos.connect(printerIP, 8008, function(res) {
+        if (res === "OK" || res === "SSL_CONNECT_OK") {
+          epos.createDevice("local_printer", epos.DEVICE_TYPE_PRINTER, {crypto:false, buffer:false}, function(devobj, code) {
+            if (code === "OK") {
+              eposRef.printer = devobj;
+              setPrinterStatus("connected");
+              showToast("Printer connected!");
+            } else {
+              eposRef.current = null;
+              setPrinterStatus("error");
+              showToast("Device error: "+code);
+              setTimeout(function() { setPrinterStatus("disconnected"); }, 3000);
+            }
+          });
+        } else {
+          eposRef.current = null;
+          setPrinterStatus("error");
+          showToast("Cannot reach printer: "+res);
+          setTimeout(function() { setPrinterStatus("disconnected"); }, 3000);
+        }
+      });
     } catch(e) {
+      eposRef.current = null;
       setPrinterStatus("error");
       showToast("Cannot reach printer: "+e.message);
       setTimeout(function() { setPrinterStatus("disconnected"); }, 3000);
@@ -385,28 +399,56 @@ export default function App() {
     return false;
   }
 
-  async function testPrint() {
-    if (!eposRef.current) { showToast("Printer not connected"); return; }
-    var data = escPos([{name:"Test Item",price:10,qty:1,spice:""}],"TEST",new Date().toLocaleTimeString("en-NZ",{hour:"2-digit",minute:"2-digit"}),10,"");
-    var bridgeUrl = "https://"+printerIP+":3000/print";
-    try {
-      var res = await fetch(bridgeUrl, {method:"POST", body:data});
-      if (res.ok) showToast("Test print sent!");
-      else showToast("Print failed");
-    } catch(e) { showToast("Error: "+e.message); }
+  function testPrint() {
+    if (!eposRef.printer) { showToast("Printer not connected"); return; }
+    var p = eposRef.printer;
+    p.addTextAlign(p.ALIGN_CENTER);
+    p.addTextSize(2,2);
+    p.addText("SEOUL JIB\n");
+    p.addTextSize(1,1);
+    p.addText("Test Print OK\n");
+    p.addText(new Date().toLocaleTimeString("en-NZ")+"\n\n\n");
+    p.addCut(p.CUT_FEED);
+    p.send();
+    showToast("Test print sent!");
   }
 
-  async function printOrder(order) {
-    if (!eposRef.current) return;
-    var data = escPos(order.items, order.table, order.time, order.total, order.note);
-    var bridgeUrl = "https://"+printerIP+":3000/print";
-    try {
-      await fetch(bridgeUrl, {method:"POST", body:data});
-    } catch(e) { console.error("Print error:", e); }
+  function printOrder(order) {
+    if (!eposRef.printer) return;
+    var p = eposRef.printer;
+    p.addTextAlign(p.ALIGN_CENTER);
+    p.addTextSize(2,2);
+    p.addText("SEOUL JIB\n");
+    p.addTextSize(1,1);
+    p.addText("270 St Asaph St\n");
+    p.addText("--------------------------------\n");
+    p.addTextAlign(p.ALIGN_LEFT);
+    p.addText("Table: "+order.table+"\n");
+    p.addText("Time:  "+order.time+"\n");
+    p.addText("--------------------------------\n");
+    order.items.forEach(function(i) {
+      var line=(i.name+(i.spice?" ("+i.spice+")":"")).padEnd(20).slice(0,20);
+      var qty="x"+i.qty;
+      var price="$"+(i.price*i.qty).toFixed(2);
+      p.addText(line+" "+qty.padStart(3)+" "+price.padStart(6)+"\n");
+    });
+    if(order.note) { p.addText("Note: "+order.note+"\n"); }
+    p.addText("--------------------------------\n");
+    p.addTextStyle(false,false,true,p.COLOR_1);
+    p.addText("TOTAL:               $"+order.total.toFixed(2)+"\n");
+    p.addTextStyle(false,false,false,p.COLOR_1);
+    p.addTextAlign(p.ALIGN_CENTER);
+    p.addText("\nThank you!\n\n\n");
+    p.addCut(p.CUT_FEED);
+    p.send();
   }
 
   function disconnectPrinter() {
+    if (eposRef.current) {
+      try { eposRef.current.disconnect(); } catch(e) {}
+    }
     eposRef.current = null;
+    eposRef.printer = null;
     setPrinterStatus("disconnected");
     showToast("Printer disconnected");
   }
