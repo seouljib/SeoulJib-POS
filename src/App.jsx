@@ -1118,8 +1118,16 @@ export default function App() {
             <button style={Object.assign({},RB,{flex:1,padding:"16px",fontSize:16})}
               onClick={function() {
                 if (!editCat.name.trim()) { showToast("Name required"); return; }
-                if (isNewCat) saveCats(cats.concat([editCat]));
-                else saveCats(cats.map(function(c) { return c.id===editCat.id?editCat:c; }));
+                if (isNewCat) {
+                  saveCats(cats.concat([editCat]));
+                } else {
+                  var oldCat = cats.find(function(c) { return c.id===editCat.id; });
+                  var oldName = oldCat ? oldCat.name : null;
+                  saveCats(cats.map(function(c) { return c.id===editCat.id?editCat:c; }));
+                  if (oldName && oldName !== editCat.name) {
+                    saveMenu(menu.map(function(m) { return m.cat===oldName?Object.assign({},m,{cat:editCat.name}):m; }));
+                  }
+                }
                 setEditCat(null);setIsNewCat(false); showToast(isNewCat?"Category added":"Saved");
               }}>{isNewCat?"Add Category":"Save"}</button>
             <button style={{background:"#fff",color:"#1a1a1a",fontWeight:600,border:"1.5px solid #e0e0e0",borderRadius:14,padding:"14px 20px",fontSize:15,cursor:"pointer",fontFamily:F}} onClick={function() { setEditCat(null);setIsNewCat(false); }}>Cancel</button>
