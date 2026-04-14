@@ -416,29 +416,29 @@ export default function App() {
   function printOrder(order) {
     if (!eposRef.printer) return;
     var p = eposRef.printer;
+    // 테이블 번호 - 크게
     p.addTextAlign(p.ALIGN_CENTER);
-    p.addTextSize(2,2);
-    p.addText("SEOUL JIB\n");
+    p.addTextSize(3,3);
+    p.addText("TABLE "+order.table+"\n");
     p.addTextSize(1,1);
-    p.addText("270 St Asaph St\n");
     p.addText("--------------------------------\n");
+    // 메뉴 아이템 - 크게
     p.addTextAlign(p.ALIGN_LEFT);
-    p.addText("Table: "+order.table+"\n");
-    p.addText("Time:  "+order.time+"\n");
-    p.addText("--------------------------------\n");
+    p.addTextSize(2,2);
     order.items.forEach(function(i) {
-      var line=(i.name+(i.spice?" ("+i.spice+")":"")).padEnd(20).slice(0,20);
-      var qty="x"+i.qty;
-      var price="$"+(i.price*i.qty).toFixed(2);
-      p.addText(line+" "+qty.padStart(3)+" "+price.padStart(6)+"\n");
+      var name = i.name+(i.spice?" ("+i.spice+")":"");
+      p.addText(name+"\n");
+      p.addText("  x"+i.qty+"\n");
     });
-    if(order.note) { p.addText("Note: "+order.note+"\n"); }
+    if(order.note) {
+      p.addTextSize(1,1);
+      p.addText("--------------------------------\n");
+      p.addTextSize(2,2);
+      p.addText("Note: "+order.note+"\n");
+    }
+    p.addTextSize(1,1);
     p.addText("--------------------------------\n");
-    p.addTextStyle(false,false,true,p.COLOR_1);
-    p.addText("TOTAL:               $"+order.total.toFixed(2)+"\n");
-    p.addTextStyle(false,false,false,p.COLOR_1);
-    p.addTextAlign(p.ALIGN_CENTER);
-    p.addText("\nThank you!\n\n\n");
+    p.addText(order.time+"\n\n\n");
     p.addCut(p.CUT_FEED);
     p.send();
   }
