@@ -843,7 +843,7 @@ export default function App() {
               <button key={c.id} onClick={function() { setSelCat(c.id); setSelSub(""); }}
                 style={{padding:"18px 10px",border:"none",background:"transparent",cursor:"pointer",fontFamily:F,textAlign:"center",lineHeight:1.3,transition:"all .12s",position:"relative"}}>
                 {on&&<div style={{position:"absolute",left:8,right:8,top:4,bottom:4,background:"#fff",borderRadius:8,zIndex:0}} />}
-                <span style={{position:"relative",zIndex:1,color:on?RED:"rgba(255,255,255,.85)",fontWeight:on?800:400,fontSize:17}}>{c.name}</span>
+                <span style={{position:"relative",zIndex:1,color:on?RED:"rgba(255,255,255,.85)",fontWeight:on?800:400,fontSize:20}}>{c.name}</span>
               </button>
             );
           })}
@@ -856,14 +856,14 @@ export default function App() {
           </div>
           {hasSubs&&(
             <div style={{display:"flex",gap:8,padding:"10px 14px",borderBottom:"1px solid #e0e0e0",overflowX:"auto",flexShrink:0,paddingRight:100}}>
-              <button style={{padding:"7px 16px",borderRadius:20,border:"1.5px solid "+(selSub===""?RED:"#e0e0e0"),background:selSub===""?RED:"#fff",color:selSub===""?"#fff":"#666",fontWeight:selSub===""?700:400,fontSize:14,cursor:"pointer",fontFamily:F,whiteSpace:"nowrap"}} onClick={function() { setSelSub(""); }}>All</button>
+              <button style={{padding:"10px 20px",borderRadius:20,border:"1.5px solid "+(selSub===""?RED:"#e0e0e0"),background:selSub===""?RED:"#fff",color:selSub===""?"#fff":"#666",fontWeight:selSub===""?700:400,fontSize:17,cursor:"pointer",fontFamily:F,whiteSpace:"nowrap"}} onClick={function() { setSelSub(""); }}>All</button>
               {curCat.subs.map(function(s) {
                 var on=selSub===s.name;
-                return <button key={s.id} style={{padding:"7px 16px",borderRadius:20,border:"1.5px solid "+(on?RED:"#e0e0e0"),background:on?RED:"#fff",color:on?"#fff":"#666",fontWeight:on?700:400,fontSize:14,cursor:"pointer",fontFamily:F,whiteSpace:"nowrap"}} onClick={function() { setSelSub(s.name); }}>{s.name}</button>;
+                return <button key={s.id} style={{padding:"10px 20px",borderRadius:20,border:"1.5px solid "+(on?RED:"#e0e0e0"),background:on?RED:"#fff",color:on?"#fff":"#666",fontWeight:on?700:400,fontSize:17,cursor:"pointer",fontFamily:F,whiteSpace:"nowrap"}} onClick={function() { setSelSub(s.name); }}>{s.name}</button>;
               })}
             </div>
           )}
-          <div style={{flex:1,overflowY:"auto",padding:"12px",paddingTop:"14px",display:"grid",gridTemplateColumns:"repeat(3,1fr)",gridAutoRows:"min-content",gap:10,alignContent:"start"}}>
+          <div style={{flex:1,overflowY:"auto",padding:"12px",paddingTop:"80px",display:"grid",gridTemplateColumns:"repeat(3,1fr)",gridAutoRows:"min-content",gap:10,alignContent:"start"}}>
             {dispMenu.length===0&&<div style={{gridColumn:"1/-1",textAlign:"center",color:"#ccc",marginTop:60,fontSize:15}}>No items</div>}
             {dispMenu.map(function(item) {
               var ic=cart.find(function(c) { return c.id===item.id; });
@@ -892,7 +892,7 @@ export default function App() {
                   {ic&&<div className="sjbdg" style={{position:"absolute",top:6,right:6,background:RED,color:"#fff",borderRadius:"50%",width:28,height:28,fontSize:13,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{ ic.qty}</div>}
                   {item.soldOut&&<div style={{position:"absolute",top:6,left:6,background:"rgba(0,0,0,.7)",color:"#fff",borderRadius:5,padding:"2px 8px",fontSize:11,fontWeight:700}}>SOLD OUT</div>}
                   <div style={{padding:"6px 8px 8px"}}>
-                    <div style={{fontWeight:700,fontSize:15,lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{item.name}</div>
+                    <div style={{fontWeight:700,fontSize:18,lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{item.name}</div>
                     <div style={{marginTop:4,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                       <div style={{fontWeight:900,fontSize:17,color:RED}}>{item.price===0?"Free":"$"+item.price}</div>
                       {!item.soldOut&&(
