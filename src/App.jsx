@@ -874,7 +874,7 @@ export default function App() {
             var on=selCat===c.id;
             return (
               <button key={c.id} onClick={function() { setSelCat(c.id); setSelSub(""); }}
-                style={{padding:"28px 10px 12px",border:"none",background:"transparent",cursor:"pointer",fontFamily:F,textAlign:"center",lineHeight:1.3,transition:"all .12s",position:"relative"}}>
+                style={{padding:"16px 10px",border:"none",background:"transparent",cursor:"pointer",fontFamily:F,textAlign:"center",lineHeight:1.3,transition:"all .12s",position:"relative",display:"flex",alignItems:"center",justifyContent:"center",minHeight:70}}>
                 {on&&<div style={{position:"absolute",left:8,right:8,top:4,bottom:4,background:"#fff",borderRadius:8,zIndex:0}} />}
                 <span style={{position:"relative",zIndex:1,color:on?RED:"rgba(255,255,255,.85)",fontWeight:on?800:400,fontSize:20}}>{c.name}</span>
               </button>
