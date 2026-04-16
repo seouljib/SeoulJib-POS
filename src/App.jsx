@@ -247,6 +247,23 @@ export default function App() {
     document.head.appendChild(s);
   }, []);
 
+  useEffect(function() {
+    var wakeLock = null;
+    function requestWakeLock() {
+      if (navigator.wakeLock) {
+        navigator.wakeLock.request("screen").then(function(wl) {
+          wakeLock = wl;
+          wl.addEventListener("release", function() { requestWakeLock(); });
+        }).catch(function() {});
+      }
+    }
+    requestWakeLock();
+    document.addEventListener("visibilitychange", function() {
+      if (document.visibilityState === "visible") requestWakeLock();
+    });
+    return function() { if (wakeLock) wakeLock.release().catch(function() {}); };
+  }, []);
+
   var [mode,setMode]               = useState("home");
   var [tableNum,setTableNum]       = useState(function() { return db.get(TABLE_KEY); });
   var [isMain,setIsMain]           = useState(function() { return !!db.get(MAIN_KEY); });
