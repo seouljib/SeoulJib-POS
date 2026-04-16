@@ -869,7 +869,7 @@ export default function App() {
       })()}
       <CartModal /><HistModal />
       <div style={{display:"flex",flex:1,overflow:"hidden"}}>
-        <div style={{width:130,background:RED,display:"flex",flexDirection:"column",alignItems:"stretch",flexShrink:0,overflowY:"auto"}}>
+        <div style={{width:130,background:RED,display:"flex",flexDirection:"column",alignItems:"stretch",flexShrink:0,overflowY:"auto",paddingTop:60}}>
           {activeCats.map(function(c) {
             var on=selCat===c.id;
             return (
