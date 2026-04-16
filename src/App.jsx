@@ -111,10 +111,10 @@ function _playLoop(ctx, buf, count) {
 
 
 var DEFAULT_CATS = [
-  { id: "c1", name: "Set Meals",  subs: [], hidden: false },
-  { id: "c2", name: "Extras",     subs: [], hidden: false },
-  { id: "c3", name: "Drinks",     subs: [{ id:"c3s1", name:"Korean Spirits" }, { id:"c3s2", name:"Beer" }, { id:"c3s3", name:"Non-Alcohol" }], hidden: false },
-  { id: "c4", name: "Beverages",  subs: [], hidden: false },
+  { id: "c1", name: "Set Meals",  subs: [], hidden: false, isDrink: false },
+  { id: "c2", name: "Extras",     subs: [], hidden: false, isDrink: false },
+  { id: "c3", name: "Drinks",     subs: [{ id:"c3s1", name:"Korean Spirits" }, { id:"c3s2", name:"Beer" }, { id:"c3s3", name:"Non-Alcohol" }], hidden: false, isDrink: true },
+  { id: "c4", name: "Beverages",  subs: [], hidden: false, isDrink: true },
 ];
 var DEFAULT_MENU = [
   { id:"b1", cat:"Set Meals",  subcat:"", name:"Bulgogi Set",          sub:"Korean Beef BBQ",     price:33, emoji:"\uD83E\uDD69", desc:"Marinated beef, 7 sides, rice, soup",        img:"", soldOut:false, hidden:false, badge:"", ingredients:"Beef, soy sauce, garlic, sesame oil, spring onion, rice", allergens:"Soy, sesame, gluten", hasSpice:false },
@@ -463,9 +463,9 @@ export default function App() {
     if (!eposRef.printer) return;
     var p = eposRef.printer;
     // 카테고리 분리: Drinks/Beverages 는 음료
-    var drinkCats = ["Drinks","Beverages","drinks","beverages"];
-    var foods = order.items.filter(function(i) { return !drinkCats.includes(i.cat); });
-    var drinks = order.items.filter(function(i) { return drinkCats.includes(i.cat); });
+    var drinkCatNames = cats.filter(function(c) { return c.isDrink; }).map(function(c) { return c.name; });
+    var foods = order.items.filter(function(i) { return !drinkCatNames.includes(i.cat); });
+    var drinks = order.items.filter(function(i) { return drinkCatNames.includes(i.cat); });
     // 테이블 번호
     p.addTextAlign(p.ALIGN_CENTER);
     p.addTextSize(3,3);
@@ -1177,6 +1177,16 @@ export default function App() {
             <div style={{color:"#666",fontSize:13,marginBottom:6,fontWeight:600}}>Category Name</div>
             <input value={editCat.name} onChange={function(e) { setEditCat(Object.assign({},editCat,{name:e.target.value})); }} style={inp} />
           </div>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",background:"#f0f8ff",borderRadius:12,border:"1px solid #b0d4f0"}}>
+            <div>
+              <div style={{fontWeight:700,fontSize:15}}>Drink Category</div>
+              <div style={{color:"#666",fontSize:13}}>음료로 분류 — Orders에서 하단에 표시</div>
+            </div>
+            <div onClick={function() { setEditCat(Object.assign({},editCat,{isDrink:!editCat.isDrink})); }}
+              style={{width:48,height:28,borderRadius:14,background:editCat.isDrink?"#2980b9":"#e0e0e0",position:"relative",cursor:"pointer",flexShrink:0,transition:"background .2s"}}>
+              <div style={{position:"absolute",top:3,left:editCat.isDrink?22:3,width:22,height:22,borderRadius:"50%",background:"#fff",transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.2)"}} />
+            </div>
+          </div>
           <div>
             <div style={{color:"#666",fontSize:13,marginBottom:10,fontWeight:600}}>Subcategories</div>
             {editCat.subs.map(function(s,i) {
@@ -1299,9 +1309,9 @@ export default function App() {
                     </div>
                     <div style={{padding:"12px 18px",flex:1}}>
                       {(function() {
-                        var drinkCats = ["Drinks","Beverages","drinks","beverages"];
-                        var foods = order.items.filter(function(i) { return !drinkCats.includes(i.cat); });
-                        var drinks = order.items.filter(function(i) { return drinkCats.includes(i.cat); });
+                        var drinkCatNames = cats.filter(function(c) { return c.isDrink; }).map(function(c) { return c.name; });
+                        var foods = order.items.filter(function(i) { return !drinkCatNames.includes(i.cat); });
+                        var drinks = order.items.filter(function(i) { return drinkCatNames.includes(i.cat); });
                         return (
                           <>
                             {foods.map(function(item,i) {
@@ -1372,9 +1382,9 @@ export default function App() {
                       </div>
                       <div style={{padding:"12px 18px",flex:1}}>
                         {(function() {
-                          var drinkCats = ["Drinks","Beverages","drinks","beverages"];
-                          var foods = allItems.filter(function(i) { return !drinkCats.includes(i.cat); });
-                          var drinks = allItems.filter(function(i) { return drinkCats.includes(i.cat); });
+                          var drinkCatNames = cats.filter(function(c) { return c.isDrink; }).map(function(c) { return c.name; });
+                          var foods = allItems.filter(function(i) { return !drinkCatNames.includes(i.cat); });
+                          var drinks = allItems.filter(function(i) { return drinkCatNames.includes(i.cat); });
                           return (
                             <>
                               {foods.map(function(item,i) {
