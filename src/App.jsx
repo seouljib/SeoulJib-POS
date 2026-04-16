@@ -1265,14 +1265,36 @@ export default function App() {
                       </div>
                     </div>
                     <div style={{padding:"12px 18px",flex:1}}>
-                      {order.items.map(function(item,i) {
+                      {(function() {
+                        var drinkCats = ["Drinks","Beverages","drinks","beverages"];
+                        var foods = order.items.filter(function(i) { return !drinkCats.includes(i.cat); });
+                        var drinks = order.items.filter(function(i) { return drinkCats.includes(i.cat); });
                         return (
-                          <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<order.items.length-1?"1px solid #3a3a3a":"none"}}>
-                            <span style={{fontSize:20,color:"#fff",fontWeight:500,flex:1}}>{item.name}{item.spice?" ("+item.spice+")":""}</span>
-                            <span style={{fontSize:20,color:"#d4952c",fontWeight:800,marginLeft:8,whiteSpace:"nowrap"}}>x {item.qty}</span>
-                          </div>
+                          <>
+                            {foods.map(function(item,i) {
+                              return (
+                                <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:"1px solid #3a3a3a"}}>
+                                  <span style={{fontSize:20,color:"#fff",fontWeight:500,flex:1}}>{item.name}{item.spice?" ("+item.spice+")":""}</span>
+                                  <span style={{fontSize:20,color:"#d4952c",fontWeight:800,marginLeft:8,whiteSpace:"nowrap"}}>x {item.qty}</span>
+                                </div>
+                              );
+                            })}
+                            {drinks.length>0&&(
+                              <>
+                                <div style={{fontSize:11,fontWeight:700,color:"#888",letterSpacing:1,padding:"8px 0 4px"}}>DRINKS</div>
+                                {drinks.map(function(item,i) {
+                                  return (
+                                    <div key={"d"+i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<drinks.length-1?"1px solid #3a3a3a":"none"}}>
+                                      <span style={{fontSize:20,color:"#7ec8e3",fontWeight:500,flex:1}}>{item.name}</span>
+                                      <span style={{fontSize:20,color:"#d4952c",fontWeight:800,marginLeft:8,whiteSpace:"nowrap"}}>x {item.qty}</span>
+                                    </div>
+                                  );
+                                })}
+                              </>
+                            )}
+                          </>
                         );
-                      })}
+                      })()}
                       {order.note&&<div style={{marginTop:8,padding:"7px 10px",background:"#3a2a10",borderRadius:8,color:"#e8c470",fontSize:14}}>📝 {order.note}</div>}
                     </div>
                     <div style={{padding:"12px 14px",display:"flex",gap:8,borderTop:"1px solid #333"}}>
