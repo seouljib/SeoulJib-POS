@@ -908,25 +908,24 @@ export default function App() {
               }
               <div style={{padding:"20px 20px 40px"}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-                  <div style={{fontSize:22,fontWeight:800}}>{detail.name}</div>
-                  {detail.badge==="best"&&<span style={{background:"linear-gradient(135deg,#f39c12,#e67e22)",color:"#fff",fontSize:12,fontWeight:900,padding:"3px 10px",borderRadius:20}}>⭐ BEST</span>}
-                  {detail.badge==="new"&&<span style={{background:"linear-gradient(135deg,#00b09b,#27ae60)",color:"#fff",fontSize:12,fontWeight:900,padding:"3px 10px",borderRadius:20}}>✨ NEW</span>}
-                  {detail.badge==="vegetarian"&&<span style={{background:"#2ecc71",color:"#fff",fontSize:12,fontWeight:900,padding:"3px 10px",borderRadius:20}}>🌿 VEGETARIAN</span>}
-                  {detail.badge==="vegan"&&<span style={{background:"#16a085",color:"#fff",fontSize:12,fontWeight:900,padding:"3px 10px",borderRadius:20}}>🌱 VEGAN</span>}
-                  {detail.badge==="gf"&&<span style={{background:"#8e44ad",color:"#fff",fontSize:12,fontWeight:900,padding:"3px 10px",borderRadius:20}}>G/F</span>}
+                  <div style={{fontSize:28,fontWeight:800}}>{detail.name}</div>
+                  {detail.badge==="best"&&<span style={{background:"linear-gradient(135deg,#f39c12,#e67e22)",color:"#fff",fontSize:13,fontWeight:900,padding:"3px 10px",borderRadius:20}}>⭐ BEST</span>}
+                  {detail.badge==="new"&&<span style={{background:"linear-gradient(135deg,#00b09b,#27ae60)",color:"#fff",fontSize:13,fontWeight:900,padding:"3px 10px",borderRadius:20}}>✨ NEW</span>}
+                  {detail.badge==="vegetarian"&&<span style={{background:"#2ecc71",color:"#fff",fontSize:13,fontWeight:900,padding:"3px 10px",borderRadius:20}}>🌿 VEGETARIAN</span>}
+                  {detail.badge==="vegan"&&<span style={{background:"#16a085",color:"#fff",fontSize:13,fontWeight:900,padding:"3px 10px",borderRadius:20}}>🌱 VEGAN</span>}
+                  {detail.badge==="gf"&&<span style={{background:"#8e44ad",color:"#fff",fontSize:13,fontWeight:900,padding:"3px 10px",borderRadius:20}}>G/F</span>}
                 </div>
-                <div style={{color:"#666",fontSize:14,marginBottom:10}}>{detail.sub}</div>
-                {detail.desc&&<div style={{fontSize:14,lineHeight:1.6,marginBottom:14}}>{detail.desc}</div>}
+                {detail.desc&&<div style={{fontSize:18,lineHeight:1.7,marginBottom:16,color:"#444"}}>{detail.desc}</div>}
                 {detail.ingredients&&(
-                  <div style={{background:"#f9f9f9",borderRadius:10,padding:"12px 14px",marginBottom:10,border:"1px solid #e0e0e0"}}>
-                    <div style={{fontSize:11,fontWeight:700,color:"#666",letterSpacing:1,marginBottom:4}}>INGREDIENTS</div>
-                    <div style={{fontSize:14,lineHeight:1.6}}>{detail.ingredients}</div>
+                  <div style={{background:"#f9f9f9",borderRadius:10,padding:"14px 16px",marginBottom:12,border:"1px solid #e0e0e0"}}>
+                    <div style={{fontSize:13,fontWeight:700,color:"#666",letterSpacing:1,marginBottom:6}}>INGREDIENTS</div>
+                    <div style={{fontSize:18,lineHeight:1.7}}>{detail.ingredients}</div>
                   </div>
                 )}
                 {detail.allergens&&(
-                  <div style={{background:"#fff8f0",borderRadius:10,padding:"12px 14px",marginBottom:14,border:"1px solid #f0c080"}}>
-                    <div style={{fontSize:11,fontWeight:700,color:"#e08020",letterSpacing:1,marginBottom:4}}>ALLERGENS</div>
-                    <div style={{fontSize:14,color:"#a06010",lineHeight:1.6}}>{detail.allergens}</div>
+                  <div style={{background:"#fff8f0",borderRadius:10,padding:"14px 16px",marginBottom:16,border:"1px solid #f0c080"}}>
+                    <div style={{fontSize:13,fontWeight:700,color:"#e08020",letterSpacing:1,marginBottom:6}}>ALLERGENS</div>
+                    <div style={{fontSize:18,color:"#a06010",lineHeight:1.7}}>{detail.allergens}</div>
                   </div>
                 )}
                 {detail.hasSpice&&(
