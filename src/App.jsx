@@ -1056,21 +1056,24 @@ export default function App() {
   );
 
   // ══ DONE ═══════════════════════════════════════════════════
-  if (mode==="done") return (
-    <div style={{minHeight:"100dvh",background:"#fdf5f5",fontFamily:F,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:14}}>
-      <div style={{fontSize:80,animation:"pop .4s cubic-bezier(.34,1.56,.64,1) both"}}>✅</div>
-      <div style={{fontSize:28,fontWeight:900}}>Order Placed!</div>
-      <div style={{color:"#666",fontSize:15}}>Table {tableNum} · We'll be right with you</div>
-      <div style={{display:"flex",gap:12,marginTop:20}}>
-        <button style={Object.assign({},RB,{fontSize:16})} onClick={function() {
-          var c=db.get(CATS_KEY)||DEFAULT_CATS;
-          var fv=c.find(function(x){return !x.hidden;});
-          setSelCat(fv?fv.id:""); setSelSub(""); setMode("order");
-        }}>Add More</button>
-        <button style={{background:"#fff",color:"#1a1a1a",fontWeight:600,border:"1.5px solid #e0e0e0",borderRadius:14,padding:"14px 20px",fontSize:16,cursor:"pointer",fontFamily:F}} onClick={function() { setMode("order"); }}>Done</button>
+  if (mode==="done") {
+    // 2.5초 후 자동으로 메뉴 화면으로 이동
+    useEffect(function() {
+      var t = setTimeout(function() {
+        var c=db.get(CATS_KEY)||DEFAULT_CATS;
+        var fv=c.find(function(x){return !x.hidden;});
+        setSelCat(fv?fv.id:""); setSelSub(""); setMode("order");
+      }, 2500);
+      return function() { clearTimeout(t); };
+    }, []);
+    return (
+      <div style={{minHeight:"100dvh",background:"#fdf5f5",fontFamily:F,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:14}}>
+        <div style={{fontSize:80,animation:"pop .4s cubic-bezier(.34,1.56,.64,1) both"}}>✅</div>
+        <div style={{fontSize:28,fontWeight:900}}>Order Placed!</div>
+        <div style={{color:"#666",fontSize:15}}>Table {tableNum} · We'll be right with you</div>
       </div>
-    </div>
-  );
+    );
+  }
 
   // ══ ADMIN PIN ══════════════════════════════════════════════
   if (mode==="admin"&&!unlocked) return (
@@ -1462,10 +1465,9 @@ export default function App() {
                             toComplete.forEach(function(o) { printOrder(o); });
                           }
                         }} style={{width:"100%",background:"#0a1525",border:"1px solid #1a2a4a",color:"#5a8acc",borderRadius:10,padding:"14px",fontWeight:700,cursor:"pointer",fontSize:16,fontFamily:F}}>
-                          {autoPrint?"🖨️ Done & Print — Table "+tbl:"Done — Table "+tbl}
+                          Done — Table {tbl}
                         </button>
                         <button onClick={function() {
-                          if (!window.confirm("Table "+tbl+" 오더 히스토리를 삭제할까요?")) return;
                           saveOrders(orders.filter(function(o) { return String(o.table)!==tbl; }));
                           showToast("Table "+tbl+" cleared");
                         }} style={{width:"100%",marginTop:8,background:"#2a0a0a",border:"1px solid #4a1a1a",color:"#e74c3c",borderRadius:10,padding:"12px",fontWeight:700,cursor:"pointer",fontSize:15,fontFamily:F}}>
