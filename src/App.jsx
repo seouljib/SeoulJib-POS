@@ -485,32 +485,32 @@ export default function App() {
     var drinks = order.items.filter(function(i) { return drinkCatNames.includes(i.cat); });
     // 테이블 번호
     p.addTextAlign(p.ALIGN_CENTER);
-    p.addTextSize(3,3);
-    p.addText("TABLE "+order.table+"\n");
+    p.addTextSize(2,2);
+    p.addText("\n\nTABLE "+order.table+"\n");
     p.addTextSize(1,1);
     p.addText("================================\n");
     // 음식 먼저
     p.addTextAlign(p.ALIGN_LEFT);
-    p.addTextSize(2,2);
+    p.addTextSize(1,2);
     foods.forEach(function(i) {
       var spiceTag = i.spice?" ("+i.spice+")":"";
-      var name = (i.name+spiceTag).slice(0,14).padEnd(14);
+      var name = (i.name+spiceTag).slice(0,18).padEnd(18);
       p.addText(name+" x"+i.qty+"\n");
     });
     // 음료 구분선 + 음료
     if (drinks.length > 0) {
       p.addTextSize(1,1);
       p.addText("--- DRINKS ----------------------\n");
-      p.addTextSize(2,2);
+      p.addTextSize(1,2);
       drinks.forEach(function(i) {
-        var name = i.name.slice(0,14).padEnd(14);
+        var name = i.name.slice(0,18).padEnd(18);
         p.addText(name+" x"+i.qty+"\n");
       });
     }
     if(order.note) {
       p.addTextSize(1,1);
       p.addText("================================\n");
-      p.addTextSize(2,2);
+      p.addTextSize(1,2);
       p.addText("Note: "+order.note+"\n");
     }
     p.addTextSize(1,1);
@@ -996,6 +996,7 @@ export default function App() {
                   {ic&&<div className="sjbdg" style={{position:"absolute",top:6,right:6,background:RED,color:"#fff",borderRadius:"50%",width:28,height:28,fontSize:13,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{ ic.qty}</div>}
                   {item.soldOut&&<div style={{position:"absolute",top:6,left:6,background:"rgba(0,0,0,.7)",color:"#fff",borderRadius:5,padding:"2px 8px",fontSize:11,fontWeight:700}}>SOLD OUT</div>}
                   <div style={{padding:"6px 8px 8px"}}>
+                    <div style={{fontSize:10,fontWeight:600,color:"#aaa",letterSpacing:1,marginBottom:2,textTransform:"uppercase"}}>{item.cat}</div>
                     <div style={{fontWeight:700,fontSize:18,lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{item.name}</div>
                     <div style={{marginTop:4,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                       <div style={{fontWeight:900,fontSize:17,color:RED}}>{item.price===0?"Free":"$"+item.price}</div>
