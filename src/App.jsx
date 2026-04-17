@@ -560,6 +560,16 @@ export default function App() {
   }, []);
 
   useEffect(function() {
+    if (mode!=="done") return;
+    var t = setTimeout(function() {
+      var c=db.get(CATS_KEY)||DEFAULT_CATS;
+      var fv=c.find(function(x){return !x.hidden;});
+      setSelCat(fv?fv.id:""); setSelSub(""); setMode("order");
+    }, 2500);
+    return function() { clearTimeout(t); };
+  }, [mode]);
+
+  useEffect(function() {
     if (mode==="admin"&&adminTab==="orders") { poll(); pollRef.current=setInterval(poll,3000); }
     else clearInterval(pollRef.current);
     return function() { clearInterval(pollRef.current); };
@@ -1056,24 +1066,13 @@ export default function App() {
   );
 
   // ══ DONE ═══════════════════════════════════════════════════
-  if (mode==="done") {
-    // 2.5초 후 자동으로 메뉴 화면으로 이동
-    useEffect(function() {
-      var t = setTimeout(function() {
-        var c=db.get(CATS_KEY)||DEFAULT_CATS;
-        var fv=c.find(function(x){return !x.hidden;});
-        setSelCat(fv?fv.id:""); setSelSub(""); setMode("order");
-      }, 2500);
-      return function() { clearTimeout(t); };
-    }, []);
-    return (
-      <div style={{minHeight:"100dvh",background:"#fdf5f5",fontFamily:F,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:14}}>
-        <div style={{fontSize:80,animation:"pop .4s cubic-bezier(.34,1.56,.64,1) both"}}>✅</div>
-        <div style={{fontSize:28,fontWeight:900}}>Order Placed!</div>
-        <div style={{color:"#666",fontSize:15}}>Table {tableNum} · We'll be right with you</div>
-      </div>
-    );
-  }
+  if (mode==="done") return (
+    <div style={{minHeight:"100dvh",background:"#fdf5f5",fontFamily:F,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:14}}>
+      <div style={{fontSize:80,animation:"pop .4s cubic-bezier(.34,1.56,.64,1) both"}}>✅</div>
+      <div style={{fontSize:28,fontWeight:900}}>Order Placed!</div>
+      <div style={{color:"#666",fontSize:15}}>Table {tableNum} · We'll be right with you</div>
+    </div>
+  );
 
   // ══ ADMIN PIN ══════════════════════════════════════════════
   if (mode==="admin"&&!unlocked) return (
