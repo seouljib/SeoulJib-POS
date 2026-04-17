@@ -367,13 +367,23 @@ export default function App() {
     var setters = {
       orders: function(v, fromRemote) {
         setOrders(v); db.set(ORDERS_KEY,v);
-        // Play order sound only on main tablet, and only for remote updates
         if (fromRemote && db.get(MAIN_KEY)) {
-          var pendingCount = v.filter(function(o) { return o.status==="pending"&&!o.confirmed; }).length;
-          if (pendingCount > prevOrderCount.current) playBeep("order");
+          var newOrders = v.filter(function(o) { return o.status==="pending"&&!o.confirmed; });
+          var pendingCount = newOrders.length;
+          if (pendingCount > prevOrderCount.current) {
+            playBeep("order");
+            if (db.get("sj-autoprint")) {
+              var prevIds = prevOrderCount.ids || [];
+              var added = newOrders.filter(function(o) { return !prevIds.includes(o.id); });
+              added.forEach(function(o) { printOrder(o); });
+            }
+          }
           prevOrderCount.current = pendingCount;
+          prevOrderCount.ids = newOrders.map(function(o) { return o.id; });
         } else if (!fromRemote) {
-          prevOrderCount.current = v.filter(function(o) { return o.status==="pending"&&!o.confirmed; }).length;
+          var pending = v.filter(function(o) { return o.status==="pending"&&!o.confirmed; });
+          prevOrderCount.current = pending.length;
+          prevOrderCount.ids = pending.map(function(o) { return o.id; });
         }
       },
       menu:  function(v) { setMenu(v);  db.set(MENU_KEY,v);  },
@@ -479,42 +489,54 @@ export default function App() {
   function printOrder(order) {
     if (!eposRef.printer) return;
     var p = eposRef.printer;
-    // 카테고리 분리: Drinks/Beverages 는 음료
     var drinkCatNames = cats.filter(function(c) { return c.isDrink; }).map(function(c) { return c.name; });
-    var foods = order.items.filter(function(i) { return !drinkCatNames.includes(i.cat); });
-    var drinks = order.items.filter(function(i) { return drinkCatNames.includes(i.cat); });
+    // 카테고리별로 그룹핑
+    var catMap = {};
+    order.items.forEach(function(i) {
+      var c = i.cat || "Other";
+      if (!catMap[c]) catMap[c] = [];
+      catMap[c].push(i);
+    });
+    // 음식 카테고리 먼저, 음료 카테고리 나중에
+    var foodCats = Object.keys(catMap).filter(function(c) { return !drinkCatNames.includes(c); });
+    var drinkCats = Object.keys(catMap).filter(function(c) { return drinkCatNames.includes(c); });
     // 테이블 번호
     p.addTextAlign(p.ALIGN_CENTER);
     p.addTextSize(2,2);
     p.addText("\n\nTABLE "+order.table+"\n");
     p.addTextSize(1,1);
     p.addText("================================\n");
-    // 음식 먼저
     p.addTextAlign(p.ALIGN_LEFT);
-    p.addTextSize(1,2);
-    foods.forEach(function(i) {
-      var spiceTag = i.spice?" ("+i.spice+")":"";
-      var name = (i.name+spiceTag).slice(0,18).padEnd(18);
-      p.addText(name+" x"+i.qty+"\n");
-    });
-    // 음료 구분선 + 음료
-    if (drinks.length > 0) {
+    // 음식 카테고리별 출력
+    foodCats.forEach(function(cat) {
       p.addTextSize(1,1);
-      p.addText("--- DRINKS ----------------------\n");
-      p.addTextSize(1,2);
-      drinks.forEach(function(i) {
-        var name = i.name.slice(0,18).padEnd(18);
+      p.addText("--- "+cat.toUpperCase()+" ---\n");
+      p.addTextSize(2,2);
+      catMap[cat].forEach(function(i) {
+        var spiceTag = i.spice?" ("+i.spice+")":"";
+        var name = (i.name+spiceTag).slice(0,16).padEnd(16);
         p.addText(name+" x"+i.qty+"\n");
       });
-    }
+    });
+    // 음료 카테고리별 출력
+    drinkCats.forEach(function(cat) {
+      p.addTextSize(1,1);
+      p.addText("--- "+cat.toUpperCase()+" ---\n");
+      p.addTextSize(2,2);
+      catMap[cat].forEach(function(i) {
+        var name = i.name.slice(0,16).padEnd(16);
+        p.addText(name+" x"+i.qty+"\n");
+      });
+    });
     if(order.note) {
       p.addTextSize(1,1);
       p.addText("================================\n");
-      p.addTextSize(1,2);
+      p.addTextSize(2,2);
       p.addText("Note: "+order.note+"\n");
     }
     p.addTextSize(1,1);
     p.addText("================================\n");
+    p.addTextSize(2,2);
     p.addText(order.time+"\n\n\n");
     p.addCut(p.CUT_FEED);
     p.send();
