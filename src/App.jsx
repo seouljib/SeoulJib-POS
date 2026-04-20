@@ -581,7 +581,7 @@ export default function App() {
     var t = setTimeout(function() {
       var c=db.get(CATS_KEY)||DEFAULT_CATS;
       var fv=c.find(function(x){return !x.hidden;});
-      setSelCat(fv?fv.id:""); setSelSub(""); setMode("order");
+      setSelCat(fv?fv.id:""); setSelSub(fv&&fv.subs&&fv.subs.length>0?fv.subs[0].name:""); setMode("order");
     }, 2500);
     return function() { clearTimeout(t); };
   }, [mode]);
@@ -704,7 +704,7 @@ export default function App() {
               db.set(TABLE_KEY,setupNum); setTableNum(setupNum); setSetupMode(false);
               var c=db.get(CATS_KEY)||DEFAULT_CATS;
               var firstVisible=c.find(function(x){return !x.hidden;});
-              setSelCat(firstVisible?firstVisible.id:""); setSelSub(""); setMode("order");
+              setSelCat(firstVisible?firstVisible.id:""); setSelSub(firstVisible&&firstVisible.subs&&firstVisible.subs.length>0?firstVisible.subs[0].name:""); setMode("order");
             }}>Confirm — Table {setupNum}</button>
         </div>
       </div>
@@ -890,7 +890,7 @@ export default function App() {
             if (tableNum) {
               var c=db.get(CATS_KEY)||DEFAULT_CATS;
               var fv=c.find(function(x){return !x.hidden;});
-              setSelCat(fv?fv.id:""); setSelSub(""); setCart([]); setNote(""); setMode("order");
+              setSelCat(fv?fv.id:""); setSelSub(fv&&fv.subs&&fv.subs.length>0?fv.subs[0].name:""); setCart([]); setNote(""); setMode("order");
             } else setSetupMode(true);
           }}>{tableNum?"Order Now · Table "+tableNum:"Order Now"}</button>
         {isMain&&(
@@ -987,7 +987,7 @@ export default function App() {
           {activeCats.map(function(c) {
             var on=selCat===c.id;
             return (
-              <button key={c.id} onClick={function() { setSelCat(c.id); setSelSub(""); }}
+              <button key={c.id} onClick={function() { setSelCat(c.id); var firstSub=c.subs&&c.subs.length>0?c.subs[0].name:""; setSelSub(firstSub); }}
                 style={{padding:"16px 10px",border:"none",background:"transparent",cursor:"pointer",fontFamily:F,textAlign:"center",lineHeight:1.3,transition:"all .12s",position:"relative",display:"flex",alignItems:"center",justifyContent:"center",minHeight:70}}>
                 {on&&<div style={{position:"absolute",left:8,right:8,top:4,bottom:4,background:"#fff",borderRadius:8,zIndex:0}} />}
                 <span style={{position:"relative",zIndex:1,color:on?RED:"rgba(255,255,255,.85)",fontWeight:on?800:400,fontSize:20}}>{c.name}</span>
@@ -1019,7 +1019,7 @@ export default function App() {
                 <div key={item.id} className="sjc"
                   style={{background:"#fff",border:"1.5px solid "+(ic?RED:"#ebebeb"),borderRadius:12,overflow:"visible",cursor:"pointer",opacity:item.soldOut?.5:banchanLocked?.4:1,position:"relative",animation:justAdded===item.id?"bnc .28s ease both":"none",boxShadow:"0 1px 6px rgba(0,0,0,.07)"}}
                   onClick={function() { setDetail(item); setSpice(""); }}>
-                  {banchanLocked&&<div style={{position:"absolute",top:6,left:6,zIndex:3,background:"rgba(0,0,0,.65)",color:"#fff",borderRadius:5,padding:"2px 8px",fontSize:11,fontWeight:700}}>백반 주문 필요</div>}
+                  {banchanLocked&&<div style={{position:"absolute",top:6,left:6,zIndex:3,background:"rgba(0,0,0,.65)",color:"#fff",borderRadius:5,padding:"2px 8px",fontSize:11,fontWeight:700}}>Baekban Order Required</div>}
                   {item.badge==="best"&&(
                     <div style={{position:"absolute",top:12,left:-2,zIndex:2,display:"flex",alignItems:"center",gap:4}}>
                       <div style={{background:"linear-gradient(135deg,#f39c12,#e67e22)",color:"#fff",fontSize:13,fontWeight:900,padding:"6px 14px 6px 10px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 8px rgba(0,0,0,.25)",letterSpacing:1}}>
