@@ -1062,8 +1062,7 @@ export default function App() {
                   {ic&&<div className="sjbdg" style={{position:"absolute",top:6,right:6,background:RED,color:"#fff",borderRadius:"50%",width:28,height:28,fontSize:13,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{ ic.qty}</div>}
                   {item.soldOut&&<div style={{position:"absolute",top:6,left:6,background:"rgba(0,0,0,.7)",color:"#fff",borderRadius:5,padding:"2px 8px",fontSize:11,fontWeight:700}}>SOLD OUT</div>}
                   <div style={{padding:"6px 8px 8px"}}>
-                    <div style={{fontSize:10,fontWeight:600,color:"#aaa",letterSpacing:1,marginBottom:2,textTransform:"uppercase"}}>{item.cat}</div>
-                    <div style={{fontWeight:700,fontSize:18,lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{item.name}</div>
+                    <div style={{fontWeight:700,fontSize:21,lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{item.name}</div>
                     <div style={{marginTop:4,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                       <div style={{fontWeight:900,fontSize:17,color:RED}}>{item.price===0?"Free":"$"+item.price}</div>
                       {!item.soldOut&&(
