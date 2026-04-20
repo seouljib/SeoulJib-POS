@@ -592,8 +592,25 @@ export default function App() {
     return function() { clearInterval(pollRef.current); };
   }, [mode, adminTab, poll]);
 
+  function hasBaekbanInHistory() {
+    var tbl = db.get(TABLE_KEY);
+    if (!tbl) return false;
+    var allOrders = db.get(ORDERS_KEY)||[];
+    var tableOrders = allOrders.filter(function(o) { return String(o.table)===String(tbl); });
+    var allItems = [];
+    tableOrders.forEach(function(o) { o.items.forEach(function(i) { allItems.push(i); }); });
+    cart.forEach(function(i) { allItems.push(i); });
+    return allItems.some(function(i) { return i.subcat==="Baekban"; });
+  }
+
   function addToCart(item, sp) {
     if (item.soldOut||item.hidden) return;
+    if (item.subcat==="Banchan") {
+      if (!hasBaekbanInHistory()) {
+        showToast("Baekban order required");
+        return;
+      }
+    }
     var sv=sp||"";
     setCart(function(p) {
       var ex=p.find(function(c) { return c.id===item.id&&c.spice===sv; });
@@ -996,10 +1013,13 @@ export default function App() {
             {dispMenu.length===0&&<div style={{gridColumn:"1/-1",textAlign:"center",color:"#ccc",marginTop:60,fontSize:15}}>No items</div>}
             {dispMenu.map(function(item) {
               var ic=cart.find(function(c) { return c.id===item.id; });
+              var isBanchan = item.subcat==="Banchan";
+              var banchanLocked = isBanchan && !hasBaekbanInHistory();
               return (
                 <div key={item.id} className="sjc"
-                  style={{background:"#fff",border:"1.5px solid "+(ic?RED:"#ebebeb"),borderRadius:12,overflow:"visible",cursor:"pointer",opacity:item.soldOut?.5:1,position:"relative",animation:justAdded===item.id?"bnc .28s ease both":"none",boxShadow:"0 1px 6px rgba(0,0,0,.07)"}}
+                  style={{background:"#fff",border:"1.5px solid "+(ic?RED:"#ebebeb"),borderRadius:12,overflow:"visible",cursor:"pointer",opacity:item.soldOut?.5:banchanLocked?.4:1,position:"relative",animation:justAdded===item.id?"bnc .28s ease both":"none",boxShadow:"0 1px 6px rgba(0,0,0,.07)"}}
                   onClick={function() { setDetail(item); setSpice(""); }}>
+                  {banchanLocked&&<div style={{position:"absolute",top:6,left:6,zIndex:3,background:"rgba(0,0,0,.65)",color:"#fff",borderRadius:5,padding:"2px 8px",fontSize:11,fontWeight:700}}>백반 주문 필요</div>}
                   {item.badge==="best"&&(
                     <div style={{position:"absolute",top:12,left:-2,zIndex:2,display:"flex",alignItems:"center",gap:4}}>
                       <div style={{background:"linear-gradient(135deg,#f39c12,#e67e22)",color:"#fff",fontSize:13,fontWeight:900,padding:"6px 14px 6px 10px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 8px rgba(0,0,0,.25)",letterSpacing:1}}>
