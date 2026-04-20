@@ -986,7 +986,6 @@ export default function App() {
           </div>
           {hasSubs&&(
             <div style={{display:"flex",gap:8,padding:"10px 14px",borderBottom:"1px solid #e0e0e0",overflowX:"auto",flexShrink:0,paddingRight:100}}>
-              <button style={{padding:"10px 20px",borderRadius:20,border:"1.5px solid "+(selSub===""?RED:"#e0e0e0"),background:selSub===""?RED:"#fff",color:selSub===""?"#fff":"#666",fontWeight:selSub===""?700:400,fontSize:17,cursor:"pointer",fontFamily:F,whiteSpace:"nowrap"}} onClick={function() { setSelSub(""); }}>All</button>
               {curCat.subs.map(function(s) {
                 var on=selSub===s.name;
                 return <button key={s.id} style={{padding:"10px 20px",borderRadius:20,border:"1.5px solid "+(on?RED:"#e0e0e0"),background:on?RED:"#fff",color:on?"#fff":"#666",fontWeight:on?700:400,fontSize:17,cursor:"pointer",fontFamily:F,whiteSpace:"nowrap"}} onClick={function() { setSelSub(s.name); }}>{s.name}</button>;
@@ -1234,16 +1233,6 @@ export default function App() {
             <div style={{color:"#666",fontSize:13,marginBottom:6,fontWeight:600}}>Category Name</div>
             <input value={editCat.name} onChange={function(e) { setEditCat(Object.assign({},editCat,{name:e.target.value})); }} style={inp} />
           </div>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",background:"#f0f8ff",borderRadius:12,border:"1px solid #b0d4f0"}}>
-            <div>
-              <div style={{fontWeight:700,fontSize:15}}>Drink Category</div>
-              <div style={{color:"#666",fontSize:13}}>음료로 분류 — Orders에서 하단에 표시</div>
-            </div>
-            <div onClick={function() { setEditCat(Object.assign({},editCat,{isDrink:!editCat.isDrink})); }}
-              style={{width:48,height:28,borderRadius:14,background:editCat.isDrink?"#2980b9":"#e0e0e0",position:"relative",cursor:"pointer",flexShrink:0,transition:"background .2s"}}>
-              <div style={{position:"absolute",top:3,left:editCat.isDrink?22:3,width:22,height:22,borderRadius:"50%",background:"#fff",transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.2)"}} />
-            </div>
-          </div>
           <div>
             <div style={{color:"#666",fontSize:13,marginBottom:10,fontWeight:600}}>Subcategories</div>
             {editCat.subs.map(function(s,i) {
@@ -1258,6 +1247,16 @@ export default function App() {
               style={{width:"100%",background:"#f9f9f9",border:"1.5px dashed #e0e0e0",borderRadius:10,padding:"12px",color:"#666",fontSize:14,cursor:"pointer",fontFamily:F}}>
               + Add Subcategory
             </button>
+          </div>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",background:"#f0f8ff",borderRadius:12,border:"1px solid #b0d4f0"}}>
+            <div>
+              <div style={{fontWeight:700,fontSize:15}}>Drink Category</div>
+              <div style={{color:"#666",fontSize:13}}>음료로 분류 — Orders에서 하단에 표시</div>
+            </div>
+            <div onClick={function() { setEditCat(Object.assign({},editCat,{isDrink:!editCat.isDrink})); }}
+              style={{width:48,height:28,borderRadius:14,background:editCat.isDrink?"#2980b9":"#e0e0e0",position:"relative",cursor:"pointer",flexShrink:0,transition:"background .2s"}}>
+              <div style={{position:"absolute",top:3,left:editCat.isDrink?22:3,width:22,height:22,borderRadius:"50%",background:"#fff",transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.2)"}} />
+            </div>
           </div>
           <div style={{display:"flex",gap:12}}>
             <button style={Object.assign({},RB,{flex:1,padding:"16px",fontSize:16})}
