@@ -731,9 +731,9 @@ export default function App() {
               {detail.badge==="vegetarian" && <span style={{background:"#2ecc71",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>🌿 VEGETARIAN</span>}
               {detail.badge==="vegan" && <span style={{background:"#16a085",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>🌱 VEGAN</span>}
               {detail.badge==="gf" && <span style={{background:"#8e44ad",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>G/F</span>}
-              {detail.badge==="spicy1" && <span style={{background:"#e74c3c",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>🌶️</span>}
-              {detail.badge==="spicy2" && <span style={{background:"#c0392b",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>🌶️🌶️</span>}
-              {detail.badge==="spicy3" && <span style={{background:"#922b21",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>🌶️🌶️🌶️</span>}
+              {detail.badge==="spicy1" && <span style={{background:"#e67e22",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>🌶️</span>}
+              {detail.badge==="spicy2" && <span style={{background:"#d35400",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>🌶️🌶️</span>}
+              {detail.badge==="spicy3" && <span style={{background:"#6e2f0a",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>🌶️🌶️🌶️</span>}
             </div>
             {detail.desc&&<div style={{fontSize:18,lineHeight:1.7,marginBottom:16,color:"#444"}}>{detail.desc}</div>}
             {detail.ingredients&&(
@@ -1008,7 +1008,7 @@ export default function App() {
             <div style={{display:"flex",gap:8,padding:"10px 14px",borderBottom:"1px solid #e0e0e0",overflowX:"auto",flexShrink:0,paddingRight:100}}>
               {curCat.subs.map(function(s) {
                 var on=selSub===s.name;
-                return <button key={s.id} style={{padding:"10px 20px",borderRadius:20,border:"1.5px solid "+(on?RED:"#e0e0e0"),background:on?RED:"#fff",color:on?"#fff":"#666",fontWeight:on?700:400,fontSize:17,cursor:"pointer",fontFamily:F,whiteSpace:"nowrap"}} onClick={function() { setSelSub(s.name); }}>{s.name}</button>;
+                return <button key={s.id} style={{padding:"10px 20px",borderRadius:20,border:"1.5px solid "+(on?RED:"#ddd"),background:on?RED:"#fff",color:on?"#fff":"#333",fontWeight:700,fontSize:18,cursor:"pointer",fontFamily:F,whiteSpace:"nowrap"}} onClick={function() { setSelSub(s.name); }}>{s.name}</button>;
               })}
             </div>
           )}
@@ -1066,8 +1066,8 @@ export default function App() {
                     </div>
                   )}
                   {item.img
-                    ? <div style={{height:"28vh",overflow:"hidden",borderRadius:"12px 12px 0 0"}}><img src={item.img} alt={item.name} style={{width:"100%",height:"100%",objectFit:"cover"}} /></div>
-                    : <div style={{height:"28vh",background:"linear-gradient(145deg,#f8f0e8,#f0e0d0)",borderRadius:"12px 12px 0 0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:60}}>{item.emoji}</div>
+                    ? <div style={{height:"34vh",overflow:"hidden",borderRadius:"12px 12px 0 0"}}><img src={item.img} alt={item.name} style={{width:"100%",height:"100%",objectFit:"cover"}} /></div>
+                    : <div style={{height:"34vh",background:"linear-gradient(145deg,#f8f0e8,#f0e0d0)",borderRadius:"12px 12px 0 0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:60}}>{item.emoji}</div>
                   }
                   {ic&&<div className="sjbdg" style={{position:"absolute",top:6,right:6,background:RED,color:"#fff",borderRadius:"50%",width:28,height:28,fontSize:13,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{ ic.qty}</div>}
                   {item.soldOut&&<div style={{position:"absolute",top:6,left:6,background:"rgba(0,0,0,.7)",color:"#fff",borderRadius:5,padding:"2px 8px",fontSize:11,fontWeight:700}}>SOLD OUT</div>}
@@ -1178,7 +1178,7 @@ export default function App() {
               <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
                 {["","best","new","vegetarian","vegan","gf","spicy1","spicy2","spicy3"].map(function(b) {
                   var labels={"":"None","best":"BEST","new":"NEW","vegetarian":"VEGETARIAN","vegan":"VEGAN","gf":"G/F","spicy1":"🌶️","spicy2":"🌶️🌶️","spicy3":"🌶️🌶️🌶️"};
-                  var colors={"":"#f0f0f0","best":"#e74c3c","new":"#27ae60","vegetarian":"#2ecc71","vegan":"#16a085","gf":"#8e44ad","spicy1":"#e74c3c","spicy2":"#c0392b","spicy3":"#922b21"};
+                  var colors={"":"#f0f0f0","best":"#e74c3c","new":"#27ae60","vegetarian":"#2ecc71","vegan":"#16a085","gf":"#8e44ad","spicy1":"#e67e22","spicy2":"#d35400","spicy3":"#6e2f0a"};
                   var sel=editItem.badge===b;
                   return <button key={b} onClick={function() { setEditItem(Object.assign({},editItem,{badge:b})); }}
                     style={{padding:"8px 16px",borderRadius:20,border:"2px solid "+(sel?colors[b]:"#e0e0e0"),background:sel?colors[b]:"#fff",color:sel?"#fff":"#666",fontWeight:sel?700:400,fontSize:14,cursor:"pointer",fontFamily:F}}>{labels[b]}</button>;
