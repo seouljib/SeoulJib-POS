@@ -290,6 +290,7 @@ export default function App() {
   var [calls,setCalls]             = useState(function() { return db.get(CALLS_KEY)||[]; });
   var [cart,setCart]               = useState([]);
   var [note,setNote]               = useState("");
+  var noteRef = useRef(null);
   var [selCat,setSelCat]           = useState(function() { var c=db.get(CATS_KEY)||DEFAULT_CATS; return c[0]?c[0].id:""; });
   var [selSub,setSelSub]           = useState("");
   var [ktab,setKtab]               = useState("all");
@@ -316,7 +317,7 @@ export default function App() {
   var [printerDevice, setPrinterDevice] = useState(null);
   var [printerChar, setPrinterChar]     = useState(null);
   var [autoPrint, setAutoPrint]         = useState(function() { return !!db.get("sj-autoprint"); });
-  var [printerIP, setPrinterIP]         = useState(function() { return db.get("sj-printer-ip")||"192.168.68.62"; });
+  var [printerIP, setPrinterIP]         = useState(function() { return db.get("sj-printer-ip")||"192.168.68.50"; });
   var eposRef = useRef(null);
   var [devices, setDevices]         = useState({});
   var prevCount = useRef(0);
@@ -654,14 +655,14 @@ export default function App() {
     var o = {
       id:Date.now().toString(), table:tableNum,
       items:cart.map(function(c) { return {id:c.id,name:c.name,cat:c.cat||"",price:c.price,qty:c.qty,spice:c.spice||""}; }),
-      note:note, total:cartTotal, status:"pending", confirmed:false,
+      note:noteRef.current?noteRef.current.value:note, total:cartTotal, status:"pending", confirmed:false,
       time:new Date().toLocaleTimeString("en-NZ",{hour:"2-digit",minute:"2-digit"}),
       ts:Date.now(),
     };
     // Load latest from storage to preserve confirmed flags set by main tablet
     var latest = db.get(ORDERS_KEY) || orders;
     saveOrders(latest.concat([o]));
-    setCart([]); setNote(""); setCartOpen(false); setMode("done");
+    setCart([]); setNote(""); if(noteRef.current) noteRef.current.value=""; setCartOpen(false); setMode("done");
   }
 
   function callStaff() {
@@ -830,7 +831,7 @@ export default function App() {
           </div>
           {cart.length>0&&(
             <div style={{padding:"10px 20px"}}>
-              <textarea placeholder="Special requests..." value={note} onChange={function(e) { setNote(e.target.value); }}
+              <textarea ref={noteRef} placeholder="Special requests..." defaultValue={note} onBlur={function(e) { setNote(e.target.value); }}
                 style={{width:"100%",background:"#f9f9f9",border:"1.5px solid #e0e0e0",color:"#1a1a1a",padding:"10px 12px",borderRadius:10,fontSize:13,minHeight:44,resize:"none",fontFamily:F}} />
             </div>
           )}
@@ -1542,21 +1543,10 @@ export default function App() {
                       </div>
                       <div style={{padding:"12px 14px",borderTop:"1px solid #333"}}>
                         <button onClick={function() {
-                          var toComplete = orders.filter(function(o) { return String(o.table)===tbl&&o.status==="pending"&&o.confirmed; });
-                          saveOrders(orders.map(function(o) {
-                            return (String(o.table)===tbl&&o.status==="pending"&&o.confirmed)?Object.assign({},o,{status:"done"}):o;
-                          }));
-                          if (autoPrint && toComplete.length>0) {
-                            toComplete.forEach(function(o) { printOrder(o); });
-                          }
-                        }} style={{width:"100%",background:"#0a1525",border:"1px solid #1a2a4a",color:"#5a8acc",borderRadius:10,padding:"14px",fontWeight:700,cursor:"pointer",fontSize:16,fontFamily:F}}>
-                          Done — Table {tbl}
-                        </button>
-                        <button onClick={function() {
                           saveOrders(orders.filter(function(o) { return String(o.table)!==tbl; }));
                           showToast("Table "+tbl+" cleared");
-                        }} style={{width:"100%",marginTop:8,background:"#2a0a0a",border:"1px solid #4a1a1a",color:"#e74c3c",borderRadius:10,padding:"12px",fontWeight:700,cursor:"pointer",fontSize:15,fontFamily:F}}>
-                          🗑️ Clear Table {tbl}
+                        }} style={{width:"100%",background:"#27ae60",border:"none",color:"#fff",borderRadius:10,padding:"14px",fontWeight:700,cursor:"pointer",fontSize:16,fontFamily:F}}>
+                          ✓ Done — Table {tbl}
                         </button>
                       </div>
                     </div>
@@ -1720,7 +1710,7 @@ export default function App() {
             <div style={{background:"#fff",borderRadius:14,padding:"20px",border:"1.5px solid "+(printerStatus==="connected"?"#27ae60":printerStatus==="error"?"#e74c3c":"#e0e0e0"),marginBottom:24}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
                 <div>
-                  <div style={{fontWeight:700,fontSize:17}}>Sewoo SLK-TS400B</div>
+                  <div style={{fontWeight:700,fontSize:17}}>Epson TM-T82II</div>
                   <div style={{fontSize:14,marginTop:4,fontWeight:600,color:printerStatus==="connected"?"#27ae60":printerStatus==="connecting"?"#e8920a":printerStatus==="error"?"#e74c3c":"#999"}}>
                     {printerStatus==="connected"?"● Connected":printerStatus==="connecting"?"● Connecting...":printerStatus==="error"?"● Failed — try again":"● Not connected"}
                   </div>
