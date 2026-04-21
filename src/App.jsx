@@ -1176,6 +1176,11 @@ export default function App() {
                 </select>
               </div>
             )}
+            <div>
+              <div style={{color:"#666",fontSize:13,marginBottom:6,fontWeight:600}}>Emoji <span style={{color:"#aaa",fontWeight:400}}>(사진 없을 때 표시)</span></div>
+              <input value={editItem.emoji||""} onChange={function(e) { setEditItem(Object.assign({},editItem,{emoji:e.target.value})); }}
+                placeholder="🍲" style={Object.assign({},inp,{fontSize:24,textAlign:"center",width:80})} />
+            </div>
             {[["Item Name","name"],["Description","desc"]].map(function(pair) {
               return (
                 <div key={pair[1]}>
