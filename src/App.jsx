@@ -1583,7 +1583,7 @@ export default function App() {
                           style={{padding:"5px 8px",borderRadius:6,border:"1px solid #999",background:"#f5f5f5",color:"#666",fontWeight:600,cursor:"pointer",fontSize:11,fontFamily:F,flexShrink:0}}>
                           {item.hidden?"Show":"Hide"}
                         </button>
-                        <button onClick={function() { setEditItem(Object.assign({},item));setIsNewItem(false); }}
+                        <button onClick={function() { var it=Object.assign({},item); it.badges=getBadges(it); it.badge=""; setEditItem(it);setIsNewItem(false); }}
                           style={{padding:"5px 10px",borderRadius:6,border:"1.5px solid #e0e0e0",background:"#fff",color:"#1a1a1a",fontWeight:600,cursor:"pointer",fontSize:13,fontFamily:F,flexShrink:0}}>Edit</button>
                         <div style={{display:"flex",flexDirection:"column",gap:2,flexShrink:0}}>
                           <button onClick={function() {
