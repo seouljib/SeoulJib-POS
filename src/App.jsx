@@ -668,7 +668,7 @@ export default function App() {
   var dispMenu = menu.filter(function(m) {
     if (!curCat||m.cat!==curCat.name) return false;
     if (m.hidden) return false;
-    if (hasSubs&&selSub) return m.subcat===selSub;
+    if (hasSubs&&selSub) return m.subcat===selSub || m.subcat==="" || !m.subcat;
     return true;
   });
   var placedItems = [];
