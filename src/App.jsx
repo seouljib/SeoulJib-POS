@@ -1187,14 +1187,16 @@ export default function App() {
                 {["","best","new","vegetarian","vegan","gf","spicy1","spicy2","spicy3"].map(function(b) {
                   var labels={"":"None","best":"BEST","new":"NEW","vegetarian":"VEGETARIAN","vegan":"VEGAN","gf":"G/F","spicy1":"🌶️","spicy2":"🌶️🌶️","spicy3":"🌶️🌶️🌶️"};
                   var colors={"":"#f0f0f0","best":"#e74c3c","new":"#27ae60","vegetarian":"#2ecc71","vegan":"#16a085","gf":"#8e44ad","spicy1":"#f1c40f","spicy2":"#f1c40f","spicy3":"#f1c40f"};
-                  var badges=getBadges(editItem);
-                  var sel=badges.includes(b);
+                  var curBadges=getBadges(editItem);
+                  var sel=b===""?curBadges.length===0:curBadges.includes(b);
+                  var txtColor=(b==="spicy1"||b==="spicy2"||b==="spicy3")?"#1a1a1a":sel?"#fff":"#666";
                   return <button key={b} onClick={function() {
+                    if (b==="") { setEditItem(Object.assign({},editItem,{badges:[],badge:""})); return; }
                     var cur=getBadges(editItem);
                     var nb=cur.includes(b)?cur.filter(function(x){return x!==b;}):cur.concat([b]);
                     setEditItem(Object.assign({},editItem,{badges:nb,badge:""}));
                   }}
-                    style={{padding:"8px 16px",borderRadius:20,border:"2px solid "+(sel?colors[b]:"#e0e0e0"),background:sel?colors[b]:"#fff",color:sel?"#fff":"#666",fontWeight:sel?700:400,fontSize:14,cursor:"pointer",fontFamily:F}}>{labels[b]}</button>;
+                    style={{padding:"8px 16px",borderRadius:20,border:"2px solid "+(sel?colors[b]:"#e0e0e0"),background:sel?colors[b]:"#fff",color:txtColor,fontWeight:sel?700:400,fontSize:14,cursor:"pointer",fontFamily:F}}>{labels[b]}</button>;
                 })}
               </div>
             </div>
