@@ -731,6 +731,9 @@ export default function App() {
               {detail.badge==="vegetarian" && <span style={{background:"#2ecc71",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>🌿 VEGETARIAN</span>}
               {detail.badge==="vegan" && <span style={{background:"#16a085",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>🌱 VEGAN</span>}
               {detail.badge==="gf" && <span style={{background:"#8e44ad",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>G/F</span>}
+              {detail.badge==="spicy1" && <span style={{background:"#e74c3c",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>🌶️</span>}
+              {detail.badge==="spicy2" && <span style={{background:"#c0392b",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>🌶️🌶️</span>}
+              {detail.badge==="spicy3" && <span style={{background:"#922b21",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>🌶️🌶️🌶️</span>}
             </div>
             {detail.desc&&<div style={{fontSize:18,lineHeight:1.7,marginBottom:16,color:"#444"}}>{detail.desc}</div>}
             {detail.ingredients&&(
@@ -1055,6 +1058,13 @@ export default function App() {
                       </div>
                     </div>
                   )}
+                  {(item.badge==="spicy1"||item.badge==="spicy2"||item.badge==="spicy3")&&(
+                    <div style={{position:"absolute",top:12,left:-2,zIndex:2}}>
+                      <div style={{background:"#e74c3c",color:"#fff",fontSize:13,fontWeight:900,padding:"6px 14px 6px 10px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 8px rgba(0,0,0,.25)"}}>
+                        {item.badge==="spicy1"?"🌶️":item.badge==="spicy2"?"🌶️🌶️":"🌶️🌶️🌶️"}
+                      </div>
+                    </div>
+                  )}
                   {item.img
                     ? <div style={{height:"28vh",overflow:"hidden",borderRadius:"12px 12px 0 0"}}><img src={item.img} alt={item.name} style={{width:"100%",height:"100%",objectFit:"cover"}} /></div>
                     : <div style={{height:"28vh",background:"linear-gradient(145deg,#f8f0e8,#f0e0d0)",borderRadius:"12px 12px 0 0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:60}}>{item.emoji}</div>
@@ -1165,10 +1175,10 @@ export default function App() {
             </div>
             <div>
               <div style={{color:"#666",fontSize:13,marginBottom:8,fontWeight:600}}>Badge</div>
-              <div style={{display:"flex",gap:8}}>
-                {["","best","new","vegetarian","vegan","gf"].map(function(b) {
-                  var labels={"":"None","best":"BEST","new":"NEW","vegetarian":"VEGETARIAN","vegan":"VEGAN","gf":"G/F"};
-                  var colors={"":"#f0f0f0","best":"#e74c3c","new":"#27ae60","vegetarian":"#2ecc71","vegan":"#16a085","gf":"#8e44ad"};
+              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                {["","best","new","vegetarian","vegan","gf","spicy1","spicy2","spicy3"].map(function(b) {
+                  var labels={"":"None","best":"BEST","new":"NEW","vegetarian":"VEGETARIAN","vegan":"VEGAN","gf":"G/F","spicy1":"🌶️","spicy2":"🌶️🌶️","spicy3":"🌶️🌶️🌶️"};
+                  var colors={"":"#f0f0f0","best":"#e74c3c","new":"#27ae60","vegetarian":"#2ecc71","vegan":"#16a085","gf":"#8e44ad","spicy1":"#e74c3c","spicy2":"#c0392b","spicy3":"#922b21"};
                   var sel=editItem.badge===b;
                   return <button key={b} onClick={function() { setEditItem(Object.assign({},editItem,{badge:b})); }}
                     style={{padding:"8px 16px",borderRadius:20,border:"2px solid "+(sel?colors[b]:"#e0e0e0"),background:sel?colors[b]:"#fff",color:sel?"#fff":"#666",fontWeight:sel?700:400,fontSize:14,cursor:"pointer",fontFamily:F}}>{labels[b]}</button>;
@@ -1560,6 +1570,26 @@ export default function App() {
                         </button>
                         <button onClick={function() { setEditItem(Object.assign({},item));setIsNewItem(false); }}
                           style={{padding:"5px 10px",borderRadius:6,border:"1.5px solid #e0e0e0",background:"#fff",color:"#1a1a1a",fontWeight:600,cursor:"pointer",fontSize:13,fontFamily:F,flexShrink:0}}>Edit</button>
+                        <div style={{display:"flex",flexDirection:"column",gap:2,flexShrink:0}}>
+                          <button onClick={function() {
+                            var idx=menu.findIndex(function(m) { return m.id===item.id; });
+                            if (idx<=0) return;
+                            var nm=menu.slice();
+                            var prev=nm[idx-1];
+                            if (prev.cat!==item.cat) return;
+                            nm[idx-1]=nm[idx]; nm[idx]=prev;
+                            saveMenu(nm);
+                          }} style={{padding:"2px 7px",borderRadius:4,border:"1px solid #ddd",background:"#f9f9f9",cursor:"pointer",fontSize:12,fontFamily:F,lineHeight:1}}>▲</button>
+                          <button onClick={function() {
+                            var idx=menu.findIndex(function(m) { return m.id===item.id; });
+                            if (idx>=menu.length-1) return;
+                            var nm=menu.slice();
+                            var next=nm[idx+1];
+                            if (next.cat!==item.cat) return;
+                            nm[idx+1]=nm[idx]; nm[idx]=next;
+                            saveMenu(nm);
+                          }} style={{padding:"2px 7px",borderRadius:4,border:"1px solid #ddd",background:"#f9f9f9",cursor:"pointer",fontSize:12,fontFamily:F,lineHeight:1}}>▼</button>
+                        </div>
                       </div>
                     );
                   })}
