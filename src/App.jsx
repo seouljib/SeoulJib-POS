@@ -167,7 +167,7 @@ var CSS  = [
 ].join("\n");
 
 function blankItem(cat) {
-  return { id:"i"+Date.now(), cat:cat, subcat:"", name:"", sub:"", price:0, emoji:"\uD83C\uDF7D\uFE0F", desc:"", img:"", soldOut:false, hidden:false, badges:[], ingredients:"", allergens:"", hasSpice:false };
+  return { id:"i"+Date.now(), cat:cat, subcat:"", name:"", sub:"", price:0, emoji:"\uD83C\uDF7D\uFE0F", desc:"", img:"", soldOut:false, hidden:false, badges:[], ingredients:"", allergens:"", hasSpice:false, upsellIds:[] };
 }
 function blankCat() { return { id:"c"+Date.now(), name:"", subs:[], hidden:false }; }
 
@@ -305,6 +305,7 @@ export default function App() {
   var [cartOpen,setCartOpen]       = useState(false);
   var [histOpen,setHistOpen]       = useState(false);
   var [justAdded,setJustAdded]     = useState(null);
+  var [upsellPop,setUpsellPop]     = useState(null); // {item, upsellItems[]}
   var [toast,setToast]             = useState("");
   var [setupMode,setSetupMode]     = useState(false);
   var [setupNum,setSetupNum]       = useState(1);
@@ -628,6 +629,12 @@ export default function App() {
     });
     setJustAdded(item.id);
     setTimeout(function() { setJustAdded(null); }, 300);
+    // Upsell 팝업
+    var uids = item.upsellIds||[];
+    if (uids.length>0) {
+      var uItems = menu.filter(function(m) { return uids.includes(m.id)&&!m.soldOut&&!m.hidden; });
+      if (uItems.length>0) setUpsellPop({trigger:item, items:uItems});
+    }
   }
   function setQty(id,sp,d) {
     setCart(function(p) {
@@ -993,6 +1000,37 @@ export default function App() {
         );
       })()}
       <CartModal /><HistModal />
+  {upsellPop&&(
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:300}}
+      onClick={function(e){if(e.target===e.currentTarget)setUpsellPop(null);}}>
+      <div style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:600,maxHeight:"70dvh",overflow:"auto",animation:"slideup .25s ease",padding:"24px 20px 40px"}}>
+        <div style={{fontSize:13,fontWeight:700,color:"#999",letterSpacing:1,marginBottom:6,textTransform:"uppercase"}}>Perfect with your order</div>
+        <div style={{fontSize:20,fontWeight:800,marginBottom:20}}>Would you like to add?</div>
+        <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:20}}>
+          {upsellPop.items.map(function(ui) {
+            var inCart=cart.find(function(c){return c.id===ui.id;});
+            return (
+              <div key={ui.id} onClick={function(){addToCart(ui,"");setUpsellPop(null);}}
+                style={{display:"flex",alignItems:"center",gap:14,padding:"14px 16px",borderRadius:14,border:"1.5px solid "+(inCart?RED:"#e0e0e0"),background:inCart?"#fff0f0":"#fafafa",cursor:"pointer"}}>
+                <div style={{width:52,height:52,borderRadius:10,background:"linear-gradient(145deg,#f8f0e8,#f0e0d0)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,flexShrink:0}}>
+                  {ui.img?<img src={ui.img} style={{width:"100%",height:"100%",objectFit:"cover",borderRadius:10}} />:ui.emoji}
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:700,fontSize:17}}>{ui.name}</div>
+                  {ui.desc&&<div style={{color:"#888",fontSize:13,marginTop:2}}>{ui.desc}</div>}
+                </div>
+                <div style={{fontWeight:900,fontSize:18,color:RED,flexShrink:0}}>{ui.price===0?"Free":"$"+ui.price}</div>
+              </div>
+            );
+          })}
+        </div>
+        <button onClick={function(){setUpsellPop(null);}}
+          style={{width:"100%",padding:"16px",borderRadius:14,border:"1.5px solid #e0e0e0",background:"#fff",color:"#666",fontWeight:600,fontSize:16,cursor:"pointer",fontFamily:F}}>
+          Skip
+        </button>
+      </div>
+    </div>
+  )}
       <div style={{display:"flex",flex:1,overflow:"hidden"}}>
         <div style={{width:130,background:RED,display:"flex",flexDirection:"column",alignItems:"stretch",flexShrink:0,overflowY:"auto",paddingTop:60}}>
           {activeCats.map(function(c) {
@@ -1181,6 +1219,28 @@ export default function App() {
               <div onClick={function() { setEditItem(Object.assign({},editItem,{hasSpice:!editItem.hasSpice})); }}
                 style={{width:48,height:28,borderRadius:14,background:editItem.hasSpice?RED:"#e0e0e0",position:"relative",cursor:"pointer",flexShrink:0,transition:"background .2s"}}>
                 <div style={{position:"absolute",top:3,left:editItem.hasSpice?22:3,width:22,height:22,borderRadius:"50%",background:"#fff",transition:"left .2s"}} />
+              </div>
+            </div>
+            <div>
+              <div style={{color:"#666",fontSize:13,marginBottom:8,fontWeight:600}}>Upsell Items <span style={{color:"#aaa",fontWeight:400}}>(선택 시 이 메뉴 담으면 팝업)</span></div>
+              <div style={{display:"flex",flexDirection:"column",gap:6,maxHeight:200,overflowY:"auto"}}>
+                {menu.filter(function(m){return m.id!==editItem.id&&!m.hidden;}).map(function(m) {
+                  var uids=editItem.upsellIds||[];
+                  var sel=uids.includes(m.id);
+                  return (
+                    <div key={m.id} onClick={function(){
+                      var cur=editItem.upsellIds||[];
+                      if (sel) { setEditItem(Object.assign({},editItem,{upsellIds:cur.filter(function(x){return x!==m.id;})})); }
+                      else if (cur.length<5) { setEditItem(Object.assign({},editItem,{upsellIds:cur.concat([m.id])})); }
+                      else { showToast("Max 5 items"); }
+                    }} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:10,border:"1.5px solid "+(sel?RED:"#e0e0e0"),background:sel?"#fff0f0":"#fafafa",cursor:"pointer"}}>
+                      <span style={{fontSize:20}}>{m.emoji}</span>
+                      <span style={{flex:1,fontWeight:sel?700:400,fontSize:14}}>{m.name}</span>
+                      <span style={{color:RED,fontWeight:700,fontSize:13}}>{m.price===0?"Free":"$"+m.price}</span>
+                      {sel&&<span style={{color:RED,fontSize:16}}>✓</span>}
+                    </div>
+                  );
+                })}
               </div>
             </div>
             <div>
