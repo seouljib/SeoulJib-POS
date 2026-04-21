@@ -1031,48 +1031,16 @@ export default function App() {
                   style={{background:"#fff",border:"1.5px solid "+(ic?RED:"#ebebeb"),borderRadius:12,overflow:"visible",cursor:"pointer",opacity:item.soldOut?.5:banchanLocked?.4:1,position:"relative",animation:justAdded===item.id?"bnc .28s ease both":"none",boxShadow:"0 1px 6px rgba(0,0,0,.07)"}}
                   onClick={function() { setDetail(item); setSpice(""); }}>
                   {banchanLocked&&<div style={{position:"absolute",top:6,left:6,zIndex:3,background:"rgba(0,0,0,.65)",color:"#fff",borderRadius:5,padding:"2px 8px",fontSize:11,fontWeight:700}}>Baekban Order Required</div>}
-                  {hasBadge(item,"best")&&(
-                    <div style={{position:"absolute",top:12,left:-2,zIndex:2,display:"flex",alignItems:"center",gap:4}}>
-                      <div style={{background:"linear-gradient(135deg,#f39c12,#e67e22)",color:"#fff",fontSize:13,fontWeight:900,padding:"6px 14px 6px 10px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 8px rgba(0,0,0,.25)",letterSpacing:1}}>
-                        ⭐ BEST
-                      </div>
-                    </div>
-                  )}
-                  {hasBadge(item,"new")&&(
-                    <div style={{position:"absolute",top:12,left:-2,zIndex:2,display:"flex",alignItems:"center",gap:4}}>
-                      <div style={{background:"linear-gradient(135deg,#00b09b,#27ae60)",color:"#fff",fontSize:13,fontWeight:900,padding:"6px 14px 6px 10px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 8px rgba(0,0,0,.25)",letterSpacing:1}}>
-                        ✨ NEW
-                      </div>
-                    </div>
-                  )}
-                  {hasBadge(item,"vegetarian")&&(
-                    <div style={{position:"absolute",top:12,left:-2,zIndex:2}}>
-                      <div style={{background:"#2ecc71",color:"#fff",fontSize:13,fontWeight:900,padding:"6px 14px 6px 10px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 8px rgba(0,0,0,.25)"}}>
-                        🌿 VEG
-                      </div>
-                    </div>
-                  )}
-                  {hasBadge(item,"vegan")&&(
-                    <div style={{position:"absolute",top:12,left:-2,zIndex:2}}>
-                      <div style={{background:"#16a085",color:"#fff",fontSize:13,fontWeight:900,padding:"6px 14px 6px 10px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 8px rgba(0,0,0,.25)"}}>
-                        🌱 VEGAN
-                      </div>
-                    </div>
-                  )}
-                  {hasBadge(item,"gf")&&(
-                    <div style={{position:"absolute",top:12,left:-2,zIndex:2}}>
-                      <div style={{background:"#8e44ad",color:"#fff",fontSize:13,fontWeight:900,padding:"6px 14px 6px 10px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 8px rgba(0,0,0,.25)"}}>
-                        G/F
-                      </div>
-                    </div>
-                  )}
-                  {(hasBadge(item,"spicy1")||hasBadge(item,"spicy2")||hasBadge(item,"spicy3"))&&(
-                    <div style={{position:"absolute",top:12,left:-2,zIndex:2}}>
-                      <div style={{background:"#e74c3c",color:"#fff",fontSize:13,fontWeight:900,padding:"6px 14px 6px 10px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 8px rgba(0,0,0,.25)"}}>
-                        {hasBadge(item,"spicy1")?"🌶️":hasBadge(item,"spicy2")?"🌶️🌶️":"🌶️🌶️🌶️"}
-                      </div>
-                    </div>
-                  )}
+                  <div style={{position:"absolute",top:8,left:-2,zIndex:2,display:"flex",flexDirection:"column",gap:4}}>
+                    {hasBadge(item,"best")&&<div style={{background:"linear-gradient(135deg,#f39c12,#e67e22)",color:"#fff",fontSize:12,fontWeight:900,padding:"5px 12px 5px 8px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 6px rgba(0,0,0,.2)"}}>⭐ BEST</div>}
+                    {hasBadge(item,"new")&&<div style={{background:"linear-gradient(135deg,#00b09b,#27ae60)",color:"#fff",fontSize:12,fontWeight:900,padding:"5px 12px 5px 8px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 6px rgba(0,0,0,.2)"}}>✨ NEW</div>}
+                    {hasBadge(item,"vegetarian")&&<div style={{background:"#2ecc71",color:"#fff",fontSize:12,fontWeight:900,padding:"5px 12px 5px 8px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 6px rgba(0,0,0,.2)"}}>🌿 VEG</div>}
+                    {hasBadge(item,"vegan")&&<div style={{background:"#16a085",color:"#fff",fontSize:12,fontWeight:900,padding:"5px 12px 5px 8px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 6px rgba(0,0,0,.2)"}}>🌱 VEGAN</div>}
+                    {hasBadge(item,"gf")&&<div style={{background:"#8e44ad",color:"#fff",fontSize:12,fontWeight:900,padding:"5px 12px 5px 8px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 6px rgba(0,0,0,.2)"}}>G/F</div>}
+                    {hasBadge(item,"spicy1")&&<div style={{background:"#fff",color:"#1a1a1a",fontSize:12,fontWeight:900,padding:"5px 12px 5px 8px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 6px rgba(0,0,0,.2)",border:"1px solid #eee"}}>🌶️</div>}
+                    {hasBadge(item,"spicy2")&&<div style={{background:"#fff",color:"#1a1a1a",fontSize:12,fontWeight:900,padding:"5px 12px 5px 8px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 6px rgba(0,0,0,.2)",border:"1px solid #eee"}}>🌶️🌶️</div>}
+                    {hasBadge(item,"spicy3")&&<div style={{background:"#fff",color:"#1a1a1a",fontSize:12,fontWeight:900,padding:"5px 12px 5px 8px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 6px rgba(0,0,0,.2)",border:"1px solid #eee"}}>🌶️🌶️🌶️</div>}
+                  </div>
                   {item.img
                     ? <div style={{height:"34vh",overflow:"hidden",borderRadius:"12px 12px 0 0"}}><img src={item.img} alt={item.name} style={{width:"100%",height:"100%",objectFit:"cover"}} /></div>
                     : <div style={{height:"34vh",background:"linear-gradient(145deg,#f8f0e8,#f0e0d0)",borderRadius:"12px 12px 0 0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:60}}>{item.emoji}</div>
@@ -1186,7 +1154,7 @@ export default function App() {
               <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
                 {["","best","new","vegetarian","vegan","gf","spicy1","spicy2","spicy3"].map(function(b) {
                   var labels={"":"None","best":"BEST","new":"NEW","vegetarian":"VEGETARIAN","vegan":"VEGAN","gf":"G/F","spicy1":"🌶️","spicy2":"🌶️🌶️","spicy3":"🌶️🌶️🌶️"};
-                  var colors={"":"#f0f0f0","best":"#e74c3c","new":"#27ae60","vegetarian":"#2ecc71","vegan":"#16a085","gf":"#8e44ad","spicy1":"#f1c40f","spicy2":"#f1c40f","spicy3":"#f1c40f"};
+                  var colors={"":"#f0f0f0","best":"#e74c3c","new":"#27ae60","vegetarian":"#2ecc71","vegan":"#16a085","gf":"#8e44ad","spicy1":"#fff","spicy2":"#fff","spicy3":"#fff"};
                   var curBadges=getBadges(editItem);
                   var sel=b===""?curBadges.length===0:curBadges.includes(b);
                   var txtColor=(b==="spicy1"||b==="spicy2"||b==="spicy3")?"#1a1a1a":sel?"#fff":"#666";
