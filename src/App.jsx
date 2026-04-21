@@ -1224,7 +1224,7 @@ export default function App() {
             <div>
               <div style={{color:"#666",fontSize:13,marginBottom:8,fontWeight:600}}>Upsell Items <span style={{color:"#aaa",fontWeight:400}}>(선택 시 이 메뉴 담으면 팝업)</span></div>
               <div style={{display:"flex",flexDirection:"column",gap:6,maxHeight:200,overflowY:"auto"}}>
-                {menu.filter(function(m){return m.id!==editItem.id&&!m.hidden;}).map(function(m) {
+                {menu.filter(function(m){return m.id!==editItem.id&&!m.hidden&&!DEFAULT_MENU.find(function(d){return d.id===m.id;});}).map(function(m) {
                   var uids=editItem.upsellIds||[];
                   var sel=uids.includes(m.id);
                   return (
