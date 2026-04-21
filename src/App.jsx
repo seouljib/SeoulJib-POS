@@ -1177,9 +1177,21 @@ export default function App() {
               </div>
             )}
             <div>
-              <div style={{color:"#666",fontSize:13,marginBottom:6,fontWeight:600}}>Emoji <span style={{color:"#aaa",fontWeight:400}}>(사진 없을 때 표시)</span></div>
-              <input value={editItem.emoji||""} onChange={function(e) { setEditItem(Object.assign({},editItem,{emoji:e.target.value})); }}
-                placeholder="🍲" style={Object.assign({},inp,{fontSize:24,textAlign:"center",width:80})} />
+              <div style={{color:"#666",fontSize:13,marginBottom:8,fontWeight:600}}>Emoji <span style={{color:"#aaa",fontWeight:400}}>(사진 없을 때 표시)</span></div>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+                <div style={{width:60,height:60,borderRadius:12,background:"#f5f5f5",border:"1.5px solid #e0e0e0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:36}}>{editItem.emoji||"🍽️"}</div>
+                <input value={editItem.emoji||""} onChange={function(e) { setEditItem(Object.assign({},editItem,{emoji:e.target.value})); }}
+                  placeholder="직접 입력" style={Object.assign({},inp,{flex:1})} />
+              </div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                {["🍲","🥩","🍖","🍗","🥓","🍳","🥚","🧆","🥘","🫕","🍜","🍝","🍛","🍣","🍱","🥟","🍤","🍙","🍚","🍘","🥗","🥦","🥕","🌽","🧅","🧄","🥔","🍠","🫚","🌶️","🧂","🍱","🥡","🫙","🍺","🍻","🥂","🍷","🥃","🍸","🍹","🧃","🥤","🧋","☕","🍵","🫖","🧊","💧","🍰","🎂","🍮","🍦","🍨","🧁","🍩","🍪","🍫","🍬","🍭"].map(function(e) {
+                  var sel=editItem.emoji===e;
+                  return <button key={e} onClick={function(){setEditItem(Object.assign({},editItem,{emoji:e}));}}
+                    style={{width:40,height:40,borderRadius:8,border:"2px solid "+(sel?RED:"#e0e0e0"),background:sel?"#fff0f0":"#fff",fontSize:22,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>
+                    {e}
+                  </button>;
+                })}
+              </div>
             </div>
             {[["Item Name","name"],["Description","desc"]].map(function(pair) {
               return (
