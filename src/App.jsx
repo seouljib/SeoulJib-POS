@@ -117,18 +117,18 @@ var DEFAULT_CATS = [
   { id: "c4", name: "Beverages",  subs: [], hidden: false, isDrink: true },
 ];
 var DEFAULT_MENU = [
-  { id:"b1", cat:"Set Meals",  subcat:"", name:"Bulgogi Set",          sub:"Korean Beef BBQ",     price:33, emoji:"\uD83E\uDD69", desc:"Marinated beef, 7 sides, rice, soup",        img:"", soldOut:false, hidden:false, badge:"", ingredients:"Beef, soy sauce, garlic, sesame oil, spring onion, rice", allergens:"Soy, sesame, gluten", hasSpice:false },
-  { id:"b2", cat:"Set Meals",  subcat:"", name:"Spicy Pork Set",       sub:"Jeyuk Bokkeum",       price:33, emoji:"\uD83C\uDF36\uFE0F", desc:"Spicy stir-fried pork, 7 sides, rice, soup", img:"", soldOut:false, hidden:false, badge:"", ingredients:"Pork, gochujang, garlic, onion, rice", allergens:"Soy, gluten", hasSpice:true  },
-  { id:"b3", cat:"Set Meals",  subcat:"", name:"Chicken Galbi Set",    sub:"Chuncheon Style",     price:33, emoji:"\uD83C\uDF57", desc:"Spicy chicken galbi, 7 sides, rice, soup",    img:"", soldOut:false, hidden:false, badge:"", ingredients:"Chicken, gochujang, soy sauce, garlic, rice cake", allergens:"Soy, gluten", hasSpice:true  },
-  { id:"b4", cat:"Set Meals",  subcat:"", name:"Tofu Stir-fry Set",    sub:"Dubu Bokkeum",        price:33, emoji:"\uD83C\uDF3F", desc:"Tofu and kimchi stir-fry, 7 sides, rice, soup",img:"", soldOut:false, hidden:false, badge:"", ingredients:"Tofu, kimchi, pork, gochujang, sesame oil, rice", allergens:"Soy, sesame, gluten", hasSpice:false },
-  { id:"e1", cat:"Extras",     subcat:"", name:"Spring Onion Pancake", sub:"Pa-jeon",             price:16, emoji:"\uD83E\uDD5E", desc:"Crispy Korean green onion pancake",           img:"", soldOut:false, hidden:false, badge:"", ingredients:"Spring onion, flour, egg, seafood mix", allergens:"Gluten, egg, shellfish", hasSpice:false },
-  { id:"e2", cat:"Extras",     subcat:"", name:"Kimchi Pancake",       sub:"Kimchi-jeon",         price:16, emoji:"\uD83E\uDED3", desc:"Crispy aged kimchi pancake",                  img:"", soldOut:false, hidden:false, badge:"", ingredients:"Kimchi, flour, egg, pork", allergens:"Gluten, egg", hasSpice:false },
-  { id:"e3", cat:"Extras",     subcat:"", name:"Extra Rice",           sub:"Gong-gi-bap",         price:2,  emoji:"\uD83C\uDF5A", desc:"Steamed white rice",                          img:"", soldOut:false, hidden:false, badge:"", ingredients:"Rice", allergens:"", hasSpice:false },
-  { id:"d1", cat:"Drinks",     subcat:"Korean Spirits", name:"Soju",   sub:"Chamisul 360ml",      price:12, emoji:"\uD83C\uDF76", desc:"Korean distilled spirit",                     img:"", soldOut:false, hidden:false, badge:"", ingredients:"Water, grain alcohol", allergens:"", hasSpice:false },
-  { id:"d2", cat:"Drinks",     subcat:"Beer",           name:"Korean Beer", sub:"Cass/Terra 330ml",price:10,emoji:"\uD83C\uDF7A", desc:"330ml chilled",                               img:"", soldOut:false, hidden:false, badge:"", ingredients:"Water, barley malt, hops", allergens:"Gluten", hasSpice:false },
-  { id:"d3", cat:"Drinks",     subcat:"Korean Spirits", name:"Makgeolli", sub:"Rice Wine 750ml",  price:12, emoji:"\uD83E\uDEA3", desc:"Traditional rice wine",                       img:"", soldOut:false, hidden:false, badge:"", ingredients:"Rice, water, nuruk", allergens:"Gluten", hasSpice:false },
-  { id:"v1", cat:"Beverages",  subcat:"", name:"Coke",                 sub:"355ml",               price:4,  emoji:"\uD83E\uDD64", desc:"",                                            img:"", soldOut:false, hidden:false, badge:"", ingredients:"Carbonated water, sugar, caramel colour", allergens:"", hasSpice:false },
-  { id:"v2", cat:"Beverages",  subcat:"", name:"Still Water",          sub:"Complimentary",        price:0,  emoji:"\uD83D\uDCA7", desc:"Free",                                       img:"", soldOut:false, hidden:false, badge:"", ingredients:"Water", allergens:"", hasSpice:false },
+  { id:"b1", cat:"Set Meals",  subcat:"", name:"Bulgogi Set",          sub:"Korean Beef BBQ",     price:33, emoji:"\uD83E\uDD69", desc:"Marinated beef, 7 sides, rice, soup",        img:"", soldOut:false, hidden:false, badges:[], ingredients:"Beef, soy sauce, garlic, sesame oil, spring onion, rice", allergens:"Soy, sesame, gluten", hasSpice:false },
+  { id:"b2", cat:"Set Meals",  subcat:"", name:"Spicy Pork Set",       sub:"Jeyuk Bokkeum",       price:33, emoji:"\uD83C\uDF36\uFE0F", desc:"Spicy stir-fried pork, 7 sides, rice, soup", img:"", soldOut:false, hidden:false, badges:[], ingredients:"Pork, gochujang, garlic, onion, rice", allergens:"Soy, gluten", hasSpice:true  },
+  { id:"b3", cat:"Set Meals",  subcat:"", name:"Chicken Galbi Set",    sub:"Chuncheon Style",     price:33, emoji:"\uD83C\uDF57", desc:"Spicy chicken galbi, 7 sides, rice, soup",    img:"", soldOut:false, hidden:false, badges:[], ingredients:"Chicken, gochujang, soy sauce, garlic, rice cake", allergens:"Soy, gluten", hasSpice:true  },
+  { id:"b4", cat:"Set Meals",  subcat:"", name:"Tofu Stir-fry Set",    sub:"Dubu Bokkeum",        price:33, emoji:"\uD83C\uDF3F", desc:"Tofu and kimchi stir-fry, 7 sides, rice, soup",img:"", soldOut:false, hidden:false, badges:[], ingredients:"Tofu, kimchi, pork, gochujang, sesame oil, rice", allergens:"Soy, sesame, gluten", hasSpice:false },
+  { id:"e1", cat:"Extras",     subcat:"", name:"Spring Onion Pancake", sub:"Pa-jeon",             price:16, emoji:"\uD83E\uDD5E", desc:"Crispy Korean green onion pancake",           img:"", soldOut:false, hidden:false, badges:[], ingredients:"Spring onion, flour, egg, seafood mix", allergens:"Gluten, egg, shellfish", hasSpice:false },
+  { id:"e2", cat:"Extras",     subcat:"", name:"Kimchi Pancake",       sub:"Kimchi-jeon",         price:16, emoji:"\uD83E\uDED3", desc:"Crispy aged kimchi pancake",                  img:"", soldOut:false, hidden:false, badges:[], ingredients:"Kimchi, flour, egg, pork", allergens:"Gluten, egg", hasSpice:false },
+  { id:"e3", cat:"Extras",     subcat:"", name:"Extra Rice",           sub:"Gong-gi-bap",         price:2,  emoji:"\uD83C\uDF5A", desc:"Steamed white rice",                          img:"", soldOut:false, hidden:false, badges:[], ingredients:"Rice", allergens:"", hasSpice:false },
+  { id:"d1", cat:"Drinks",     subcat:"Korean Spirits", name:"Soju",   sub:"Chamisul 360ml",      price:12, emoji:"\uD83C\uDF76", desc:"Korean distilled spirit",                     img:"", soldOut:false, hidden:false, badges:[], ingredients:"Water, grain alcohol", allergens:"", hasSpice:false },
+  { id:"d2", cat:"Drinks",     subcat:"Beer",           name:"Korean Beer", sub:"Cass/Terra 330ml",price:10,emoji:"\uD83C\uDF7A", desc:"330ml chilled",                               img:"", soldOut:false, hidden:false, badges:[], ingredients:"Water, barley malt, hops", allergens:"Gluten", hasSpice:false },
+  { id:"d3", cat:"Drinks",     subcat:"Korean Spirits", name:"Makgeolli", sub:"Rice Wine 750ml",  price:12, emoji:"\uD83E\uDEA3", desc:"Traditional rice wine",                       img:"", soldOut:false, hidden:false, badges:[], ingredients:"Rice, water, nuruk", allergens:"Gluten", hasSpice:false },
+  { id:"v1", cat:"Beverages",  subcat:"", name:"Coke",                 sub:"355ml",               price:4,  emoji:"\uD83E\uDD64", desc:"",                                            img:"", soldOut:false, hidden:false, badges:[], ingredients:"Carbonated water, sugar, caramel colour", allergens:"", hasSpice:false },
+  { id:"v2", cat:"Beverages",  subcat:"", name:"Still Water",          sub:"Complimentary",        price:0,  emoji:"\uD83D\uDCA7", desc:"Free",                                       img:"", soldOut:false, hidden:false, badges:[], ingredients:"Water", allergens:"", hasSpice:false },
 ];
 
 var db = {
@@ -167,7 +167,7 @@ var CSS  = [
 ].join("\n");
 
 function blankItem(cat) {
-  return { id:"i"+Date.now(), cat:cat, subcat:"", name:"", sub:"", price:0, emoji:"\uD83C\uDF7D\uFE0F", desc:"", img:"", soldOut:false, hidden:false, badge:"", ingredients:"", allergens:"", hasSpice:false };
+  return { id:"i"+Date.now(), cat:cat, subcat:"", name:"", sub:"", price:0, emoji:"\uD83C\uDF7D\uFE0F", desc:"", img:"", soldOut:false, hidden:false, badges:[], ingredients:"", allergens:"", hasSpice:false };
 }
 function blankCat() { return { id:"c"+Date.now(), name:"", subs:[], hidden:false }; }
 
@@ -592,6 +592,14 @@ export default function App() {
     return function() { clearInterval(pollRef.current); };
   }, [mode, adminTab, poll]);
 
+  function getBadges(item) {
+    if (!item) return [];
+    if (Array.isArray(item.badges)) return item.badges;
+    if (item.badge && item.badge !== "") return [item.badge];
+    return [];
+  }
+  function hasBadge(item, b) { return getBadges(item).includes(b); }
+
   function hasBaekbanInHistory() {
     var tbl = db.get(TABLE_KEY);
     if (!tbl) return false;
@@ -726,14 +734,14 @@ export default function App() {
           <div style={{padding:"20px 20px 40px"}}>
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
               <div style={{fontSize:28,fontWeight:800}}>{detail.name}</div>
-              {detail.badge==="best" && <span style={{background:"#e74c3c",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>BEST</span>}
-              {detail.badge==="new"  && <span style={{background:"#27ae60",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>NEW</span>}
-              {detail.badge==="vegetarian" && <span style={{background:"#2ecc71",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>🌿 VEGETARIAN</span>}
-              {detail.badge==="vegan" && <span style={{background:"#16a085",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>🌱 VEGAN</span>}
-              {detail.badge==="gf" && <span style={{background:"#8e44ad",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>G/F</span>}
-              {detail.badge==="spicy1" && <span style={{background:"#e67e22",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>🌶️</span>}
-              {detail.badge==="spicy2" && <span style={{background:"#d35400",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>🌶️🌶️</span>}
-              {detail.badge==="spicy3" && <span style={{background:"#6e2f0a",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>🌶️🌶️🌶️</span>}
+              {hasBadge(detail,"best") && <span style={{background:"#e74c3c",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>BEST</span>}
+              {hasBadge(detail,"new")  && <span style={{background:"#27ae60",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>NEW</span>}
+              {hasBadge(detail,"vegetarian") && <span style={{background:"#2ecc71",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>🌿 VEGETARIAN</span>}
+              {hasBadge(detail,"vegan") && <span style={{background:"#16a085",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>🌱 VEGAN</span>}
+              {hasBadge(detail,"gf") && <span style={{background:"#8e44ad",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>G/F</span>}
+              {hasBadge(detail,"spicy1") && <span style={{background:"#f1c40f",color:"#1a1a1a",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>🌶️</span>}
+              {hasBadge(detail,"spicy2") && <span style={{background:"#f1c40f",color:"#1a1a1a",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>🌶️🌶️</span>}
+              {hasBadge(detail,"spicy3") && <span style={{background:"#f1c40f",color:"#1a1a1a",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>🌶️🌶️🌶️</span>}
             </div>
             {detail.desc&&<div style={{fontSize:18,lineHeight:1.7,marginBottom:16,color:"#444"}}>{detail.desc}</div>}
             {detail.ingredients&&(
@@ -929,11 +937,11 @@ export default function App() {
               <div style={{padding:"20px 20px 40px"}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
                   <div style={{fontSize:28,fontWeight:800}}>{detail.name}</div>
-                  {detail.badge==="best"&&<span style={{background:"linear-gradient(135deg,#f39c12,#e67e22)",color:"#fff",fontSize:13,fontWeight:900,padding:"3px 10px",borderRadius:20}}>⭐ BEST</span>}
-                  {detail.badge==="new"&&<span style={{background:"linear-gradient(135deg,#00b09b,#27ae60)",color:"#fff",fontSize:13,fontWeight:900,padding:"3px 10px",borderRadius:20}}>✨ NEW</span>}
-                  {detail.badge==="vegetarian"&&<span style={{background:"#2ecc71",color:"#fff",fontSize:13,fontWeight:900,padding:"3px 10px",borderRadius:20}}>🌿 VEGETARIAN</span>}
-                  {detail.badge==="vegan"&&<span style={{background:"#16a085",color:"#fff",fontSize:13,fontWeight:900,padding:"3px 10px",borderRadius:20}}>🌱 VEGAN</span>}
-                  {detail.badge==="gf"&&<span style={{background:"#8e44ad",color:"#fff",fontSize:13,fontWeight:900,padding:"3px 10px",borderRadius:20}}>G/F</span>}
+                  {hasBadge(detail,"best")&&<span style={{background:"linear-gradient(135deg,#f39c12,#e67e22)",color:"#fff",fontSize:13,fontWeight:900,padding:"3px 10px",borderRadius:20}}>⭐ BEST</span>}
+                  {hasBadge(detail,"new")&&<span style={{background:"linear-gradient(135deg,#00b09b,#27ae60)",color:"#fff",fontSize:13,fontWeight:900,padding:"3px 10px",borderRadius:20}}>✨ NEW</span>}
+                  {hasBadge(detail,"vegetarian")&&<span style={{background:"#2ecc71",color:"#fff",fontSize:13,fontWeight:900,padding:"3px 10px",borderRadius:20}}>🌿 VEGETARIAN</span>}
+                  {hasBadge(detail,"vegan")&&<span style={{background:"#16a085",color:"#fff",fontSize:13,fontWeight:900,padding:"3px 10px",borderRadius:20}}>🌱 VEGAN</span>}
+                  {hasBadge(detail,"gf")&&<span style={{background:"#8e44ad",color:"#fff",fontSize:13,fontWeight:900,padding:"3px 10px",borderRadius:20}}>G/F</span>}
                 </div>
                 {detail.desc&&<div style={{fontSize:18,lineHeight:1.7,marginBottom:16,color:"#444"}}>{detail.desc}</div>}
                 {detail.ingredients&&(
@@ -1023,45 +1031,45 @@ export default function App() {
                   style={{background:"#fff",border:"1.5px solid "+(ic?RED:"#ebebeb"),borderRadius:12,overflow:"visible",cursor:"pointer",opacity:item.soldOut?.5:banchanLocked?.4:1,position:"relative",animation:justAdded===item.id?"bnc .28s ease both":"none",boxShadow:"0 1px 6px rgba(0,0,0,.07)"}}
                   onClick={function() { setDetail(item); setSpice(""); }}>
                   {banchanLocked&&<div style={{position:"absolute",top:6,left:6,zIndex:3,background:"rgba(0,0,0,.65)",color:"#fff",borderRadius:5,padding:"2px 8px",fontSize:11,fontWeight:700}}>Baekban Order Required</div>}
-                  {item.badge==="best"&&(
+                  {hasBadge(item,"best")&&(
                     <div style={{position:"absolute",top:12,left:-2,zIndex:2,display:"flex",alignItems:"center",gap:4}}>
                       <div style={{background:"linear-gradient(135deg,#f39c12,#e67e22)",color:"#fff",fontSize:13,fontWeight:900,padding:"6px 14px 6px 10px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 8px rgba(0,0,0,.25)",letterSpacing:1}}>
                         ⭐ BEST
                       </div>
                     </div>
                   )}
-                  {item.badge==="new"&&(
+                  {hasBadge(item,"new")&&(
                     <div style={{position:"absolute",top:12,left:-2,zIndex:2,display:"flex",alignItems:"center",gap:4}}>
                       <div style={{background:"linear-gradient(135deg,#00b09b,#27ae60)",color:"#fff",fontSize:13,fontWeight:900,padding:"6px 14px 6px 10px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 8px rgba(0,0,0,.25)",letterSpacing:1}}>
                         ✨ NEW
                       </div>
                     </div>
                   )}
-                  {item.badge==="vegetarian"&&(
+                  {hasBadge(item,"vegetarian")&&(
                     <div style={{position:"absolute",top:12,left:-2,zIndex:2}}>
                       <div style={{background:"#2ecc71",color:"#fff",fontSize:13,fontWeight:900,padding:"6px 14px 6px 10px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 8px rgba(0,0,0,.25)"}}>
                         🌿 VEG
                       </div>
                     </div>
                   )}
-                  {item.badge==="vegan"&&(
+                  {hasBadge(item,"vegan")&&(
                     <div style={{position:"absolute",top:12,left:-2,zIndex:2}}>
                       <div style={{background:"#16a085",color:"#fff",fontSize:13,fontWeight:900,padding:"6px 14px 6px 10px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 8px rgba(0,0,0,.25)"}}>
                         🌱 VEGAN
                       </div>
                     </div>
                   )}
-                  {item.badge==="gf"&&(
+                  {hasBadge(item,"gf")&&(
                     <div style={{position:"absolute",top:12,left:-2,zIndex:2}}>
                       <div style={{background:"#8e44ad",color:"#fff",fontSize:13,fontWeight:900,padding:"6px 14px 6px 10px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 8px rgba(0,0,0,.25)"}}>
                         G/F
                       </div>
                     </div>
                   )}
-                  {(item.badge==="spicy1"||item.badge==="spicy2"||item.badge==="spicy3")&&(
+                  {(hasBadge(item,"spicy1")||hasBadge(item,"spicy2")||hasBadge(item,"spicy3"))&&(
                     <div style={{position:"absolute",top:12,left:-2,zIndex:2}}>
                       <div style={{background:"#e74c3c",color:"#fff",fontSize:13,fontWeight:900,padding:"6px 14px 6px 10px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 8px rgba(0,0,0,.25)"}}>
-                        {item.badge==="spicy1"?"🌶️":item.badge==="spicy2"?"🌶️🌶️":"🌶️🌶️🌶️"}
+                        {hasBadge(item,"spicy1")?"🌶️":hasBadge(item,"spicy2")?"🌶️🌶️":"🌶️🌶️🌶️"}
                       </div>
                     </div>
                   )}
@@ -1178,9 +1186,14 @@ export default function App() {
               <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
                 {["","best","new","vegetarian","vegan","gf","spicy1","spicy2","spicy3"].map(function(b) {
                   var labels={"":"None","best":"BEST","new":"NEW","vegetarian":"VEGETARIAN","vegan":"VEGAN","gf":"G/F","spicy1":"🌶️","spicy2":"🌶️🌶️","spicy3":"🌶️🌶️🌶️"};
-                  var colors={"":"#f0f0f0","best":"#e74c3c","new":"#27ae60","vegetarian":"#2ecc71","vegan":"#16a085","gf":"#8e44ad","spicy1":"#e67e22","spicy2":"#d35400","spicy3":"#6e2f0a"};
-                  var sel=editItem.badge===b;
-                  return <button key={b} onClick={function() { setEditItem(Object.assign({},editItem,{badge:b})); }}
+                  var colors={"":"#f0f0f0","best":"#e74c3c","new":"#27ae60","vegetarian":"#2ecc71","vegan":"#16a085","gf":"#8e44ad","spicy1":"#f1c40f","spicy2":"#f1c40f","spicy3":"#f1c40f"};
+                  var badges=getBadges(editItem);
+                  var sel=badges.includes(b);
+                  return <button key={b} onClick={function() {
+                    var cur=getBadges(editItem);
+                    var nb=cur.includes(b)?cur.filter(function(x){return x!==b;}):cur.concat([b]);
+                    setEditItem(Object.assign({},editItem,{badges:nb,badge:""}));
+                  }}
                     style={{padding:"8px 16px",borderRadius:20,border:"2px solid "+(sel?colors[b]:"#e0e0e0"),background:sel?colors[b]:"#fff",color:sel?"#fff":"#666",fontWeight:sel?700:400,fontSize:14,cursor:"pointer",fontFamily:F}}>{labels[b]}</button>;
                 })}
               </div>
@@ -1552,8 +1565,8 @@ export default function App() {
                         <div style={{flex:1,minWidth:0}}>
                           <div style={{fontWeight:700,fontSize:17,display:"flex",alignItems:"center",gap:6}}>
                             {item.name}
-                            {item.badge==="best"&&<span style={{background:"#e74c3c",color:"#fff",fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:4}}>BEST</span>}
-                            {item.badge==="new"&&<span style={{background:"#27ae60",color:"#fff",fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:4}}>NEW</span>}
+                            {hasBadge(item,"best")&&<span style={{background:"#e74c3c",color:"#fff",fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:4}}>BEST</span>}
+                            {hasBadge(item,"new")&&<span style={{background:"#27ae60",color:"#fff",fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:4}}>NEW</span>}
                             {item.hasSpice&&<span style={{fontSize:12}}>🌶</span>}
                           </div>
                           <div style={{color:"#999",fontSize:15}}>{item.subcat?catObj.name+" > "+item.subcat:catObj.name}</div>
