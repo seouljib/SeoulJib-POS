@@ -478,6 +478,7 @@ export default function App() {
                             {item.name}
                             {hasBadge(item,"best")&&<span style={{background:"#e74c3c",color:"#fff",fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:4}}>BEST</span>}
                             {hasBadge(item,"new")&&<span style={{background:"#27ae60",color:"#fff",fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:4}}>NEW</span>}
+                            {hasBadge(item,"popular")&&<span style={{background:"#e67e22",color:"#fff",fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:4}}>🔥 POPULAR</span>}
                             {item.hasSpice&&<span style={{fontSize:12}}>🌶</span>}
                           </div>
                           <div style={{color:"#999",fontSize:15}}>{item.subcat?catObj.name+" > "+item.subcat:catObj.name}</div>
