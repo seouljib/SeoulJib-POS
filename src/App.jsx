@@ -284,7 +284,15 @@ export default function App() {
   var [mode,setMode]               = useState("home");
   var [tableNum,setTableNum]       = useState(function() { return db.get(TABLE_KEY); });
   var [isMain,setIsMain]           = useState(function() { return !!db.get(MAIN_KEY); });
-  var [menu,setMenu]               = useState(function() { return db.get(MENU_KEY)||DEFAULT_MENU; });
+  var [menu,setMenu]               = useState(function() {
+    var m = db.get(MENU_KEY)||DEFAULT_MENU;
+    return m.map(function(item) {
+      if (!Array.isArray(item.badges)) {
+        return Object.assign({},item,{badges:item.badge&&item.badge!==""?[item.badge]:[],badge:""});
+      }
+      return item;
+    });
+  });
   var [cats,setCats]               = useState(function() { return db.get(CATS_KEY)||DEFAULT_CATS; });
   var [orders,setOrders]           = useState(function() { return db.get(ORDERS_KEY)||[]; });
   var [calls,setCalls]             = useState(function() { return db.get(CALLS_KEY)||[]; });
@@ -407,7 +415,15 @@ export default function App() {
           prevOrderCount.ids = pending.map(function(o) { return o.id; });
         }
       },
-      menu:  function(v) { setMenu(v);  db.set(MENU_KEY,v);  },
+      menu:  function(v) {
+        var migrated = v.map(function(item) {
+          if (!Array.isArray(item.badges)) {
+            return Object.assign({},item,{badges:item.badge&&item.badge!==""?[item.badge]:[],badge:""});
+          }
+          return item;
+        });
+        setMenu(migrated); db.set(MENU_KEY,migrated);
+      },
       cats:  function(v) { setCats(v);  db.set(CATS_KEY,v);  },
       calls: function(v, fromRemote) {
         setCalls(v); db.set(CALLS_KEY,v);
