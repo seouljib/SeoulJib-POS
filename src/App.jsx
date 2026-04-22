@@ -1133,8 +1133,8 @@ export default function App() {
                     {hasBadge(item,"spicy3")&&<div style={{background:"#fff",color:"#1a1a1a",fontSize:12,fontWeight:900,padding:"5px 12px 5px 8px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 6px rgba(0,0,0,.2)",border:"1px solid #eee"}}>🌶️🌶️🌶️</div>}
                   </div>
                   {item.img
-                    ? <div style={{height:"34vh",overflow:"hidden",borderRadius:"12px 12px 0 0"}}><img src={item.img} alt={item.name} style={{width:"100%",height:"100%",objectFit:"cover"}} /></div>
-                    : <div style={{height:"34vh",background:"linear-gradient(145deg,#f8f0e8,#f0e0d0)",borderRadius:"12px 12px 0 0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:60}}>{item.emoji}</div>
+                    ? <div style={{height:270,overflow:"hidden",borderRadius:"12px 12px 0 0"}}><img src={item.img} alt={item.name} style={{width:"100%",height:"100%",objectFit:"cover"}} /></div>
+                    : <div style={{height:270,background:"linear-gradient(145deg,#f8f0e8,#f0e0d0)",borderRadius:"12px 12px 0 0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:60}}>{item.emoji}</div>
                   }
                   {ic&&<div className="sjbdg" style={{position:"absolute",top:6,right:6,background:RED,color:"#fff",borderRadius:"50%",width:28,height:28,fontSize:13,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{ ic.qty}</div>}
                   {item.soldOut&&<div style={{position:"absolute",top:6,left:6,background:"rgba(0,0,0,.7)",color:"#fff",borderRadius:5,padding:"2px 8px",fontSize:11,fontWeight:700}}>SOLD OUT</div>}
