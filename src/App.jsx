@@ -796,6 +796,7 @@ export default function App() {
               {hasBadge(detail,"new")  && <span style={{background:"#27ae60",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>NEW</span>}
               {hasBadge(detail,"vegetarian") && <span style={{background:"#2ecc71",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>🌿 VEGETARIAN</span>}
               {hasBadge(detail,"vegan") && <span style={{background:"#16a085",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>🌱 VEGAN</span>}
+              {hasBadge(detail,"popular") && <span style={{background:"#e67e22",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>🔥 POPULAR</span>}
               {hasBadge(detail,"gf") && <span style={{background:"#8e44ad",color:"#fff",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>G/F</span>}
               {hasBadge(detail,"spicy1") && <span style={{background:"#f1c40f",color:"#1a1a1a",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>🌶️</span>}
               {hasBadge(detail,"spicy2") && <span style={{background:"#f1c40f",color:"#1a1a1a",fontSize:13,fontWeight:700,padding:"3px 10px",borderRadius:5}}>🌶️🌶️</span>}
@@ -1125,6 +1126,7 @@ export default function App() {
                     {hasBadge(item,"new")&&<div style={{background:"linear-gradient(135deg,#00b09b,#27ae60)",color:"#fff",fontSize:12,fontWeight:900,padding:"5px 12px 5px 8px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 6px rgba(0,0,0,.2)"}}>✨ NEW</div>}
                     {hasBadge(item,"vegetarian")&&<div style={{background:"#2ecc71",color:"#fff",fontSize:12,fontWeight:900,padding:"5px 12px 5px 8px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 6px rgba(0,0,0,.2)"}}>🌿 VEG</div>}
                     {hasBadge(item,"vegan")&&<div style={{background:"#16a085",color:"#fff",fontSize:12,fontWeight:900,padding:"5px 12px 5px 8px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 6px rgba(0,0,0,.2)"}}>🌱 VEGAN</div>}
+                    {hasBadge(item,"popular")&&<div style={{background:"#e67e22",color:"#fff",fontSize:12,fontWeight:900,padding:"5px 12px 5px 8px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 6px rgba(0,0,0,.2)"}}>🔥 POPULAR</div>}
                     {hasBadge(item,"gf")&&<div style={{background:"#8e44ad",color:"#fff",fontSize:12,fontWeight:900,padding:"5px 12px 5px 8px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 6px rgba(0,0,0,.2)"}}>G/F</div>}
                     {hasBadge(item,"spicy1")&&<div style={{background:"#fff",color:"#1a1a1a",fontSize:12,fontWeight:900,padding:"5px 12px 5px 8px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 6px rgba(0,0,0,.2)",border:"1px solid #eee"}}>🌶️</div>}
                     {hasBadge(item,"spicy2")&&<div style={{background:"#fff",color:"#1a1a1a",fontSize:12,fontWeight:900,padding:"5px 12px 5px 8px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 6px rgba(0,0,0,.2)",border:"1px solid #eee"}}>🌶️🌶️</div>}
@@ -1259,9 +1261,9 @@ export default function App() {
             <div>
               <div style={{color:"#666",fontSize:13,marginBottom:8,fontWeight:600}}>Badge</div>
               <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                {["","best","new","vegetarian","vegan","gf","spicy1","spicy2","spicy3"].map(function(b) {
-                  var labels={"":"None","best":"BEST","new":"NEW","vegetarian":"VEGETARIAN","vegan":"VEGAN","gf":"G/F","spicy1":"🌶️","spicy2":"🌶️🌶️","spicy3":"🌶️🌶️🌶️"};
-                  var colors={"":"#f0f0f0","best":"#e74c3c","new":"#27ae60","vegetarian":"#2ecc71","vegan":"#16a085","gf":"#8e44ad","spicy1":"#fff","spicy2":"#fff","spicy3":"#fff"};
+                {["","best","new","popular","vegetarian","vegan","gf","spicy1","spicy2","spicy3"].map(function(b) {
+                  var labels={"":"None","best":"BEST","new":"NEW","popular":"POPULAR","vegetarian":"VEGETARIAN","vegan":"VEGAN","gf":"G/F","spicy1":"🌶️","spicy2":"🌶️🌶️","spicy3":"🌶️🌶️🌶️"};
+                  var colors={"":"#f0f0f0","best":"#e74c3c","new":"#27ae60","popular":"#e67e22","vegetarian":"#2ecc71","vegan":"#16a085","gf":"#8e44ad","spicy1":"#fff","spicy2":"#fff","spicy3":"#fff"};
                   var curBadges=getBadges(editItem);
                   var sel=b===""?curBadges.length===0:curBadges.includes(b);
                   var txtColor=(b==="spicy1"||b==="spicy2"||b==="spicy3")?"#1a1a1a":sel?"#fff":"#666";
@@ -1670,55 +1672,6 @@ export default function App() {
                       </>
                     );
                   })()}
-                  {false&&ci.map(function(item) {
-                    return (
-                      <div key={item.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 16px",borderBottom:"1px solid #f5f5f5",opacity:item.hidden?.5:1}}>
-                        {item.img?<img src={item.img} alt="" style={{width:44,height:44,borderRadius:8,objectFit:"cover",flexShrink:0}} />:<div style={{width:44,height:44,borderRadius:8,background:"#f5f5f5",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{item.emoji}</div>}
-                        <div style={{flex:1,minWidth:0}}>
-                          <div style={{fontWeight:700,fontSize:17,display:"flex",alignItems:"center",gap:6}}>
-                            {item.name}
-                            {hasBadge(item,"best")&&<span style={{background:"#e74c3c",color:"#fff",fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:4}}>BEST</span>}
-                            {hasBadge(item,"new")&&<span style={{background:"#27ae60",color:"#fff",fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:4}}>NEW</span>}
-                            {item.hasSpice&&<span style={{fontSize:12}}>🌶</span>}
-                          </div>
-                          <div style={{color:"#999",fontSize:15}}>{item.subcat?catObj.name+" > "+item.subcat:catObj.name}</div>
-                        </div>
-                        <div style={{color:RED,fontWeight:700,fontSize:17,flexShrink:0}}>{item.price===0?"Free":"$"+item.price}</div>
-                        {/* Quick controls */}
-                        <button onClick={function() { saveMenu(menu.map(function(m) { return m.id===item.id?Object.assign({},m,{soldOut:!m.soldOut}):m; })); }}
-                          style={{padding:"5px 8px",borderRadius:6,border:"1px solid "+(item.soldOut?"#27ae60":RED),background:item.soldOut?"#f0fff0":"#fff0f0",color:item.soldOut?"#27ae60":RED,fontWeight:600,cursor:"pointer",fontSize:11,fontFamily:F,whiteSpace:"nowrap",flexShrink:0}}>
-                          {item.soldOut?"Resume":"Sold Out"}
-                        </button>
-                        <button onClick={function() { saveMenu(menu.map(function(m) { return m.id===item.id?Object.assign({},m,{hidden:!m.hidden}):m; })); }}
-                          style={{padding:"5px 8px",borderRadius:6,border:"1px solid #999",background:"#f5f5f5",color:"#666",fontWeight:600,cursor:"pointer",fontSize:11,fontFamily:F,flexShrink:0}}>
-                          {item.hidden?"Show":"Hide"}
-                        </button>
-                        <button onClick={function() { var it=Object.assign({},item); it.badges=getBadges(it); it.badge=""; setEditItem(it);setIsNewItem(false); }}
-                          style={{padding:"5px 10px",borderRadius:6,border:"1.5px solid #e0e0e0",background:"#fff",color:"#1a1a1a",fontWeight:600,cursor:"pointer",fontSize:13,fontFamily:F,flexShrink:0}}>Edit</button>
-                        <div style={{display:"flex",flexDirection:"column",gap:2,flexShrink:0}}>
-                          <button onClick={function() {
-                            var idx=menu.findIndex(function(m) { return m.id===item.id; });
-                            if (idx<=0) return;
-                            var nm=menu.slice();
-                            var prev=nm[idx-1];
-                            if (prev.cat!==item.cat) return;
-                            nm[idx-1]=nm[idx]; nm[idx]=prev;
-                            saveMenu(nm);
-                          }} style={{padding:"2px 7px",borderRadius:4,border:"1px solid #ddd",background:"#f9f9f9",cursor:"pointer",fontSize:12,fontFamily:F,lineHeight:1}}>▲</button>
-                          <button onClick={function() {
-                            var idx=menu.findIndex(function(m) { return m.id===item.id; });
-                            if (idx>=menu.length-1) return;
-                            var nm=menu.slice();
-                            var next=nm[idx+1];
-                            if (next.cat!==item.cat) return;
-                            nm[idx+1]=nm[idx]; nm[idx]=next;
-                            saveMenu(nm);
-                          }} style={{padding:"2px 7px",borderRadius:4,border:"1px solid #ddd",background:"#f9f9f9",cursor:"pointer",fontSize:12,fontFamily:F,lineHeight:1}}>▼</button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  }
                 </div>
               );
             })}
