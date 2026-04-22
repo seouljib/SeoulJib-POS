@@ -1294,9 +1294,22 @@ export default function App() {
             </div>
             <div>
               <div style={{color:"#666",fontSize:13,marginBottom:8,fontWeight:600}}>Upsell Items <span style={{color:"#aaa",fontWeight:400}}>(선택 시 이 메뉴 담으면 팝업)</span></div>
+              {(editItem.upsellIds||[]).length>0&&(
+                <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10,padding:"10px 12px",background:"#fff0f0",borderRadius:10,border:"1px solid #ffc0c0"}}>
+                  <span style={{fontSize:12,fontWeight:700,color:RED,width:"100%",marginBottom:4}}>선택됨 ({(editItem.upsellIds||[]).length}/5)</span>
+                  {(editItem.upsellIds||[]).map(function(uid){
+                    var m=menu.find(function(x){return x.id===uid;});
+                    if (!m) return null;
+                    return <span key={uid} onClick={function(){setEditItem(Object.assign({},editItem,{upsellIds:(editItem.upsellIds||[]).filter(function(x){return x!==uid;})}));}}
+                      style={{display:"flex",alignItems:"center",gap:4,padding:"4px 8px",borderRadius:20,background:"#fff",border:"1px solid #ffc0c0",fontSize:13,cursor:"pointer"}}>
+                      {m.emoji} {m.name} <span style={{color:"#aaa"}}>✕</span>
+                    </span>;
+                  })}
+                </div>
+              )}
               <input value={upsellCat} onChange={function(e){setUpsellCat(e.target.value);}}
                 placeholder="아이템 이름 검색..." style={Object.assign({},inp,{marginBottom:8,fontSize:13})} />
-              <div style={{display:"flex",flexDirection:"column",gap:6,maxHeight:200,overflowY:"auto"}}>
+              <div style={{display:"flex",flexDirection:"column",gap:4,maxHeight:140,overflowY:"auto"}}>
                 {menu.filter(function(m){return m.id!==editItem.id&&!m.hidden&&!DEFAULT_MENU.find(function(d){return d.id===m.id;})&&(upsellCat===""||m.name.toLowerCase().includes(upsellCat.toLowerCase()));}).map(function(m) {
                   var uids=editItem.upsellIds||[];
                   var sel=uids.includes(m.id);
@@ -1306,11 +1319,11 @@ export default function App() {
                       if (sel) { setEditItem(Object.assign({},editItem,{upsellIds:cur.filter(function(x){return x!==m.id;})})); }
                       else if (cur.length<5) { setEditItem(Object.assign({},editItem,{upsellIds:cur.concat([m.id])})); }
                       else { showToast("Max 5 items"); }
-                    }} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:10,border:"1.5px solid "+(sel?RED:"#e0e0e0"),background:sel?"#fff0f0":"#fafafa",cursor:"pointer"}}>
-                      <span style={{fontSize:20}}>{m.emoji}</span>
-                      <span style={{flex:1,fontWeight:sel?700:400,fontSize:14}}>{m.name}</span>
-                      <span style={{color:RED,fontWeight:700,fontSize:13}}>{m.price===0?"Free":"$"+m.price}</span>
-                      {sel&&<span style={{color:RED,fontSize:16}}>✓</span>}
+                    }} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:10,border:"1.5px solid "+(sel?RED:"#e0e0e0"),background:sel?"#fff0f0":"#fafafa",cursor:"pointer"}}>
+                      <span style={{fontSize:18}}>{m.emoji}</span>
+                      <span style={{flex:1,fontWeight:sel?700:400,fontSize:13}}>{m.name}</span>
+                      <span style={{color:"#999",fontSize:12}}>{m.price===0?"Free":"$"+m.price}</span>
+                      {sel&&<span style={{color:RED,fontSize:14}}>✓</span>}
                     </div>
                   );
                 })}
