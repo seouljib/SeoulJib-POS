@@ -478,7 +478,13 @@ export default function App() {
                             {item.name}
                             {hasBadge(item,"best")&&<span style={{background:"#e74c3c",color:"#fff",fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:4}}>BEST</span>}
                             {hasBadge(item,"new")&&<span style={{background:"#27ae60",color:"#fff",fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:4}}>NEW</span>}
-                            {hasBadge(item,"popular")&&<span style={{background:"#e67e22",color:"#fff",fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:4}}>🔥 POPULAR</span>}
+                            {hasBadge(item,"popular")&&<span style={{background:"#e67e22",color:"#fff",fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:4}}>🔥</span>}
+                            {hasBadge(item,"vegetarian")&&<span style={{background:"#2ecc71",color:"#fff",fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:4}}>🌿</span>}
+                            {hasBadge(item,"vegan")&&<span style={{background:"#16a085",color:"#fff",fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:4}}>🌱</span>}
+                            {hasBadge(item,"gf")&&<span style={{background:"#8e44ad",color:"#fff",fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:4}}>G/F</span>}
+                            {hasBadge(item,"spicy1")&&<span style={{background:"#f1c40f",color:"#1a1a1a",fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:4}}>🌶️</span>}
+                            {hasBadge(item,"spicy2")&&<span style={{background:"#f1c40f",color:"#1a1a1a",fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:4}}>🌶️🌶️</span>}
+                            {hasBadge(item,"spicy3")&&<span style={{background:"#f1c40f",color:"#1a1a1a",fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:4}}>🌶️🌶️🌶️</span>}
                             {item.hasSpice&&<span style={{fontSize:12}}>🌶</span>}
                           </div>
                           <div style={{color:"#999",fontSize:15}}>{item.subcat?catObj.name+" > "+item.subcat:catObj.name}</div>
