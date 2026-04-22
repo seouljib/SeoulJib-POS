@@ -299,6 +299,8 @@ export default function App() {
   var [adminTab,setAdminTab]       = useState("orders");
   var [editItem,setEditItem]       = useState(null);
   var [isNewItem,setIsNewItem]     = useState(false);
+  var [emojiOpen,setEmojiOpen]     = useState(false);
+  var [upsellCat,setUpsellCat]     = useState("");
   var [editCat,setEditCat]         = useState(null);
   var [isNewCat,setIsNewCat]       = useState(false);
   var [detail,setDetail]           = useState(null);
@@ -451,6 +453,54 @@ export default function App() {
   }, []);
 
   function showToast(m) { setToast(m); setTimeout(function() { setToast(""); }, 2000); }
+  function renderMenuItem(item, catObj) {
+    return (
+      <div key={item.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 16px",borderBottom:"1px solid #f5f5f5",opacity:item.hidden?.5:1}}>
+                        {item.img?<img src={item.img} alt="" style={{width:44,height:44,borderRadius:8,objectFit:"cover",flexShrink:0}} />:<div style={{width:44,height:44,borderRadius:8,background:"#f5f5f5",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{item.emoji}</div>}
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{fontWeight:700,fontSize:17,display:"flex",alignItems:"center",gap:6}}>
+                            {item.name}
+                            {hasBadge(item,"best")&&<span style={{background:"#e74c3c",color:"#fff",fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:4}}>BEST</span>}
+                            {hasBadge(item,"new")&&<span style={{background:"#27ae60",color:"#fff",fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:4}}>NEW</span>}
+                            {item.hasSpice&&<span style={{fontSize:12}}>🌶</span>}
+                          </div>
+                          <div style={{color:"#999",fontSize:15}}>{item.subcat?catObj.name+" > "+item.subcat:catObj.name}</div>
+                        </div>
+                        <div style={{color:RED,fontWeight:700,fontSize:17,flexShrink:0}}>{item.price===0?"Free":"$"+item.price}</div>
+                        {/* Quick controls */}
+                        <button onClick={function() { saveMenu(menu.map(function(m) { return m.id===item.id?Object.assign({},m,{soldOut:!m.soldOut}):m; })); }}
+                          style={{padding:"5px 8px",borderRadius:6,border:"1px solid "+(item.soldOut?"#27ae60":RED),background:item.soldOut?"#f0fff0":"#fff0f0",color:item.soldOut?"#27ae60":RED,fontWeight:600,cursor:"pointer",fontSize:11,fontFamily:F,whiteSpace:"nowrap",flexShrink:0}}>
+                          {item.soldOut?"Resume":"Sold Out"}
+                        </button>
+                        <button onClick={function() { saveMenu(menu.map(function(m) { return m.id===item.id?Object.assign({},m,{hidden:!m.hidden}):m; })); }}
+                          style={{padding:"5px 8px",borderRadius:6,border:"1px solid #999",background:"#f5f5f5",color:"#666",fontWeight:600,cursor:"pointer",fontSize:11,fontFamily:F,flexShrink:0}}>
+                          {item.hidden?"Show":"Hide"}
+                        </button>
+                        <button onClick={function() { var it=Object.assign({},item); it.badges=getBadges(it); it.badge=""; setEditItem(it);setIsNewItem(false); }}
+                          style={{padding:"5px 10px",borderRadius:6,border:"1.5px solid #e0e0e0",background:"#fff",color:"#1a1a1a",fontWeight:600,cursor:"pointer",fontSize:13,fontFamily:F,flexShrink:0}}>Edit</button>
+                        <div style={{display:"flex",flexDirection:"column",gap:2,flexShrink:0}}>
+                          <button onClick={function() {
+                            var idx=menu.findIndex(function(m) { return m.id===item.id; });
+                            if (idx<=0) return;
+                            var nm=menu.slice();
+                            var prev=nm[idx-1];
+                            if (prev.cat!==item.cat) return;
+                            nm[idx-1]=nm[idx]; nm[idx]=prev;
+                            saveMenu(nm);
+                          }} style={{padding:"2px 7px",borderRadius:4,border:"1px solid #ddd",background:"#f9f9f9",cursor:"pointer",fontSize:12,fontFamily:F,lineHeight:1}}>▲</button>
+                          <button onClick={function() {
+                            var idx=menu.findIndex(function(m) { return m.id===item.id; });
+                            if (idx>=menu.length-1) return;
+                            var nm=menu.slice();
+                            var next=nm[idx+1];
+                            if (next.cat!==item.cat) return;
+                            nm[idx+1]=nm[idx]; nm[idx]=next;
+                            saveMenu(nm);
+                          }} style={{padding:"2px 7px",borderRadius:4,border:"1px solid #ddd",background:"#f9f9f9",cursor:"pointer",fontSize:12,fontFamily:F,lineHeight:1}}>▼</button>
+                        </div>
+                      </div>
+    );
+  }
 
   function connectPrinter() {
     setPrinterStatus("connecting");
@@ -1048,7 +1098,7 @@ export default function App() {
         <div style={{flex:1,background:"#fff",display:"flex",flexDirection:"column",overflow:"hidden",position:"relative"}}>
           {/* T-order style table badge */}
           <div style={{position:"absolute",top:0,right:0,zIndex:10,background:RED,border:"none",borderRadius:"0 0 0 14px",padding:"10px 32px 16px",textAlign:"center",minWidth:160,boxShadow:"-2px 2px 8px rgba(192,57,43,.3)"}}>
-            <div style={{fontSize:14,fontWeight:600,color:"rgba(255,255,255,.7)",letterSpacing:2,lineHeight:1,marginBottom:4}}>Table.</div>
+            <div style={{fontSize:14,fontWeight:900,color:"rgba(255,255,255,.9)",letterSpacing:2,lineHeight:1,marginBottom:4}}>TABLE</div>
             <div style={{fontSize:52,fontWeight:900,color:"#fff",lineHeight:1}}>{tableNum}</div>
           </div>
           {hasSubs&&(
@@ -1103,7 +1153,7 @@ export default function App() {
         </div>
       </div>
       <div style={{height:68,background:"#fff",borderTop:"1px solid #e0e0e0",display:"flex",alignItems:"center",padding:"0 16px",gap:12,flexShrink:0}}>
-        <button className="sjcst" onClick={callStaff}
+        {/*callbtn*/}<button className={callActive?"sjcst":""} onClick={callStaff}
           style={{flex:1,height:46,background:"#fff",border:"1.5px solid #e0e0e0",borderRadius:12,color:"#666",fontSize:15,fontWeight:600,cursor:"pointer",fontFamily:F,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
           🔔 Call Staff
         </button>
@@ -1178,20 +1228,21 @@ export default function App() {
             )}
             <div>
               <div style={{color:"#666",fontSize:13,marginBottom:8,fontWeight:600}}>Emoji <span style={{color:"#aaa",fontWeight:400}}>(사진 없을 때 표시)</span></div>
-              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
-                <div style={{width:60,height:60,borderRadius:12,background:"#f5f5f5",border:"1.5px solid #e0e0e0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:36}}>{editItem.emoji||"🍽️"}</div>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+                <div onClick={function(){setEmojiOpen(!emojiOpen);}} style={{width:60,height:60,borderRadius:12,background:"#f5f5f5",border:"2px solid "+(emojiOpen?RED:"#e0e0e0"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:36,cursor:"pointer"}}>{editItem.emoji||"🍽️"}</div>
                 <input value={editItem.emoji||""} onChange={function(e) { setEditItem(Object.assign({},editItem,{emoji:e.target.value})); }}
                   placeholder="직접 입력" style={Object.assign({},inp,{flex:1})} />
+                <button onClick={function(){setEmojiOpen(!emojiOpen);}} style={{padding:"8px 12px",borderRadius:8,border:"1px solid #e0e0e0",background:emojiOpen?"#fff0f0":"#f9f9f9",color:emojiOpen?RED:"#666",fontSize:13,cursor:"pointer",fontFamily:F,flexShrink:0}}>{emojiOpen?"닫기":"선택"}</button>
               </div>
-              <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-                {["🍲","🥩","🍖","🍗","🥓","🍳","🥚","🧆","🥘","🫕","🍜","🍝","🍛","🍣","🍱","🥟","🍤","🍙","🍚","🍘","🥗","🥦","🥕","🌽","🧅","🧄","🥔","🍠","🫚","🌶️","🧂","🍱","🥡","🫙","🍺","🍻","🥂","🍷","🥃","🍸","🍹","🧃","🥤","🧋","☕","🍵","🫖","🧊","💧","🍰","🎂","🍮","🍦","🍨","🧁","🍩","🍪","🍫","🍬","🍭"].map(function(e) {
+              {emojiOpen&&<div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:4}}>
+                {["🍲","🥩","🍖","🍗","🥓","🍳","🥚","🧆","🥘","🫕","🍜","🍝","🍛","🍣","🍱","🥟","🍤","🍙","🍚","🍘","🥗","🥦","🥕","🌽","🧅","🧄","🥔","🍠","🫚","🌶️","🧂","🥡","🫙","🍺","🍻","🥂","🍷","🥃","🍸","🍹","🧃","🥤","🧋","☕","🍵","🫖","🧊","💧","🍰","🎂","🍮","🍦","🍨","🧁","🍩","🍪","🍫","🍬","🍭"].map(function(e) {
                   var sel=editItem.emoji===e;
-                  return <button key={e} onClick={function(){setEditItem(Object.assign({},editItem,{emoji:e}));}}
-                    style={{width:40,height:40,borderRadius:8,border:"2px solid "+(sel?RED:"#e0e0e0"),background:sel?"#fff0f0":"#fff",fontSize:22,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>
+                  return <button key={e} onClick={function(){setEditItem(Object.assign({},editItem,{emoji:e}));setEmojiOpen(false);}}
+                    style={{width:44,height:44,borderRadius:8,border:"2px solid "+(sel?RED:"#e0e0e0"),background:sel?"#fff0f0":"#fff",fontSize:24,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>
                     {e}
                   </button>;
                 })}
-              </div>
+              </div>}
             </div>
             {[["Item Name","name"],["Description","desc"]].map(function(pair) {
               return (
@@ -1241,8 +1292,10 @@ export default function App() {
             </div>
             <div>
               <div style={{color:"#666",fontSize:13,marginBottom:8,fontWeight:600}}>Upsell Items <span style={{color:"#aaa",fontWeight:400}}>(선택 시 이 메뉴 담으면 팝업)</span></div>
+              <input value={upsellCat} onChange={function(e){setUpsellCat(e.target.value);}}
+                placeholder="아이템 이름 검색..." style={Object.assign({},inp,{marginBottom:8,fontSize:13})} />
               <div style={{display:"flex",flexDirection:"column",gap:6,maxHeight:200,overflowY:"auto"}}>
-                {menu.filter(function(m){return m.id!==editItem.id&&!m.hidden&&!DEFAULT_MENU.find(function(d){return d.id===m.id;});}).map(function(m) {
+                {menu.filter(function(m){return m.id!==editItem.id&&!m.hidden&&!DEFAULT_MENU.find(function(d){return d.id===m.id;})&&(upsellCat===""||m.name.toLowerCase().includes(upsellCat.toLowerCase()));}).map(function(m) {
                   var uids=editItem.upsellIds||[];
                   var sel=uids.includes(m.id);
                   return (
@@ -1425,7 +1478,7 @@ export default function App() {
                   <div key={c.id} style={{display:"flex",alignItems:"center",gap:12,background:"#3a1a1a",border:"2px solid "+RED,borderRadius:12,padding:"10px 18px"}}>
                     <span style={{fontWeight:800,fontSize:18,color:"#fff"}}>🔔 Table {c.table}</span>
                     <span style={{color:"#888",fontSize:15}}>{c.time}</span>
-                    <button onClick={function() { saveCalls(calls.map(function(x) { return x.id===c.id?Object.assign({},x,{done:true}):x; })); stopBeep(); }}
+                    <button onClick={function() { saveCalls(calls.map(function(x) { return x.id===c.id?Object.assign({},x,{done:true}):x; })); stopBeep(); setCallActive(false); }}
                       style={{background:"#27ae60",border:"none",color:"#fff",borderRadius:8,padding:"8px 18px",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:F}}>Done</button>
                   </div>
                 );
@@ -1595,7 +1648,29 @@ export default function App() {
                       </button>
                     </div>
                   </div>
-                  {ci.map(function(item) {
+                  {(function() {
+                    var subs = catObj.subs&&catObj.subs.length>0 ? catObj.subs.map(function(s){return s.name;}) : null;
+                    if (!subs) return ci.map(function(item) {
+                      return renderMenuItem(item, catObj);
+                    });
+                    var noSub = ci.filter(function(m){return !m.subcat||m.subcat===""});
+                    var groups = subs.map(function(s){ return {name:s, items:ci.filter(function(m){return m.subcat===s;})}; });
+                    return (
+                      <>
+                        {noSub.map(function(item){ return renderMenuItem(item, catObj); })}
+                        {groups.map(function(g) {
+                          if (g.items.length===0) return null;
+                          return (
+                            <div key={g.name}>
+                              <div style={{padding:"8px 16px",background:"#f9f9f9",borderBottom:"1px solid #e0e0e0",fontSize:12,fontWeight:700,color:"#888",letterSpacing:1}}>{g.name.toUpperCase()}</div>
+                              {g.items.map(function(item){ return renderMenuItem(item, catObj); })}
+                            </div>
+                          );
+                        })}
+                      </>
+                    );
+                  })()}
+                  {false&&ci.map(function(item) {
                     return (
                       <div key={item.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 16px",borderBottom:"1px solid #f5f5f5",opacity:item.hidden?.5:1}}>
                         {item.img?<img src={item.img} alt="" style={{width:44,height:44,borderRadius:8,objectFit:"cover",flexShrink:0}} />:<div style={{width:44,height:44,borderRadius:8,background:"#f5f5f5",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{item.emoji}</div>}
@@ -1643,6 +1718,7 @@ export default function App() {
                       </div>
                     );
                   })}
+                  }
                 </div>
               );
             })}
