@@ -667,6 +667,31 @@ export default function App() {
     return function() { clearInterval(pollRef.current); };
   }, [mode, adminTab, poll]);
 
+  // 앱 시작 시 프린터 자동 연결
+  useEffect(function() {
+    var ip = db.get("sj-printer-ip");
+    if (!ip) return;
+    var tryConnect = function() {
+      if (eposRef.printer) return;
+      if (!window.epson) { setTimeout(tryConnect, 1000); return; }
+      try {
+        var epos = new window.epson.ePOSDevice();
+        eposRef.current = epos;
+        epos.connect(ip, 8008, function(res) {
+          if (res==="OK"||res==="SSL_CONNECT_OK") {
+            epos.createDevice("local_printer", epos.DEVICE_TYPE_PRINTER, {crypto:false,buffer:false}, function(devobj,code) {
+              if (code==="OK") { eposRef.printer=devobj; setPrinterStatus("connected"); }
+              else { eposRef.current=null; setPrinterStatus("disconnected"); }
+            });
+          } else {
+            eposRef.current=null; setPrinterStatus("disconnected");
+          }
+        });
+      } catch(e) { setPrinterStatus("disconnected"); }
+    };
+    setTimeout(tryConnect, 2000);
+  }, []);
+
   function getBadges(item) {
     if (!item) return [];
     if (Array.isArray(item.badges)) return item.badges;
