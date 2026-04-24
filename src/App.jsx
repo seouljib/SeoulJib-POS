@@ -287,13 +287,21 @@ export default function App() {
   var [menu,setMenu]               = useState(function() {
     var m = db.get(MENU_KEY)||DEFAULT_MENU;
     var needsMigration = m.some(function(item){return !Array.isArray(item.badges);});
-    if (!needsMigration) return m;
-    return m.map(function(item) {
+    var migrated = needsMigration ? m.map(function(item) {
       if (!Array.isArray(item.badges)) {
         return Object.assign({},item,{badges:item.badge&&item.badge!==""?[item.badge]:[],badge:""});
       }
       return item;
-    });
+    }) : m;
+    // status 캐시 적용
+    var st = db.get("sj-status")||{};
+    if (Object.keys(st).length>0) {
+      return migrated.map(function(item) {
+        if (st[item.id]) return Object.assign({},item,st[item.id]);
+        return item;
+      });
+    }
+    return migrated;
   });
   var [cats,setCats]               = useState(function() { return db.get(CATS_KEY)||DEFAULT_CATS; });
   var [orders,setOrders]           = useState(function() { return db.get(ORDERS_KEY)||[]; });
@@ -373,7 +381,7 @@ export default function App() {
   var prevCallCount  = useRef(0);
   useEffect(function() {
     var unsubs = [];
-    var keys = ["orders","menu","cats","calls"];
+    var keys = ["orders","menu","cats","calls","status"];
     // Devices battery listener (main tablet only)
     if (db.get(MAIN_KEY)) {
       var devUnsub = onSnapshot(collection(firestore,"devices"), function(snapshot) {
@@ -426,6 +434,16 @@ export default function App() {
         }) : v;
         setMenu(migrated); db.set(MENU_KEY,migrated);
       },
+      status: function(v) {
+        // v = {itemId: {soldOut, hidden}, ...}
+        setMenu(function(prev) {
+          return prev.map(function(m) {
+            if (v[m.id]) return Object.assign({},m,v[m.id]);
+            return m;
+          });
+        });
+        db.set("sj-status",v);
+      },
       cats:  function(v) {
         setCats(v); db.set(CATS_KEY,v);
         // cats 변경 시 selCat/selSub 유효성 확인 후 리셋
@@ -473,7 +491,7 @@ export default function App() {
     prevOrderCount.current = n.filter(function(o) { return o.status==="pending"&&!o.confirmed; }).length;
     fsSet("pos","orders",{data:JSON.stringify(n),ts:Date.now()});
   }, []);
-  var saveMenu   = useCallback(function(n) { setMenu(n);   db.set(MENU_KEY,n);   fsSet("pos","menu",{data:JSON.stringify(n),ts:Date.now()}); }, [fsSet]);
+  var saveMenu   = useCallback(function(n) { setMenu(n);   db.set(MENU_KEY,n);   fsSet("pos","menu",{data:JSON.stringify(n),ts:Date.now()}); }, []);
   var saveCats   = useCallback(function(n) { setCats(n);   db.set(CATS_KEY,n);   fsSet("pos","cats",{data:JSON.stringify(n),ts:Date.now()}); }, []);
   var saveCalls  = useCallback(function(n) {
     setCalls(n);  db.set(CALLS_KEY,n);
@@ -505,11 +523,25 @@ export default function App() {
                         </div>
                         <div style={{color:RED,fontWeight:700,fontSize:17,flexShrink:0}}>{item.price===0?"Free":"$"+item.price}</div>
                         {/* Quick controls */}
-                        <button onClick={function() { saveMenu(menu.map(function(m) { return m.id===item.id?Object.assign({},m,{soldOut:!m.soldOut}):m; })); }}
+                        <button onClick={function() {
+                          var st = db.get("sj-status")||{};
+                          var cur = st[item.id]||{};
+                          var next = Object.assign({},st,{}); next[item.id]=Object.assign({},cur,{soldOut:!item.soldOut});
+                          db.set("sj-status",next);
+                          fsSet("pos","status",{data:JSON.stringify(next),ts:Date.now()});
+                          saveMenu(menu.map(function(m){return m.id===item.id?Object.assign({},m,{soldOut:!m.soldOut}):m;}));
+                        }}
                           style={{padding:"5px 8px",borderRadius:6,border:"1px solid "+(item.soldOut?"#27ae60":RED),background:item.soldOut?"#f0fff0":"#fff0f0",color:item.soldOut?"#27ae60":RED,fontWeight:600,cursor:"pointer",fontSize:11,fontFamily:F,whiteSpace:"nowrap",flexShrink:0}}>
                           {item.soldOut?"Resume":"Sold Out"}
                         </button>
-                        <button onClick={function() { saveMenu(menu.map(function(m) { return m.id===item.id?Object.assign({},m,{hidden:!m.hidden}):m; })); }}
+                        <button onClick={function() {
+                          var st = db.get("sj-status")||{};
+                          var cur = st[item.id]||{};
+                          var next = Object.assign({},st,{}); next[item.id]=Object.assign({},cur,{hidden:!item.hidden});
+                          db.set("sj-status",next);
+                          fsSet("pos","status",{data:JSON.stringify(next),ts:Date.now()});
+                          saveMenu(menu.map(function(m){return m.id===item.id?Object.assign({},m,{hidden:!m.hidden}):m;}));
+                        }}
                           style={{padding:"5px 8px",borderRadius:6,border:"1px solid #999",background:"#f5f5f5",color:"#666",fontWeight:600,cursor:"pointer",fontSize:11,fontFamily:F,flexShrink:0}}>
                           {item.hidden?"Show":"Hide"}
                         </button>
