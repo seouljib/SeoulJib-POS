@@ -530,8 +530,8 @@ export default function App() {
                           var cur = st[item.id]||{};
                           var next = Object.assign({},st,{}); next[item.id]=Object.assign({},cur,{soldOut:!item.soldOut});
                           db.set("sj-status",next);
+                          setMenu(function(prev){return prev.map(function(m){return m.id===item.id?Object.assign({},m,{soldOut:!item.soldOut}):m;});});
                           fsSet("pos","status",{data:JSON.stringify(next),ts:Date.now()});
-                          saveMenu(menu.map(function(m){return m.id===item.id?Object.assign({},m,{soldOut:!m.soldOut}):m;}));
                         }}
                           style={{padding:"5px 8px",borderRadius:6,border:"1px solid "+(item.soldOut?"#27ae60":RED),background:item.soldOut?"#f0fff0":"#fff0f0",color:item.soldOut?"#27ae60":RED,fontWeight:600,cursor:"pointer",fontSize:11,fontFamily:F,whiteSpace:"nowrap",flexShrink:0}}>
                           {item.soldOut?"Resume":"Sold Out"}
@@ -541,8 +541,8 @@ export default function App() {
                           var cur = st[item.id]||{};
                           var next = Object.assign({},st,{}); next[item.id]=Object.assign({},cur,{hidden:!item.hidden});
                           db.set("sj-status",next);
+                          setMenu(function(prev){return prev.map(function(m){return m.id===item.id?Object.assign({},m,{hidden:!item.hidden}):m;});});
                           fsSet("pos","status",{data:JSON.stringify(next),ts:Date.now()});
-                          saveMenu(menu.map(function(m){return m.id===item.id?Object.assign({},m,{hidden:!m.hidden}):m;}));
                         }}
                           style={{padding:"5px 8px",borderRadius:6,border:"1px solid #999",background:"#f5f5f5",color:"#666",fontWeight:600,cursor:"pointer",fontSize:11,fontFamily:F,flexShrink:0}}>
                           {item.hidden?"Show":"Hide"}
