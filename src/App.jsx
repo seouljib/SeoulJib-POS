@@ -549,21 +549,26 @@ export default function App() {
                           style={{padding:"5px 10px",borderRadius:6,border:"1.5px solid #e0e0e0",background:"#fff",color:"#1a1a1a",fontWeight:600,cursor:"pointer",fontSize:13,fontFamily:F,flexShrink:0}}>Edit</button>
                         <div style={{display:"flex",flexDirection:"column",gap:2,flexShrink:0}}>
                           <button onClick={function() {
-                            var idx=menu.findIndex(function(m) { return m.id===item.id; });
-                            if (idx<=0) return;
+                            var sameSub = menu.filter(function(m){return m.cat===item.cat&&(m.subcat||"")===(item.subcat||"");});
+                            var subIdx = sameSub.findIndex(function(m){return m.id===item.id;});
+                            showToast("pos:"+subIdx+"/"+sameSub.length+" sub:["+(item.subcat||"")+"]");
+                            if (subIdx<=0) return;
+                            var swapWith = sameSub[subIdx-1];
                             var nm=menu.slice();
-                            var prev=nm[idx-1];
-                            if (prev.cat!==item.cat) return;
-                            nm[idx-1]=nm[idx]; nm[idx]=prev;
+                            var i1=nm.findIndex(function(m){return m.id===item.id;});
+                            var i2=nm.findIndex(function(m){return m.id===swapWith.id;});
+                            var tmp=nm[i1]; nm[i1]=nm[i2]; nm[i2]=tmp;
                             saveMenu(nm);
                           }} style={{padding:"2px 7px",borderRadius:4,border:"1px solid #ddd",background:"#f9f9f9",cursor:"pointer",fontSize:12,fontFamily:F,lineHeight:1}}>▲</button>
                           <button onClick={function() {
-                            var idx=menu.findIndex(function(m) { return m.id===item.id; });
-                            if (idx>=menu.length-1) return;
+                            var sameSub = menu.filter(function(m){return m.cat===item.cat&&(m.subcat||"")===(item.subcat||"");});
+                            var subIdx = sameSub.findIndex(function(m){return m.id===item.id;});
+                            if (subIdx>=sameSub.length-1) return;
+                            var swapWith = sameSub[subIdx+1];
                             var nm=menu.slice();
-                            var next=nm[idx+1];
-                            if (next.cat!==item.cat) return;
-                            nm[idx+1]=nm[idx]; nm[idx]=next;
+                            var i1=nm.findIndex(function(m){return m.id===item.id;});
+                            var i2=nm.findIndex(function(m){return m.id===swapWith.id;});
+                            var tmp=nm[i1]; nm[i1]=nm[i2]; nm[i2]=tmp;
                             saveMenu(nm);
                           }} style={{padding:"2px 7px",borderRadius:4,border:"1px solid #ddd",background:"#f9f9f9",cursor:"pointer",fontSize:12,fontFamily:F,lineHeight:1}}>▼</button>
                         </div>
