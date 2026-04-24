@@ -701,12 +701,11 @@ export default function App() {
   function hasBadge(item, b) { return getBadges(item).includes(b); }
 
   function hasBaekbanInHistory() {
-    var tbl = db.get(TABLE_KEY);
+    var tbl = tableNum || db.get(TABLE_KEY);
     if (!tbl) return false;
-    var allOrders = db.get(ORDERS_KEY)||[];
-    var tableOrders = allOrders.filter(function(o) { return String(o.table)===String(tbl); });
     var allItems = [];
-    tableOrders.forEach(function(o) { o.items.forEach(function(i) { allItems.push(i); }); });
+    orders.filter(function(o) { return String(o.table)===String(tbl); })
+      .forEach(function(o) { o.items.forEach(function(i) { allItems.push(i); }); });
     cart.forEach(function(i) { allItems.push(i); });
     return allItems.some(function(i) { return i.subcat==="Baekban"; });
   }
