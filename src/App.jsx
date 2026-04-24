@@ -378,6 +378,8 @@ export default function App() {
 
   // Firebase real-time sync
   var prevOrderCount = useRef(0);
+  // 앱 시작 시 printed-ids 초기화
+  useEffect(function() { db.set("sj-printed-ids",[]); }, []);
   var prevCallCount  = useRef(0);
   useEffect(function() {
     var unsubs = [];
