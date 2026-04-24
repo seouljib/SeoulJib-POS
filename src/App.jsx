@@ -551,15 +551,16 @@ export default function App() {
       },
       cats:  function(v) {
         setCats(v); db.set(CATS_KEY,v);
-        // cats 변경 시 selCat/selSub 유효성 확인 후 리셋
         var visible = v.filter(function(c){return !c.hidden;});
         setSelCat(function(cur) {
           var stillValid = visible.find(function(c){return c.id===cur;});
-          return stillValid ? cur : (visible[0]?visible[0].id:"");
-        });
-        setSelSub(function(curSub) {
-          if (!curSub) return "";
-          return curSub;
+          var newCat = stillValid ? stillValid : visible[0];
+          // selSub도 같이 업데이트
+          if (newCat) {
+            var firstSub = newCat.subs&&newCat.subs.length>0?newCat.subs[0].name:"";
+            setTimeout(function(){setSelSub(firstSub);},0);
+          }
+          return newCat ? newCat.id : "";
         });
       },
       calls: function(v, fromRemote) {
