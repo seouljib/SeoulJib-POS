@@ -399,20 +399,19 @@ export default function App() {
         if (fromRemote && db.get(MAIN_KEY)) {
           var newOrders = v.filter(function(o) { return o.status==="pending"&&!o.confirmed; });
           var pendingCount = newOrders.length;
-          if (pendingCount > prevOrderCount.current) {
+          var printedIds = db.get("sj-printed-ids")||[];
+          var added = newOrders.filter(function(o) { return !printedIds.includes(o.id); });
+          if (added.length > 0) {
             playBeep("order");
             if (db.get("sj-autoprint")) {
-              var prevIds = prevOrderCount.ids || [];
-              var added = newOrders.filter(function(o) { return !prevIds.includes(o.id); });
-              added.forEach(function(o) { printOrder(o); });
+              added.forEach(function(o) { printOrder(o); setTimeout(function(){printOrder(o);},1000); });
             }
+            db.set("sj-printed-ids", printedIds.concat(added.map(function(o){return o.id;})));
           }
           prevOrderCount.current = pendingCount;
-          prevOrderCount.ids = newOrders.map(function(o) { return o.id; });
         } else if (!fromRemote) {
           var pending = v.filter(function(o) { return o.status==="pending"&&!o.confirmed; });
           prevOrderCount.current = pending.length;
-          prevOrderCount.ids = pending.map(function(o) { return o.id; });
         }
       },
       menu:  function(v) {
@@ -1675,6 +1674,9 @@ export default function App() {
                       </div>
                       <div style={{padding:"12px 14px",borderTop:"1px solid #333"}}>
                         <button onClick={function() {
+                          var clearedIds = orders.filter(function(o){return String(o.table)===tbl;}).map(function(o){return o.id;});
+                          var printedIds = db.get("sj-printed-ids")||[];
+                          db.set("sj-printed-ids", printedIds.filter(function(id){return !clearedIds.includes(id);}));
                           saveOrders(orders.filter(function(o) { return String(o.table)!==tbl; }));
                           showToast("Table "+tbl+" cleared");
                         }} style={{width:"100%",background:"#27ae60",border:"none",color:"#fff",borderRadius:10,padding:"14px",fontWeight:700,cursor:"pointer",fontSize:16,fontFamily:F}}>
