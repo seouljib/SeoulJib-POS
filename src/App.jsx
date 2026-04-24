@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, setDoc, onSnapshot, collection } from "firebase/firestore";
+import { getFirestore, doc, setDoc, onSnapshot, collection, deleteDoc } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBVMWiAcH05UYstTQCxQ8MOQ3k_rZmvq-k",
@@ -24,6 +24,18 @@ var DEVICE_ID = (function() {
 async function fsSet(col, id, data) {
   try {
     await setDoc(doc(firestore, col, id), Object.assign({}, data, { _writer: DEVICE_ID }));
+  } catch(e) { console.error(e); }
+}
+
+async function fsSetMenuItem(item) {
+  try {
+    await setDoc(doc(firestore, "menu", item.id), Object.assign({}, item, { _writer: DEVICE_ID }));
+  } catch(e) { console.error(e); }
+}
+
+async function fsDeleteMenuItem(itemId) {
+  try {
+    await deleteDoc(doc(firestore, "menu", itemId));
   } catch(e) { console.error(e); }
 }
 
@@ -383,7 +395,27 @@ export default function App() {
   var prevCallCount  = useRef(0);
   useEffect(function() {
     var unsubs = [];
-    var keys = ["orders","menu","cats","calls","status"];
+    var keys = ["orders","cats","calls","status"];
+
+    // 메뉴 아이템별 실시간 리스너
+    var menuUnsub = onSnapshot(collection(firestore,"menu"), function(snapshot) {
+      snapshot.docChanges().forEach(function(change) {
+        var item = change.doc.data();
+        if (item._writer === DEVICE_ID) return; // 자신이 쓴 건 무시
+        if (change.type === "removed") {
+          setMenu(function(prev) { return prev.filter(function(m){return m.id!==change.doc.id;}); });
+        } else {
+          setMenu(function(prev) {
+            var exists = prev.find(function(m){return m.id===item.id;});
+            if (exists) return prev.map(function(m){return m.id===item.id?item:m;});
+            return prev.concat([item]);
+          });
+        }
+      });
+    });
+    unsubs.push(menuUnsub);
+
+    var keys = ["orders","cats","calls","status"];
     // Devices battery listener (main tablet only)
     if (db.get(MAIN_KEY)) {
       var devUnsub = onSnapshot(collection(firestore,"devices"), function(snapshot) {
@@ -426,16 +458,7 @@ export default function App() {
           prevOrderCount.current = pending.length;
         }
       },
-      menu:  function(v) {
-        var needsMigration = v.some(function(item){return !Array.isArray(item.badges);});
-        var migrated = needsMigration ? v.map(function(item) {
-          if (!Array.isArray(item.badges)) {
-            return Object.assign({},item,{badges:item.badge&&item.badge!==""?[item.badge]:[],badge:""});
-          }
-          return item;
-        }) : v;
-        setMenu(migrated); db.set(MENU_KEY,migrated);
-      },
+
       status: function(v) {
         // v = {itemId: {soldOut, hidden}, ...}
         setMenu(function(prev) {
@@ -493,7 +516,12 @@ export default function App() {
     prevOrderCount.current = n.filter(function(o) { return o.status==="pending"&&!o.confirmed; }).length;
     fsSet("pos","orders",{data:JSON.stringify(n),ts:Date.now()});
   }, []);
-  var saveMenu   = useCallback(function(n) { setMenu(n);   db.set(MENU_KEY,n);   fsSet("pos","menu",{data:JSON.stringify(n),ts:Date.now()}); }, []);
+  var saveMenu   = useCallback(function(n) {
+    setMenu(n);
+    db.set(MENU_KEY,n);
+    // 변경된 아이템만 Firestore에 저장
+    n.forEach(function(item) { fsSetMenuItem(item); });
+  }, []);
   var saveCats   = useCallback(function(n) { setCats(n);   db.set(CATS_KEY,n);   fsSet("pos","cats",{data:JSON.stringify(n),ts:Date.now()}); }, []);
   var saveCalls  = useCallback(function(n) {
     setCalls(n);  db.set(CALLS_KEY,n);
@@ -530,8 +558,9 @@ export default function App() {
                           var cur = st[item.id]||{};
                           var next = Object.assign({},st,{}); next[item.id]=Object.assign({},cur,{soldOut:!item.soldOut});
                           db.set("sj-status",next);
-                          setMenu(function(prev){return prev.map(function(m){return m.id===item.id?Object.assign({},m,{soldOut:!item.soldOut}):m;});});
-                          fsSet("pos","status",{data:JSON.stringify(next),ts:Date.now()});
+                          var updatedItem = Object.assign({},item,{soldOut:!item.soldOut});
+                          setMenu(function(prev){return prev.map(function(m){return m.id===item.id?updatedItem:m;});});
+                          fsSetMenuItem(updatedItem);
                         }}
                           style={{padding:"5px 8px",borderRadius:6,border:"1px solid "+(item.soldOut?"#27ae60":RED),background:item.soldOut?"#f0fff0":"#fff0f0",color:item.soldOut?"#27ae60":RED,fontWeight:600,cursor:"pointer",fontSize:11,fontFamily:F,whiteSpace:"nowrap",flexShrink:0}}>
                           {item.soldOut?"Resume":"Sold Out"}
@@ -541,8 +570,9 @@ export default function App() {
                           var cur = st[item.id]||{};
                           var next = Object.assign({},st,{}); next[item.id]=Object.assign({},cur,{hidden:!item.hidden});
                           db.set("sj-status",next);
-                          setMenu(function(prev){return prev.map(function(m){return m.id===item.id?Object.assign({},m,{hidden:!item.hidden}):m;});});
-                          fsSet("pos","status",{data:JSON.stringify(next),ts:Date.now()});
+                          var updatedItem = Object.assign({},item,{hidden:!item.hidden});
+                          setMenu(function(prev){return prev.map(function(m){return m.id===item.id?updatedItem:m;});});
+                          fsSetMenuItem(updatedItem);
                         }}
                           style={{padding:"5px 8px",borderRadius:6,border:"1px solid #999",background:"#f5f5f5",color:"#666",fontWeight:600,cursor:"pointer",fontSize:11,fontFamily:F,flexShrink:0}}>
                           {item.hidden?"Show":"Hide"}
@@ -718,6 +748,16 @@ export default function App() {
     else clearInterval(pollRef.current);
     return function() { clearInterval(pollRef.current); };
   }, [mode, adminTab, poll]);
+
+  // 앱 시작 시 기존 메뉴를 menu 컬렉션으로 마이그레이션 (최초 1회)
+  useEffect(function() {
+    if (db.get("sj-menu-migrated")) return;
+    var m = db.get(MENU_KEY)||[];
+    if (m.length > 0) {
+      m.forEach(function(item) { fsSetMenuItem(item); });
+      db.set("sj-menu-migrated", true);
+    }
+  }, []);
 
   // 앱 시작 시 프린터 자동 연결
   useEffect(function() {
@@ -1465,7 +1505,7 @@ export default function App() {
             </div>
             {!isNewItem&&(
               <button style={{width:"100%",background:"#fff0f0",color:RED,border:"1.5px solid #ffc0c0",borderRadius:14,padding:"14px",fontSize:15,fontWeight:600,cursor:"pointer",fontFamily:F}}
-                onClick={function() { saveMenu(menu.filter(function(m) { return m.id!==editItem.id; })); setEditItem(null); showToast("Deleted"); }}>
+                onClick={function() { saveMenu(menu.filter(function(m) { return m.id!==editItem.id; })); fsDeleteMenuItem(editItem.id); setEditItem(null); showToast("Deleted"); }}>
                 🗑️ Delete Item
               </button>
             )}
