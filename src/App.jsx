@@ -751,7 +751,7 @@ export default function App() {
     if (!cart.length) return;
     var o = {
       id:Date.now().toString(), table:tableNum,
-      items:cart.map(function(c) { return {id:c.id,name:c.name,cat:c.cat||"",price:c.price,qty:c.qty,spice:c.spice||""}; }),
+      items:cart.map(function(c) { return {id:c.id,name:c.name,cat:c.cat||"",subcat:c.subcat||"",price:c.price,qty:c.qty,spice:c.spice||""}; }),
       note:noteRef.current?noteRef.current.value:note, total:cartTotal, status:"pending", confirmed:false,
       time:new Date().toLocaleTimeString("en-NZ",{hour:"2-digit",minute:"2-digit"}),
       ts:Date.now(),
