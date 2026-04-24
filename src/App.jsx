@@ -21,6 +21,46 @@ var DEVICE_ID = (function() {
   return id;
 })();
 
+// WebSocket 연결 (로컬 라즈베리파이 - 즉각 반응)
+var WS_URL = "ws://192.168.68.62:8765";
+var wsRef = { ws: null, listeners: {} };
+
+function wsConnect() {
+  try {
+    var ws = new WebSocket(WS_URL);
+    wsRef.ws = ws;
+    ws.onmessage = function(e) {
+      try {
+        var m = JSON.parse(e.data);
+        if (m.type === "init") {
+          Object.keys(m.data).forEach(function(k) {
+            if (wsRef.listeners[k]) wsRef.listeners[k](m.data[k], true);
+          });
+        } else if (m.type === "update") {
+          if (m.key && m.key.startsWith("menu_item_") && wsRef.itemListener) {
+            wsRef.itemListener(m.key, m.value);
+          } else if (wsRef.listeners[m.key]) {
+            wsRef.listeners[m.key](m.value, true);
+          }
+        }
+      } catch(ex) {}
+    };
+    ws.onclose = function() { setTimeout(wsConnect, 2000); };
+    ws.onerror = function() {};
+  } catch(ex) { setTimeout(wsConnect, 2000); }
+}
+wsConnect();
+
+function wsSet(key, value) {
+  if (wsRef.ws && wsRef.ws.readyState === 1) {
+    wsRef.ws.send(JSON.stringify({ type: "set", key: key, value: value }));
+  }
+}
+
+function wsOn(key, fn) {
+  wsRef.listeners[key] = fn;
+}
+
 async function fsSet(col, id, data) {
   try {
     await setDoc(doc(firestore, col, id), Object.assign({}, data, { _writer: DEVICE_ID }));
@@ -392,6 +432,46 @@ export default function App() {
   var prevOrderCount = useRef(0);
   // 앱 시작 시 printed-ids 초기화
   useEffect(function() { db.set("sj-printed-ids",[]); }, []);
+
+  // WebSocket 리스너 등록
+  useEffect(function() {
+    wsOn("orders", function(v, fromRemote) {
+      if (!fromRemote) return;
+      try {
+        var parsed = typeof v === "string" ? JSON.parse(v) : v;
+        setters["orders"](parsed, true);
+      } catch(e) {}
+    });
+    wsOn("menu", function(v, fromRemote) {
+      if (!fromRemote) return;
+      try {
+        var parsed = typeof v === "string" ? JSON.parse(v) : v;
+        setMenu(parsed); db.set(MENU_KEY, parsed);
+      } catch(e) {}
+    });
+    wsOn("cats", function(v, fromRemote) {
+      if (!fromRemote) return;
+      try {
+        var parsed = typeof v === "string" ? JSON.parse(v) : v;
+        setters["cats"](parsed, true);
+      } catch(e) {}
+    });
+    wsOn("calls", function(v, fromRemote) {
+      if (!fromRemote) return;
+      try {
+        var parsed = typeof v === "string" ? JSON.parse(v) : v;
+        setters["calls"](parsed, true);
+      } catch(e) {}
+    });
+    // 개별 메뉴 아이템 변경 (soldOut/hide 즉각 반영)
+    wsRef.itemListener = function(key, value) {
+      if (key.startsWith("menu_item_")) {
+        setMenu(function(prev) {
+          return prev.map(function(m) { return m.id===value.id?value:m; });
+        });
+      }
+    };
+  }, []);
   var prevCallCount  = useRef(0);
   useEffect(function() {
     var unsubs = [];
@@ -512,21 +592,21 @@ export default function App() {
 
   var saveOrders = useCallback(function(n) {
     setOrders(n); db.set(ORDERS_KEY,n);
-    // Pre-update counter so Firebase echo doesn't trigger sound
     prevOrderCount.current = n.filter(function(o) { return o.status==="pending"&&!o.confirmed; }).length;
-    fsSet("pos","orders",{data:JSON.stringify(n),ts:Date.now()});
+    wsSet("orders", n); // WS로 즉시 전송
+    fsSet("pos","orders",{data:JSON.stringify(n),ts:Date.now()}); // Firestore 백업
   }, []);
   var saveMenu   = useCallback(function(n) {
     setMenu(n);
     db.set(MENU_KEY,n);
-    // 변경된 아이템만 Firestore에 저장
-    n.forEach(function(item) { fsSetMenuItem(item); });
+    wsSet("menu", n); // WS로 즉시 전송
+    n.forEach(function(item) { fsSetMenuItem(item); }); // Firestore 백업
   }, []);
-  var saveCats   = useCallback(function(n) { setCats(n);   db.set(CATS_KEY,n);   fsSet("pos","cats",{data:JSON.stringify(n),ts:Date.now()}); }, []);
+  var saveCats   = useCallback(function(n) { setCats(n);   db.set(CATS_KEY,n);   wsSet("cats",n); fsSet("pos","cats",{data:JSON.stringify(n),ts:Date.now()}); }, []);
   var saveCalls  = useCallback(function(n) {
     setCalls(n);  db.set(CALLS_KEY,n);
-    // Pre-update counter so Firebase echo doesn't trigger sound
     prevCallCount.current = n.filter(function(c) { return !c.done; }).length;
+    wsSet("calls", n);
     fsSet("pos","calls",{data:JSON.stringify(n),ts:Date.now()});
   }, []);
 
@@ -560,6 +640,7 @@ export default function App() {
                           db.set("sj-status",next);
                           var updatedItem = Object.assign({},item,{soldOut:!item.soldOut});
                           setMenu(function(prev){return prev.map(function(m){return m.id===item.id?updatedItem:m;});});
+                          wsSet("menu_item_"+item.id, updatedItem);
                           fsSetMenuItem(updatedItem);
                         }}
                           style={{padding:"5px 8px",borderRadius:6,border:"1px solid "+(item.soldOut?"#27ae60":RED),background:item.soldOut?"#f0fff0":"#fff0f0",color:item.soldOut?"#27ae60":RED,fontWeight:600,cursor:"pointer",fontSize:11,fontFamily:F,whiteSpace:"nowrap",flexShrink:0}}>
@@ -572,6 +653,7 @@ export default function App() {
                           db.set("sj-status",next);
                           var updatedItem = Object.assign({},item,{hidden:!item.hidden});
                           setMenu(function(prev){return prev.map(function(m){return m.id===item.id?updatedItem:m;});});
+                          wsSet("menu_item_"+item.id, updatedItem);
                           fsSetMenuItem(updatedItem);
                         }}
                           style={{padding:"5px 8px",borderRadius:6,border:"1px solid #999",background:"#f5f5f5",color:"#666",fontWeight:600,cursor:"pointer",fontSize:11,fontFamily:F,flexShrink:0}}>
