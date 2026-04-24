@@ -551,7 +551,6 @@ export default function App() {
                           <button onClick={function() {
                             var sameSub = menu.filter(function(m){return m.cat===item.cat&&(m.subcat||"")===(item.subcat||"");});
                             var subIdx = sameSub.findIndex(function(m){return m.id===item.id;});
-                            showToast("pos:"+subIdx+"/"+sameSub.length+" sub:["+(item.subcat||"")+"]");
                             if (subIdx<=0) return;
                             var swapWith = sameSub[subIdx-1];
                             var nm=menu.slice();
