@@ -473,7 +473,7 @@ export default function App() {
     prevOrderCount.current = n.filter(function(o) { return o.status==="pending"&&!o.confirmed; }).length;
     fsSet("pos","orders",{data:JSON.stringify(n),ts:Date.now()});
   }, []);
-  var saveMenu   = useCallback(function(n) { setMenu(n);   db.set(MENU_KEY,n);   fsSet("pos","menu",{data:JSON.stringify(n),ts:Date.now()}); }, []);
+  var saveMenu   = useCallback(function(n) { setMenu(n);   db.set(MENU_KEY,n);   fsSet("pos","menu",{data:JSON.stringify(n),ts:Date.now()}); }, [fsSet]);
   var saveCats   = useCallback(function(n) { setCats(n);   db.set(CATS_KEY,n);   fsSet("pos","cats",{data:JSON.stringify(n),ts:Date.now()}); }, []);
   var saveCalls  = useCallback(function(n) {
     setCalls(n);  db.set(CALLS_KEY,n);
