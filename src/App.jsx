@@ -423,7 +423,19 @@ export default function App() {
         });
         setMenu(migrated); db.set(MENU_KEY,migrated);
       },
-      cats:  function(v) { setCats(v);  db.set(CATS_KEY,v);  },
+      cats:  function(v) {
+        setCats(v); db.set(CATS_KEY,v);
+        // cats 변경 시 selCat/selSub 유효성 확인 후 리셋
+        var visible = v.filter(function(c){return !c.hidden;});
+        setSelCat(function(cur) {
+          var stillValid = visible.find(function(c){return c.id===cur;});
+          return stillValid ? cur : (visible[0]?visible[0].id:"");
+        });
+        setSelSub(function(curSub) {
+          if (!curSub) return "";
+          return curSub;
+        });
+      },
       calls: function(v, fromRemote) {
         setCalls(v); db.set(CALLS_KEY,v);
         // Play call sound only on main tablet, and only for remote updates
@@ -506,7 +518,7 @@ export default function App() {
                             if (idx<=0) return;
                             var nm=menu.slice();
                             var prev=nm[idx-1];
-                            if (prev.cat!==item.cat) return;
+                            if (prev.cat!==item.cat||(prev.subcat||"")!==(item.subcat||"")) return;
                             nm[idx-1]=nm[idx]; nm[idx]=prev;
                             saveMenu(nm);
                           }} style={{padding:"2px 7px",borderRadius:4,border:"1px solid #ddd",background:"#f9f9f9",cursor:"pointer",fontSize:12,fontFamily:F,lineHeight:1}}>▲</button>
@@ -515,7 +527,7 @@ export default function App() {
                             if (idx>=menu.length-1) return;
                             var nm=menu.slice();
                             var next=nm[idx+1];
-                            if (next.cat!==item.cat) return;
+                            if (next.cat!==item.cat||(next.subcat||"")!==(item.subcat||"")) return;
                             nm[idx+1]=nm[idx]; nm[idx]=next;
                             saveMenu(nm);
                           }} style={{padding:"2px 7px",borderRadius:4,border:"1px solid #ddd",background:"#f9f9f9",cursor:"pointer",fontSize:12,fontFamily:F,lineHeight:1}}>▼</button>
