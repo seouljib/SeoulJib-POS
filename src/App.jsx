@@ -444,7 +444,7 @@ export default function App() {
       if (!fromRemote) return;
       try {
         var parsed = typeof v === "string" ? JSON.parse(v) : v;
-        setters["orders"](parsed, true);
+        setOrders(parsed); db.set(ORDERS_KEY,parsed);
       } catch(e) {}
     });
     wsOn("menu", function(v, fromRemote) {
