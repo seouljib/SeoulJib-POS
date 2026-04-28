@@ -29,12 +29,17 @@ function wsConnect() {
   try {
     var ws = new WebSocket(WS_URL);
     wsRef.ws = ws;
+    ws.onopen = function() {
+      // 연결되면 서버에 최신 데이터 요청
+      ws.send(JSON.stringify({ type: "get_all" }));
+    };
     ws.onmessage = function(e) {
       try {
         var m = JSON.parse(e.data);
         if (m.type === "init") {
           Object.keys(m.data).forEach(function(k) {
             if (wsRef.listeners[k]) wsRef.listeners[k](m.data[k], true);
+            else if (k.startsWith("menu_item_") && wsRef.itemListener) wsRef.itemListener(k, m.data[k]);
           });
         } else if (m.type === "update") {
           if (m.key && m.key.startsWith("menu_item_") && wsRef.itemListener) {
@@ -45,7 +50,7 @@ function wsConnect() {
         }
       } catch(ex) {}
     };
-    ws.onclose = function() { setTimeout(wsConnect, 2000); };
+    ws.onclose = function() { wsRef.ws = null; setTimeout(wsConnect, 2000); };
     ws.onerror = function() {};
   } catch(ex) { setTimeout(wsConnect, 2000); }
 }
