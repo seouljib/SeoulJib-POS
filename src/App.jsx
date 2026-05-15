@@ -1364,7 +1364,9 @@ export default function App() {
                     : <div style={{height:270,background:"linear-gradient(145deg,#f8f0e8,#f0e0d0)",borderRadius:"12px 12px 0 0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:60}}>{item.emoji}</div>
                   }
                   {ic&&<div className="sjbdg" style={{position:"absolute",top:6,right:6,background:RED,color:"#fff",borderRadius:"50%",width:28,height:28,fontSize:13,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{ ic.qty}</div>}
-                  {item.soldOut&&<div style={{position:"absolute",top:6,left:6,background:"rgba(0,0,0,.7)",color:"#fff",borderRadius:5,padding:"2px 8px",fontSize:11,fontWeight:700}}>SOLD OUT</div>}
+                  {item.soldOut&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.55)",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",zIndex:4}}>
+                    <div style={{background:"#fff",color:"#e74c3c",fontSize:14,fontWeight:900,padding:"6px 14px",borderRadius:20,letterSpacing:1,boxShadow:"0 2px 8px rgba(0,0,0,.3)"}}>SOLD OUT</div>
+                  </div>}
                   <div style={{padding:"6px 8px 8px"}}>
                     <div style={{fontWeight:700,fontSize:21,lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{item.name}</div>
                     <div style={{marginTop:4,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
