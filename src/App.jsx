@@ -224,7 +224,7 @@ var CSS  = [
 ].join("\n");
 
 function blankItem(cat) {
-  return { id:"i"+Date.now(), cat:cat, subcat:"", name:"", sub:"", price:0, emoji:"\uD83C\uDF7D\uFE0F", desc:"", img:"", soldOut:false, hidden:false, badges:[], ingredients:"", allergens:"", hasSpice:false, upsellIds:[] };
+  return { id:"i"+Date.now(), cat:cat, subcat:"", name:"", sub:"", price:0, emoji:"\uD83C\uDF7D\uFE0F", desc:"", img:"", soldOut:false, hidden:false, addOnly:false, badges:[], ingredients:"", allergens:"", hasSpice:false, upsellIds:[] };
 }
 function blankCat() { return { id:"c"+Date.now(), name:"", subs:[], hidden:false }; }
 
@@ -961,6 +961,7 @@ export default function App() {
   var dispMenu = menu.filter(function(m) {
     if (!curCat||m.cat!==curCat.name) return false;
     if (m.hidden) return false;
+    if (m.addOnly) return false;
     if (hasSubs&&selSub) return m.subcat===selSub || m.subcat==="" || !m.subcat;
     return true;
   });
@@ -1519,6 +1520,16 @@ export default function App() {
               <div onClick={function() { setEditItem(Object.assign({},editItem,{hasSpice:!editItem.hasSpice})); }}
                 style={{width:48,height:28,borderRadius:14,background:editItem.hasSpice?RED:"#e0e0e0",position:"relative",cursor:"pointer",flexShrink:0,transition:"background .2s"}}>
                 <div style={{position:"absolute",top:3,left:editItem.hasSpice?22:3,width:22,height:22,borderRadius:"50%",background:"#fff",transition:"left .2s"}} />
+              </div>
+            </div>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",background:"#f0f4ff",borderRadius:12,border:"1px solid #c0d0f0"}}>
+              <div>
+                <div style={{fontWeight:700,fontSize:15}}>Add-on Only</div>
+                <div style={{color:"#666",fontSize:13}}>메뉴판 숨김, 업셀 팝업에서만 표시</div>
+              </div>
+              <div onClick={function() { setEditItem(Object.assign({},editItem,{addOnly:!editItem.addOnly})); }}
+                style={{width:48,height:28,borderRadius:14,background:editItem.addOnly?"#3b82f6":"#e0e0e0",position:"relative",cursor:"pointer",flexShrink:0,transition:"background .2s"}}>
+                <div style={{position:"absolute",top:3,left:editItem.addOnly?22:3,width:22,height:22,borderRadius:"50%",background:"#fff",transition:"left .2s"}} />
               </div>
             </div>
             <div>
