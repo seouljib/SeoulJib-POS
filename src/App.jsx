@@ -1292,8 +1292,8 @@ export default function App() {
             return (
               <div key={ui.id} onClick={function(){addToCart(ui,"");setUpsellPop(null);}}
                 style={{display:"flex",alignItems:"center",gap:14,padding:"14px 16px",borderRadius:14,border:"1.5px solid "+(inCart?RED:"#e0e0e0"),background:inCart?"#fff0f0":"#fafafa",cursor:"pointer"}}>
-                <div style={{width:52,height:52,borderRadius:10,background:"linear-gradient(145deg,#f8f0e8,#f0e0d0)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,flexShrink:0}}>
-                  {ui.img?<img src={ui.img} style={{width:"100%",height:"100%",objectFit:"cover",borderRadius:10}} />:ui.emoji}
+                <div style={{width:70,height:70,borderRadius:12,background:"linear-gradient(145deg,#f8f0e8,#f0e0d0)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:36,flexShrink:0}}>
+                  {ui.img?<img src={ui.img} style={{width:"100%",height:"100%",objectFit:"cover",borderRadius:12}} />:ui.emoji}
                 </div>
                 <div style={{flex:1}}>
                   <div style={{fontWeight:700,fontSize:17}}>{ui.name}</div>
