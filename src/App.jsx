@@ -780,9 +780,13 @@ export default function App() {
       p.addText("--- "+cat.toUpperCase()+" ---\n");
       p.addTextSize(2,2);
       catMap[cat].forEach(function(i) {
-        var spiceTag = i.spice?" ("+i.spice+")":"";
-        var name = (i.name+spiceTag).slice(0,16).padEnd(16);
+        var name = i.name.slice(0,16).padEnd(16);
         p.addText(name+" x"+i.qty+"\n");
+        if (i.spice) {
+          p.addTextSize(1,1);
+          p.addText("   >> "+i.spice+"\n");
+          p.addTextSize(2,2);
+        }
       });
     });
     // 음료 카테고리별 출력
