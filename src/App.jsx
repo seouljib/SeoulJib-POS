@@ -91,6 +91,7 @@ const MENU_KEY   = "sj-menu-v10";
 const CATS_KEY   = "sj-cats-v10";
 const TABLE_KEY  = "sj-table-v10";
 const MAIN_KEY   = "sj-main-v10";
+const SERVER_KEY = "sj-server-v10";
 const CALLS_KEY  = "sj-calls-v10";
 const TABLES     = Array.from({ length: 15 }, function(_, i) { return i + 1; });
 
@@ -341,6 +342,10 @@ export default function App() {
   var [mode,setMode]               = useState("home");
   var [tableNum,setTableNum]       = useState(function() { return db.get(TABLE_KEY); });
   var [isMain,setIsMain]           = useState(function() { return !!db.get(MAIN_KEY); });
+  var [serverMode,setServerMode]   = useState(function() { return !!db.get(SERVER_KEY); });
+  var [serverPin,setServerPin]     = useState("");
+  var [showServerPin,setShowServerPin] = useState(false);
+  var [serverTable,setServerTable] = useState(null);
   var [menu,setMenu]               = useState(function() {
     var m = db.get(MENU_KEY)||DEFAULT_MENU;
     var needsMigration = m.some(function(item){return !Array.isArray(item.badges);});
@@ -824,12 +829,17 @@ export default function App() {
   useEffect(function() {
     if (mode!=="done") return;
     var t = setTimeout(function() {
-      var c=db.get(CATS_KEY)||DEFAULT_CATS;
-      var fv=c.find(function(x){return !x.hidden;});
-      setSelCat(fv?fv.id:""); setSelSub(fv&&fv.subs&&fv.subs.length>0?fv.subs[0].name:""); setMode("order");
+      if (serverMode) {
+        // 서버 모드: 테이블 선택 화면으로 복귀
+        setServerTable(null); setTableNum(null); setMode("serverTable");
+      } else {
+        var c=db.get(CATS_KEY)||DEFAULT_CATS;
+        var fv=c.find(function(x){return !x.hidden;});
+        setSelCat(fv?fv.id:""); setSelSub(fv&&fv.subs&&fv.subs.length>0?fv.subs[0].name:""); setMode("order");
+      }
     }, 2500);
     return function() { clearTimeout(t); };
-  }, [mode]);
+  }, [mode, serverMode]);
 
   useEffect(function() {
     if (mode==="admin"&&adminTab==="orders") { poll(); pollRef.current=setInterval(poll,3000); }
@@ -892,7 +902,7 @@ export default function App() {
 
   function addToCart(item, sp) {
     if (item.soldOut||item.hidden) return;
-    if (item.subcat==="Banchan") {
+    if (item.subcat==="Banchan" && !serverMode) {
       if (!hasBaekbanInHistory()) {
         showToast("Baekban order required");
         return;
@@ -1169,6 +1179,44 @@ export default function App() {
   }
 
   // ══ HOME ═══════════════════════════════════════════════════
+  if (mode==="serverTable") return (
+    <div style={{minHeight:"100dvh",height:"100dvh",background:"#f0f0f0",fontFamily:F,display:"flex",flexDirection:"column",userSelect:"none"}}>
+      <div style={{background:"#3b82f6",color:"#fff",padding:"18px 24px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div>
+          <div style={{fontSize:13,fontWeight:600,opacity:.85,letterSpacing:1}}>SERVER MODE</div>
+          <div style={{fontSize:22,fontWeight:900}}>Select Table</div>
+        </div>
+        <button onClick={function(){ setMode("home"); }}
+          style={{background:"rgba(255,255,255,.2)",border:"none",color:"#fff",borderRadius:10,padding:"10px 16px",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:F}}>✕ Exit</button>
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:"24px"}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
+          {TABLES.map(function(t) {
+            var hasOrder = orders.some(function(o){ return String(o.table)===String(t)&&o.status==="pending"; });
+            return (
+              <button key={t} onClick={function() {
+                setServerTable(t); setTableNum(t);
+                setCart([]); setNote("");
+                // 음료 카테고리 기본 선택
+                var c=db.get(CATS_KEY)||DEFAULT_CATS;
+                var vis=c.filter(function(x){return !x.hidden;});
+                var drink=vis.find(function(x){return x.isDrink;});
+                var pick=drink||vis[0];
+                setSelCat(pick?pick.id:"");
+                setSelSub(pick&&pick.subs&&pick.subs.length>0?pick.subs[0].name:"");
+                setMode("order");
+              }}
+                style={{aspectRatio:"1",background:hasOrder?"#fff0f0":"#fff",border:"2px solid "+(hasOrder?RED:"#ddd"),borderRadius:16,fontSize:34,fontWeight:900,color:hasOrder?RED:"#1a1a1a",cursor:"pointer",fontFamily:F,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,boxShadow:"0 1px 6px rgba(0,0,0,.08)"}}>
+                {t}
+                {hasOrder&&<span style={{fontSize:11,fontWeight:700,letterSpacing:1}}>● ACTIVE</span>}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+
   if (mode==="home") return (
     <div style={{minHeight:"100dvh",background:"#fff7f0",fontFamily:F,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden",userSelect:"none"}}>
       {setupMode&&<SetupModal />}
@@ -1185,12 +1233,14 @@ export default function App() {
         <button style={Object.assign({},RB,{width:"100%",padding:"18px",fontSize:17})}
           onClick={function() {
             if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
-            if (tableNum) {
+            if (serverMode) {
+              setMode("serverTable");
+            } else if (tableNum) {
               var c=db.get(CATS_KEY)||DEFAULT_CATS;
               var fv=c.find(function(x){return !x.hidden;});
               setSelCat(fv?fv.id:""); setSelSub(fv&&fv.subs&&fv.subs.length>0?fv.subs[0].name:""); setCart([]); setNote(""); setMode("order");
             } else setSetupMode(true);
-          }}>{tableNum?"Order Now · Table "+tableNum:"Order Now"}</button>
+          }}>{serverMode?"🧑\u200d🍳 Server Order":(tableNum?"Order Now · Table "+tableNum:"Order Now")}</button>
         {isMain&&(
           <button style={{background:"#fff",color:"#1a1a1a",fontWeight:600,border:"1.5px solid #e0e0e0",borderRadius:14,padding:"16px",fontSize:16,cursor:"pointer",fontFamily:F,width:"100%",position:"relative"}}
             onClick={function() { setMode("admin"); setAdminTab("orders"); }}>
@@ -1326,8 +1376,9 @@ export default function App() {
         </div>
         <div style={{flex:1,background:"#fff",display:"flex",flexDirection:"column",overflow:"hidden",position:"relative"}}>
           {/* T-order style table badge */}
-          <div style={{position:"absolute",top:0,right:0,zIndex:10,background:RED,border:"none",borderRadius:"0 0 0 14px",padding:"10px 32px 16px",textAlign:"center",minWidth:160,boxShadow:"-2px 2px 8px rgba(192,57,43,.3)"}}>
-            <div style={{fontSize:14,fontWeight:900,color:"rgba(255,255,255,.9)",letterSpacing:2,lineHeight:1,marginBottom:4}}>TABLE</div>
+          <div onClick={function(){ if(serverMode) setMode("serverTable"); }}
+            style={{position:"absolute",top:0,right:0,zIndex:10,background:serverMode?"#3b82f6":RED,border:"none",borderRadius:"0 0 0 14px",padding:"10px 32px 16px",textAlign:"center",minWidth:160,boxShadow:"-2px 2px 8px rgba(0,0,0,.25)",cursor:serverMode?"pointer":"default"}}>
+            <div style={{fontSize:14,fontWeight:900,color:"rgba(255,255,255,.9)",letterSpacing:2,lineHeight:1,marginBottom:4}}>{serverMode?"TABLE ⇄":"TABLE"}</div>
             <div style={{fontSize:52,fontWeight:900,color:"#fff",lineHeight:1}}>{tableNum}</div>
           </div>
           {hasSubs&&(
@@ -1343,7 +1394,7 @@ export default function App() {
             {dispMenu.map(function(item) {
               var ic=cart.find(function(c) { return c.id===item.id; });
               var isBanchan = item.subcat==="Banchan";
-              var banchanLocked = isBanchan && !hasBaekbanInHistory();
+              var banchanLocked = isBanchan && !hasBaekbanInHistory() && !serverMode;
               return (
                 <div key={item.id} className="sjc"
                   style={{background:"#fff",border:"1.5px solid "+(ic?RED:"#ebebeb"),borderRadius:12,overflow:"visible",cursor:"pointer",opacity:item.soldOut?.5:banchanLocked?.4:1,position:"relative",animation:justAdded===item.id?"bnc .28s ease both":"none",boxShadow:"0 1px 6px rgba(0,0,0,.07)"}}
@@ -2079,6 +2130,38 @@ export default function App() {
                 <div style={{position:"absolute",top:3,left:isMain?24:3,width:24,height:24,borderRadius:"50%",background:"#fff",transition:"left .2s"}} />
               </div>
             </div>
+
+            <div style={{height:1,background:"#e0e0e0",margin:"24px 0"}} />
+            <div style={{fontSize:11,fontWeight:700,color:"#3b82f6",letterSpacing:3,marginBottom:14}}>SERVER MODE</div>
+            <div style={{padding:"18px",background:"#fff",borderRadius:14,border:"1.5px solid "+(serverMode?"#3b82f6":"#e0e0e0"),marginBottom:14,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:700,fontSize:16}}>Server Ordering Mode</div>
+                <div style={{color:"#666",fontSize:13,marginTop:3}}>서버가 테이블별 주문 입력 (PIN 필요)</div>
+              </div>
+              <div onClick={function() {
+                if (serverMode) { db.set(SERVER_KEY,false); setServerMode(false); showToast("Server mode off"); }
+                else { setShowServerPin(true); }
+              }}
+                style={{width:52,height:30,borderRadius:15,background:serverMode?"#3b82f6":"#e0e0e0",position:"relative",cursor:"pointer",flexShrink:0,transition:"background .2s"}}>
+                <div style={{position:"absolute",top:3,left:serverMode?24:3,width:24,height:24,borderRadius:"50%",background:"#fff",transition:"left .2s"}} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showServerPin&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.6)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:400}}
+          onClick={function(e){if(e.target===e.currentTarget){setShowServerPin(false);setServerPin("");}}}>
+          <div style={{background:"#fff",borderRadius:20,padding:"32px 24px",width:"90%",maxWidth:360,textAlign:"center"}}>
+            <div style={{fontSize:32,marginBottom:8}}>🔒</div>
+            <div style={{fontSize:20,fontWeight:800,marginBottom:16}}>Enter PIN</div>
+            <input type="password" value={serverPin} onChange={function(e){setServerPin(e.target.value);}} placeholder="PIN" maxLength={4}
+              autoFocus
+              style={{width:"100%",textAlign:"center",fontSize:24,letterSpacing:8,padding:"14px",borderRadius:12,border:"1.5px solid #e0e0e0",fontFamily:F,outline:"none",marginBottom:16}}
+              onKeyDown={function(e){ if(e.key==="Enter"){ if(serverPin===ADMIN_PIN){db.set(SERVER_KEY,true);setServerMode(true);setShowServerPin(false);setServerPin("");showToast("Server mode on");}else{showToast("Incorrect PIN");setServerPin("");} } }} />
+            <button style={Object.assign({},RB,{width:"100%",padding:"16px",fontSize:16})}
+              onClick={function(){ if(serverPin===ADMIN_PIN){db.set(SERVER_KEY,true);setServerMode(true);setShowServerPin(false);setServerPin("");showToast("Server mode on");}else{showToast("Incorrect PIN");setServerPin("");} }}>Enable</button>
           </div>
         </div>
       )}
