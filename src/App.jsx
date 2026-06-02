@@ -1968,9 +1968,17 @@ export default function App() {
                     });
                     var noSub = ci.filter(function(m){return !m.subcat||m.subcat===""});
                     var groups = subs.map(function(s){ return {name:s, items:ci.filter(function(m){return m.subcat===s;})}; });
+                    // 어떤 서브카테고리에도 속하지 않는 고아 아이템 (subcat이 목록에 없는 값)
+                    var orphans = ci.filter(function(m){ return m.subcat && m.subcat!=="" && subs.indexOf(m.subcat)===-1; });
                     return (
                       <>
                         {noSub.map(function(item){ return renderMenuItem(item, catObj); })}
+                        {orphans.length>0&&(
+                          <div>
+                            <div style={{padding:"8px 16px",background:"#fff3cd",borderBottom:"1px solid #ffe69c",fontSize:12,fontWeight:700,color:"#856404",letterSpacing:1}}>⚠ NO SUBCATEGORY MATCH (서브카테고리 확인 필요)</div>
+                            {orphans.map(function(item){ return renderMenuItem(item, catObj); })}
+                          </div>
+                        )}
                         {groups.map(function(g) {
                           if (g.items.length===0) return null;
                           return (
