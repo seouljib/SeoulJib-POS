@@ -463,14 +463,30 @@ export default function App() {
       if (!fromRemote) return;
       try {
         var parsed = typeof v === "string" ? JSON.parse(v) : v;
-        setters["cats"](parsed, true);
+        setCats(parsed); db.set(CATS_KEY,parsed);
+        // 카테고리 변경 시 현재 선택 유효성 확인
+        var visible = parsed.filter(function(c){return !c.hidden;});
+        setSelCat(function(cur) {
+          var stillValid = visible.find(function(c){return c.id===cur;});
+          var newCat = stillValid ? stillValid : visible[0];
+          if (newCat) {
+            var firstSub = newCat.subs&&newCat.subs.length>0?newCat.subs[0].name:"";
+            setTimeout(function(){setSelSub(firstSub);},0);
+          }
+          return newCat ? newCat.id : "";
+        });
       } catch(e) {}
     });
     wsOn("calls", function(v, fromRemote) {
       if (!fromRemote) return;
       try {
         var parsed = typeof v === "string" ? JSON.parse(v) : v;
-        setters["calls"](parsed, true);
+        setCalls(parsed); db.set(CALLS_KEY,parsed);
+        if (db.get(MAIN_KEY)) {
+          var active = parsed.filter(function(c){return !c.done;});
+          if (active.length > prevCallCount.current) { playBeep("call"); setCallActive(true); }
+          prevCallCount.current = active.length;
+        }
       } catch(e) {}
     });
     // 개별 메뉴 아이템 변경 (soldOut/hide 즉각 반영)
