@@ -1360,7 +1360,7 @@ export default function App() {
           var ui=upsellPop.items[0];
           return (
             <div>
-              <div style={{width:"100%",aspectRatio:"4/3",borderRadius:16,overflow:"hidden",background:"linear-gradient(145deg,#f8f0e8,#f0e0d0)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:80,marginBottom:16}}>
+              <div style={{width:"100%",height:"min(30dvh,280px)",borderRadius:16,overflow:"hidden",background:"linear-gradient(145deg,#f8f0e8,#f0e0d0)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:80,marginBottom:14}}>
                 {ui.img?<img src={ui.img} style={{width:"100%",height:"100%",objectFit:"cover"}} />:ui.emoji}
               </div>
               <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",gap:12,marginBottom:4}}>
