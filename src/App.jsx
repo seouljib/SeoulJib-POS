@@ -1356,6 +1356,32 @@ export default function App() {
       <div style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:600,maxHeight:"70dvh",overflow:"auto",animation:"slideup .25s ease",padding:"24px 20px 40px"}}>
         <div style={{fontSize:13,fontWeight:700,color:"#999",letterSpacing:1,marginBottom:6,textTransform:"uppercase"}}>Perfect with your order</div>
         <div style={{fontSize:20,fontWeight:800,marginBottom:20}}>Would you like to add?</div>
+        {upsellPop.items.length===1?(function(){
+          var ui=upsellPop.items[0];
+          return (
+            <div>
+              <div style={{width:"100%",aspectRatio:"4/3",borderRadius:16,overflow:"hidden",background:"linear-gradient(145deg,#f8f0e8,#f0e0d0)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:80,marginBottom:16}}>
+                {ui.img?<img src={ui.img} style={{width:"100%",height:"100%",objectFit:"cover"}} />:ui.emoji}
+              </div>
+              <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",gap:12,marginBottom:4}}>
+                <div style={{fontWeight:800,fontSize:22}}>{ui.name}</div>
+                <div style={{fontWeight:900,fontSize:22,color:RED,flexShrink:0}}>{ui.price===0?"Free":"$"+ui.price}</div>
+              </div>
+              {ui.desc&&<div style={{color:"#888",fontSize:14,lineHeight:1.5,marginBottom:20}}>{ui.desc}</div>}
+              <div style={{display:"flex",gap:10}}>
+                <button onClick={function(){setUpsellPop(null);}}
+                  style={{flex:1,padding:"16px",borderRadius:14,border:"1.5px solid #e0e0e0",background:"#fff",color:"#666",fontWeight:600,fontSize:16,cursor:"pointer",fontFamily:F}}>
+                  Skip
+                </button>
+                <button onClick={function(){addToCart(ui,"");setUpsellPop(null);}}
+                  style={{flex:2,padding:"16px",borderRadius:14,border:"none",background:RED,color:"#fff",fontWeight:800,fontSize:16,cursor:"pointer",fontFamily:F}}>
+                  Add to Order
+                </button>
+              </div>
+            </div>
+          );
+        })():(
+        <div>
         <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:20}}>
           {upsellPop.items.map(function(ui) {
             var inCart=cart.find(function(c){return c.id===ui.id;});
@@ -1378,6 +1404,8 @@ export default function App() {
           style={{width:"100%",padding:"16px",borderRadius:14,border:"1.5px solid #e0e0e0",background:"#fff",color:"#666",fontWeight:600,fontSize:16,cursor:"pointer",fontFamily:F}}>
           Skip
         </button>
+        </div>
+        )}
       </div>
     </div>
   )}
