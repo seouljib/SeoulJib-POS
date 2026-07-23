@@ -1448,7 +1448,7 @@ export default function App() {
                   style={{background:"#fff",border:"1.5px solid "+(ic?RED:"#ebebeb"),borderRadius:12,overflow:"visible",cursor:"pointer",opacity:item.soldOut?.5:banchanLocked?.4:1,position:"relative",animation:justAdded===item.id?"bnc .28s ease both":"none",boxShadow:"0 1px 6px rgba(0,0,0,.07)"}}
                   onClick={function() { setDetail(item); setSpice(""); }}>
                   {banchanLocked&&<div style={{position:"absolute",top:6,left:6,zIndex:3,background:"rgba(0,0,0,.65)",color:"#fff",borderRadius:5,padding:"2px 8px",fontSize:11,fontWeight:700}}>Baekban Order Required</div>}
-                  <div style={{position:"absolute",top:8,left:-2,zIndex:2,display:"flex",flexDirection:"column",gap:4}}>
+                  <div style={{position:"absolute",top:8,left:-2,zIndex:2,display:"flex",flexDirection:"column",alignItems:"flex-start",gap:4}}>
                     {hasBadge(item,"best")&&<div style={{background:"linear-gradient(135deg,#f39c12,#e67e22)",color:"#fff",fontSize:12,fontWeight:900,padding:"5px 12px 5px 8px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 6px rgba(0,0,0,.2)"}}>⭐ BEST</div>}
                     {hasBadge(item,"new")&&<div style={{background:"linear-gradient(135deg,#00b09b,#27ae60)",color:"#fff",fontSize:12,fontWeight:900,padding:"5px 12px 5px 8px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 6px rgba(0,0,0,.2)"}}>✨ NEW</div>}
                     {hasBadge(item,"vegetarian")&&<div style={{background:"#2ecc71",color:"#fff",fontSize:12,fontWeight:900,padding:"5px 12px 5px 8px",borderRadius:"0 20px 20px 0",boxShadow:"2px 2px 6px rgba(0,0,0,.2)"}}>🌿 VEG</div>}
