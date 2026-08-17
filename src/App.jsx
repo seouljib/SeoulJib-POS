@@ -224,8 +224,14 @@ var CSS  = [
   "*{-webkit-tap-highlight-color:transparent;box-sizing:border-box}",
 ].join("\n");
 
+function bySortOrder(a, b) {
+  var sa = a.sortOrder == null ? 1e15 : a.sortOrder;
+  var sb = b.sortOrder == null ? 1e15 : b.sortOrder;
+  return sa - sb;
+}
+
 function blankItem(cat) {
-  return { id:"i"+Date.now(), cat:cat, subcat:"", name:"", sub:"", price:0, emoji:"\uD83C\uDF7D\uFE0F", desc:"", img:"", soldOut:false, hidden:false, addOnly:false, badges:[], ingredients:"", allergens:"", hasSpice:false, upsellIds:[] };
+  return { id:"i"+Date.now(), cat:cat, subcat:"", name:"", sub:"", price:0, emoji:"\uD83C\uDF7D\uFE0F", desc:"", img:"", soldOut:false, hidden:false, addOnly:false, badges:[], ingredients:"", allergens:"", hasSpice:false, upsellIds:[], sortOrder:Date.now() };
 }
 function blankCat() { return { id:"c"+Date.now(), name:"", subs:[], hidden:false }; }
 
@@ -690,26 +696,28 @@ export default function App() {
                           style={{padding:"5px 10px",borderRadius:6,border:"1.5px solid #e0e0e0",background:"#fff",color:"#1a1a1a",fontWeight:600,cursor:"pointer",fontSize:13,fontFamily:F,flexShrink:0}}>Edit</button>
                         <div style={{display:"flex",flexDirection:"column",gap:2,flexShrink:0}}>
                           <button onClick={function() {
-                            var sameSub = menu.filter(function(m){return m.cat===item.cat&&(m.subcat||"")===(item.subcat||"");});
+                            var norm = menu.slice().sort(bySortOrder).map(function(m,i){ return Object.assign({},m,{sortOrder:i}); });
+                            var sameSub = norm.filter(function(m){return m.cat===item.cat&&(m.subcat||"")===(item.subcat||"");});
                             var subIdx = sameSub.findIndex(function(m){return m.id===item.id;});
                             if (subIdx<=0) return;
-                            var swapWith = sameSub[subIdx-1];
-                            var nm=menu.slice();
-                            var i1=nm.findIndex(function(m){return m.id===item.id;});
-                            var i2=nm.findIndex(function(m){return m.id===swapWith.id;});
-                            var tmp=nm[i1]; nm[i1]=nm[i2]; nm[i2]=tmp;
-                            saveMenu(nm);
+                            var a=sameSub[subIdx], b=sameSub[subIdx-1];
+                            saveMenu(norm.map(function(m){
+                              if (m.id===a.id) return Object.assign({},m,{sortOrder:b.sortOrder});
+                              if (m.id===b.id) return Object.assign({},m,{sortOrder:a.sortOrder});
+                              return m;
+                            }));
                           }} style={{padding:"2px 7px",borderRadius:4,border:"1px solid #ddd",background:"#f9f9f9",cursor:"pointer",fontSize:12,fontFamily:F,lineHeight:1}}>▲</button>
                           <button onClick={function() {
-                            var sameSub = menu.filter(function(m){return m.cat===item.cat&&(m.subcat||"")===(item.subcat||"");});
+                            var norm = menu.slice().sort(bySortOrder).map(function(m,i){ return Object.assign({},m,{sortOrder:i}); });
+                            var sameSub = norm.filter(function(m){return m.cat===item.cat&&(m.subcat||"")===(item.subcat||"");});
                             var subIdx = sameSub.findIndex(function(m){return m.id===item.id;});
                             if (subIdx>=sameSub.length-1) return;
-                            var swapWith = sameSub[subIdx+1];
-                            var nm=menu.slice();
-                            var i1=nm.findIndex(function(m){return m.id===item.id;});
-                            var i2=nm.findIndex(function(m){return m.id===swapWith.id;});
-                            var tmp=nm[i1]; nm[i1]=nm[i2]; nm[i2]=tmp;
-                            saveMenu(nm);
+                            var a=sameSub[subIdx], b=sameSub[subIdx+1];
+                            saveMenu(norm.map(function(m){
+                              if (m.id===a.id) return Object.assign({},m,{sortOrder:b.sortOrder});
+                              if (m.id===b.id) return Object.assign({},m,{sortOrder:a.sortOrder});
+                              return m;
+                            }));
                           }} style={{padding:"2px 7px",borderRadius:4,border:"1px solid #ddd",background:"#f9f9f9",cursor:"pointer",fontSize:12,fontFamily:F,lineHeight:1}}>▼</button>
                         </div>
                       </div>
@@ -994,7 +1002,7 @@ export default function App() {
     if (m.addOnly) return false;
     if (hasSubs&&selSub) return m.subcat===selSub || m.subcat==="" || !m.subcat;
     return true;
-  });
+  }).sort(bySortOrder);
   var placedItems = [];
   orders.filter(function(o) { return o.table===tableNum&&o.status==="pending"; }).forEach(function(o) { o.items.forEach(function(i) { placedItems.push(i); }); });
 
@@ -1992,7 +2000,7 @@ export default function App() {
             <button style={Object.assign({},RB,{width:"100%",marginBottom:16,padding:"14px"})}
               onClick={function() { setEditItem(blankItem(cats[0]?cats[0].name:"Set Meals"));setIsNewItem(true); }}>+ Add New Item</button>
             {cats.map(function(catObj) {
-              var ci=menu.filter(function(m) { return m.cat===catObj.name; });
+              var ci=menu.filter(function(m) { return m.cat===catObj.name; }).sort(bySortOrder);
               return (
                 <div key={catObj.id} style={{marginBottom:20,background:"#fff",borderRadius:12,overflow:"hidden",border:"1px solid #e0e0e0"}}>
                   <div style={{padding:"12px 16px",background:catObj.hidden?"#f5f5f5":"#fff",borderBottom:"1px solid #e0e0e0",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
