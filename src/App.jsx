@@ -777,6 +777,24 @@ export default function App() {
     showToast("Test print sent!");
   }
 
+  function wrapPrintText(s, w) {
+    var words = String(s).split(" ");
+    var lines = [];
+    var cur = "";
+    words.forEach(function(word) {
+      while (word.length > w) {
+        if (cur) { lines.push(cur); cur = ""; }
+        lines.push(word.slice(0, w));
+        word = word.slice(w);
+      }
+      if (!cur) cur = word;
+      else if ((cur + " " + word).length <= w) cur = cur + " " + word;
+      else { lines.push(cur); cur = word; }
+    });
+    if (cur) lines.push(cur);
+    return lines;
+  }
+
   function printOrder(order) {
     if (!eposRef.printer) return;
     var p = eposRef.printer;
@@ -804,12 +822,9 @@ export default function App() {
       p.addText("--- "+cat.toUpperCase()+" ---\n");
       p.addTextSize(2,2);
       catMap[cat].forEach(function(i) {
-        var name = i.name.slice(0,16).padEnd(16);
-        p.addText(name+" x"+i.qty+"\n");
+        wrapPrintText(i.name+" x"+i.qty, 16).forEach(function(ln) { p.addText(ln+"\n"); });
         if (i.spice) {
-          p.addTextSize(1,1);
-          p.addText("   >> "+i.spice+"\n");
-          p.addTextSize(2,2);
+          p.addText(">> "+i.spice+"\n");
         }
       });
     });
@@ -819,8 +834,7 @@ export default function App() {
       p.addText("--- "+cat.toUpperCase()+" ---\n");
       p.addTextSize(2,2);
       catMap[cat].forEach(function(i) {
-        var name = i.name.slice(0,16).padEnd(16);
-        p.addText(name+" x"+i.qty+"\n");
+        wrapPrintText(i.name+" x"+i.qty, 16).forEach(function(ln) { p.addText(ln+"\n"); });
       });
     });
     if(order.note) {
