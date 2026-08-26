@@ -56,6 +56,15 @@ function wsConnect() {
 }
 wsConnect();
 
+// 절전 복귀(화면 켜짐) 시 좀비 연결 강제 갱신:
+// 밤새 끊긴 연결을 앱이 살아있다고 착각하는 상태를 끊어서
+// onclose -> 2초 후 재접속 -> get_all 로 최신 데이터 재수신
+document.addEventListener("visibilitychange", function() {
+  if (!document.hidden && wsRef.ws && wsRef.ws.readyState <= 1) {
+    try { wsRef.ws.close(); } catch(e) {}
+  }
+});
+
 function wsSet(key, value) {
   if (wsRef.ws && wsRef.ws.readyState === 1) {
     wsRef.ws.send(JSON.stringify({ type: "set", key: key, value: value }));
@@ -322,9 +331,16 @@ export default function App() {
       }
     }
     requestWakeLock();
+    var lastHiddenAt = 0;
     document.addEventListener("visibilitychange", function() {
+      if (document.visibilityState === "hidden") { lastHiddenAt = Date.now(); return; }
       if (document.visibilityState === "visible") {
         requestWakeLock();
+        // 5분 이상 절전이었으면 프린터 연결도 좀비일 수 있으니 버리고 새로 잡음
+        if (lastHiddenAt && Date.now() - lastHiddenAt > 5*60*1000) {
+          eposRef.printer = null;
+          eposRef.current = null;
+        }
         setTimeout(function() {
           if (!eposRef.printer) {
             var ip = db.get("sj-printer-ip");
