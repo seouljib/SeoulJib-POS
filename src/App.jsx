@@ -23,19 +23,24 @@ var DEVICE_ID = (function() {
 
 // WebSocket 연결 (로컬 라즈베리파이 - 즉각 반응)
 var WS_URL = "ws://192.168.68.62:8765";
-var wsRef = { ws: null, listeners: {} };
+var wsRef = { ws: null, listeners: {}, lastMsgAt: Date.now(), probing: false, recoveredAt: 0 };
 
 function wsConnect() {
   try {
     var ws = new WebSocket(WS_URL);
     wsRef.ws = ws;
     ws.onopen = function() {
+      // 5분 이상 침묵 후의 재접속이면 복구 표시 (프린터 재연결 트리거용)
+      if (Date.now() - wsRef.lastMsgAt > 5*60*1000) wsRef.recoveredAt = Date.now();
+      wsRef.probing = false;
       // 연결되면 서버에 최신 데이터 요청
       ws.send(JSON.stringify({ type: "get_all" }));
     };
     ws.onmessage = function(e) {
+      wsRef.lastMsgAt = Date.now();
       try {
         var m = JSON.parse(e.data);
+        if (m.type === "init" && wsRef.probing) { wsRef.probing = false; return; } // 생존 확인 응답은 상태에 적용하지 않음
         if (m.type === "init") {
           Object.keys(m.data).forEach(function(k) {
             if (wsRef.listeners[k]) wsRef.listeners[k](m.data[k], true);
@@ -55,6 +60,22 @@ function wsConnect() {
   } catch(ex) { setTimeout(wsConnect, 2000); }
 }
 wsConnect();
+
+// 워치독: 화면 이벤트와 무관하게, 연결이 30초 이상 침묵하면 생존 확인 → 무응답 시 강제 재접속
+setInterval(function() {
+  var ws = wsRef.ws;
+  if (!ws || ws.readyState !== 1) return; // 끊긴 상태는 기존 재접속 루프가 처리
+  if (Date.now() - wsRef.lastMsgAt > 30000) {
+    if (wsRef.probing) {
+      // 지난 확인에도 응답 없음 = 죽은 연결
+      wsRef.probing = false;
+      try { ws.close(); } catch(e) {}
+    } else {
+      wsRef.probing = true;
+      try { ws.send(JSON.stringify({ type: "get_all" })); } catch(e) { try { ws.close(); } catch(e2) {} }
+    }
+  }
+}, 10000);
 
 // 절전 복귀(화면 켜짐) 시 좀비 연결 강제 갱신:
 // 밤새 끊긴 연결을 앱이 살아있다고 착각하는 상태를 끊어서
@@ -331,6 +352,23 @@ export default function App() {
       }
     }
     requestWakeLock();
+    function reconnectPrinter() {
+      setTimeout(function() {
+        if (!eposRef.printer) {
+          var ip = db.get("sj-printer-ip");
+          if (ip) {
+            var epos2 = new window.epson.ePOSDevice();
+            epos2.connect(ip, 8008, function(res) {
+              if (res==="OK"||res==="SSL_CONNECT_OK") {
+                epos2.createDevice("local_printer", epos2.DEVICE_TYPE_PRINTER, {crypto:false,buffer:false}, function(devobj,retcode) {
+                  if (retcode==="OK") { eposRef.printer = devobj; eposRef.current = epos2; }
+                });
+              }
+            });
+          }
+        }
+      }, 1000);
+    }
     var lastHiddenAt = 0;
     document.addEventListener("visibilitychange", function() {
       if (document.visibilityState === "hidden") { lastHiddenAt = Date.now(); return; }
@@ -341,24 +379,20 @@ export default function App() {
           eposRef.printer = null;
           eposRef.current = null;
         }
-        setTimeout(function() {
-          if (!eposRef.printer) {
-            var ip = db.get("sj-printer-ip");
-            if (ip) {
-              var epos2 = new window.epson.ePOSDevice();
-              epos2.connect(ip, 8008, function(res) {
-                if (res==="OK"||res==="SSL_CONNECT_OK") {
-                  epos2.createDevice("local_printer", epos2.DEVICE_TYPE_PRINTER, {crypto:false,buffer:false}, function(devobj,retcode) {
-                    if (retcode==="OK") { eposRef.printer = devobj; eposRef.current = epos2; }
-                  });
-                }
-              });
-            }
-          }
-        }, 1000);
+        reconnectPrinter();
       }
     });
-    return function() { if (wakeLock) wakeLock.release().catch(function() {}); };
+    // 화면 이벤트가 안 오는 기기(APK) 대비: WS가 장기 침묵에서 복구되면 프린터도 재연결
+    var handledRecoverAt = 0;
+    var recoverCheck = setInterval(function() {
+      if (wsRef.recoveredAt && wsRef.recoveredAt !== handledRecoverAt) {
+        handledRecoverAt = wsRef.recoveredAt;
+        eposRef.printer = null;
+        eposRef.current = null;
+        reconnectPrinter();
+      }
+    }, 15000);
+    return function() { clearInterval(recoverCheck); if (wakeLock) wakeLock.release().catch(function() {}); };
   }, []);
 
   var [mode,setMode]               = useState("home");
