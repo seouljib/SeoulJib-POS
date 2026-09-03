@@ -171,19 +171,41 @@ function playBeep(type) {
     stopBeep();
     var ctx = _getAudioCtx();
     if (!ctx) return;
-    if (ctx.state === "suspended") ctx.resume();
     var buf = (type === "call") ? _audioBuffer_call : _audioBuffer_order;
-    if (!buf) {
-      // 버퍼 없으면 즉석 디코딩 후 재생
+    function decodeAndPlay(c) {
       var bytes = (type === "call") ? SND_CALL_BYTES : SND_ORDER_BYTES;
-      ctx.decodeAudioData(bytes.buffer.slice(0), function(decoded) {
+      c.decodeAudioData(bytes.buffer.slice(0), function(decoded) {
         if (type === "call") _audioBuffer_call = decoded;
         else _audioBuffer_order = decoded;
-        _playLoop(ctx, decoded, 0);
+        _playLoop(c, decoded, 0);
       }, function() {});
-      return;
     }
-    _playLoop(ctx, buf, 0);
+    function playOn(c) {
+      if (buf) _playLoop(c, buf, 0);
+      else decodeAndPlay(c);
+    }
+    function freshCtxAndPlay() {
+      // 절전으로 영구 고장난 컨텍스트는 버리고 새로 생성 (앱 재실행과 동일 효과)
+      try { if (_audioCtx) _audioCtx.close(); } catch(e) {}
+      _audioCtx = null;
+      _audioBuffer_order = null;
+      _audioBuffer_call = null;
+      buf = null;
+      var c2 = _getAudioCtx();
+      if (c2) decodeAndPlay(c2);
+    }
+    if (ctx.state === "running") { playOn(ctx); return; }
+    // 정지 상태: 깨운 뒤 재생, 1초 내 복구 안 되면 컨텍스트 재생성
+    var done = false;
+    try {
+      ctx.resume().then(function() {
+        if (done) return;
+        done = true;
+        if (ctx.state === "running") playOn(ctx);
+        else freshCtxAndPlay();
+      }).catch(function() { if (!done) { done = true; freshCtxAndPlay(); } });
+    } catch(e) { if (!done) { done = true; freshCtxAndPlay(); } }
+    setTimeout(function() { if (!done) { done = true; freshCtxAndPlay(); } }, 1000);
   } catch(e) {}
 }
 
