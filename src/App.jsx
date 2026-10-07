@@ -732,7 +732,7 @@ export default function App() {
                             {hasBadge(item,"spicy1")&&<span style={{background:"#f1c40f",color:"#1a1a1a",fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:4}}>🌶️</span>}
                             {hasBadge(item,"spicy2")&&<span style={{background:"#f1c40f",color:"#1a1a1a",fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:4}}>🌶️🌶️</span>}
                             {hasBadge(item,"spicy3")&&<span style={{background:"#f1c40f",color:"#1a1a1a",fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:4}}>🌶️🌶️🌶️</span>}
-                            {item.hasSpice&&<span style={{fontSize:12}}>🌶</span>}
+                            {item.hasSpice&&<span style={{fontSize:12}}>🌶</span>}{item.baseOpt&&<span style={{fontSize:12}}>🍜/🍚</span>}
                           </div>
                           <div style={{color:"#999",fontSize:15}}>{item.subcat?catObj.name+" > "+item.subcat:catObj.name}</div>
                         </div>
@@ -1132,7 +1132,7 @@ export default function App() {
   function DetailModal() {
     if (!detail) return null;
     var ic=cart.find(function(c) { return c.id===detail.id&&c.spice===spice; });
-    var needSpice=detail.hasSpice&&!spice;
+    var needSpice=(detail.hasSpice||detail.baseOpt)&&!spice;
     return (
       <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:250}}
         onClick={function(e) { if (e.target===e.currentTarget) { setDetail(null); setSpice(""); } }}>
@@ -1167,12 +1167,12 @@ export default function App() {
                 <div style={{fontSize:18,color:"#a06010",lineHeight:1.7}}>{detail.allergens}</div>
               </div>
             )}
-            {detail.hasSpice&&(
+            {(detail.hasSpice||detail.baseOpt)&&(
               <div style={{marginBottom:18}}>
-                <div style={{fontSize:11,fontWeight:700,color:"#c05020",letterSpacing:1,marginBottom:10}}>SPICE LEVEL</div>
+                <div style={{fontSize:11,fontWeight:700,color:"#c05020",letterSpacing:1,marginBottom:10}}>{detail.baseOpt?"NOODLES OR RICE":"SPICE LEVEL"}</div>
                 <div style={{display:"flex",gap:10}}>
-                  {["Non Spicy","Spicy"].map(function(lvl) {
-                    var icons={"Non Spicy":"✅","Spicy":"🌶️"};
+                  {(detail.baseOpt?["Noodles","Rice"]:["Non Spicy","Spicy"]).map(function(lvl) {
+                    var icons={"Non Spicy":"✅","Spicy":"🌶️","Noodles":"🍜","Rice":"🍚"};
                     var sel=spice===lvl;
                     return <button key={lvl} onClick={function() { setSpice(lvl); }} style={{padding:"10px 16px",borderRadius:22,border:"1.5px solid "+(sel?RED:"#e0e0e0"),background:sel?"#fff0f0":"#fff",color:sel?RED:"#666",fontWeight:sel?700:400,fontSize:14,cursor:"pointer",fontFamily:F}}>{icons[lvl]+" "+lvl}</button>;
                   })}
@@ -1193,7 +1193,7 @@ export default function App() {
                 {!detail.soldOut&&!ic&&(
                   <button style={Object.assign({},RB,{padding:"16px 32px",fontSize:16,opacity:needSpice?.5:1})}
                     onClick={function() { if (needSpice) return; addToCart(detail,spice); setDetail(null); setSpice(""); }}>
-                    {needSpice?"Select Spice First":"Add to Order"}
+                    {needSpice?(detail.baseOpt?"Choose Noodles or Rice":"Select Spice First"):"Add to Order"}
                   </button>
                 )}
               </div>
@@ -1376,7 +1376,7 @@ export default function App() {
     <div style={{minHeight:"100dvh",height:"100dvh",background:"#f0f0f0",fontFamily:F,display:"flex",flexDirection:"column",overflow:"hidden",userSelect:"none"}}>
       {detail&&(function() {
         var ic=cart.find(function(c) { return c.id===detail.id&&c.spice===spice; });
-        var needSpice=detail.hasSpice&&!spice;
+        var needSpice=(detail.hasSpice||detail.baseOpt)&&!spice;
         return (
           <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:250}}
             onClick={function(e) { if (e.target===e.currentTarget) { setDetail(null); setSpice(""); } }}>
@@ -1407,12 +1407,12 @@ export default function App() {
                     <div style={{fontSize:18,color:"#a06010",lineHeight:1.7}}>{detail.allergens}</div>
                   </div>
                 )}
-                {detail.hasSpice&&(
+                {(detail.hasSpice||detail.baseOpt)&&(
                   <div style={{marginBottom:18}}>
-                    <div style={{fontSize:11,fontWeight:700,color:"#c05020",letterSpacing:1,marginBottom:10}}>SPICE LEVEL</div>
+                    <div style={{fontSize:11,fontWeight:700,color:"#c05020",letterSpacing:1,marginBottom:10}}>{detail.baseOpt?"NOODLES OR RICE":"SPICE LEVEL"}</div>
                     <div style={{display:"flex",gap:10}}>
-                      {["Non Spicy","Spicy"].map(function(lvl) {
-                        var icons={"Non Spicy":"✅","Spicy":"🌶️"};
+                      {(detail.baseOpt?["Noodles","Rice"]:["Non Spicy","Spicy"]).map(function(lvl) {
+                        var icons={"Non Spicy":"✅","Spicy":"🌶️","Noodles":"🍜","Rice":"🍚"};
                         var sel=spice===lvl;
                         return <button key={lvl} onClick={function() { setSpice(lvl); }} style={{padding:"10px 16px",borderRadius:22,border:"1.5px solid "+(sel?RED:"#e0e0e0"),background:sel?"#fff0f0":"#fff",color:sel?RED:"#666",fontWeight:sel?700:400,fontSize:14,cursor:"pointer",fontFamily:F}}>{icons[lvl]+" "+lvl}</button>;
                       })}
@@ -1433,7 +1433,7 @@ export default function App() {
                     {!detail.soldOut&&!ic&&(
                       <button style={Object.assign({},RB,{padding:"16px 32px",fontSize:16,opacity:needSpice?.5:1})}
                         onClick={function() { if (needSpice) return; addToCart(detail,spice); setDetail(null); setSpice(""); }}>
-                        {needSpice?"Select Spice First":"Add to Order"}
+                        {needSpice?(detail.baseOpt?"Choose Noodles or Rice":"Select Spice First"):"Add to Order"}
                       </button>
                     )}
                   </div>
@@ -1566,7 +1566,7 @@ export default function App() {
                     <div style={{marginTop:4,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                       <div style={{fontWeight:900,fontSize:17,color:RED}}>{item.price===0?"Free":"$"+item.price}</div>
                       {!item.soldOut&&(
-                        <button onClick={function(e) { e.stopPropagation(); if (item.hasSpice) { setDetail(item); setSpice(""); } else addToCart(item,""); }}
+                        <button onClick={function(e) { e.stopPropagation(); if (item.hasSpice||item.baseOpt) { setDetail(item); setSpice(""); } else addToCart(item,""); }}
                           style={{background:RED,border:"none",color:"#fff",width:36,height:36,borderRadius:"50%",fontSize:22,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(192,57,43,.3)",flexShrink:0}}>+</button>
                       )}
                     </div>
@@ -1710,9 +1710,19 @@ export default function App() {
                 <div style={{fontWeight:700,fontSize:15}}>Spice Level Option</div>
                 <div style={{color:"#666",fontSize:13}}>Non Spicy / Spicy selector</div>
               </div>
-              <div onClick={function() { setEditItem(Object.assign({},editItem,{hasSpice:!editItem.hasSpice})); }}
+              <div onClick={function() { setEditItem(Object.assign({},editItem,{hasSpice:!editItem.hasSpice, baseOpt:editItem.hasSpice?editItem.baseOpt:false})); }}
                 style={{width:48,height:28,borderRadius:14,background:editItem.hasSpice?RED:"#e0e0e0",position:"relative",cursor:"pointer",flexShrink:0,transition:"background .2s"}}>
                 <div style={{position:"absolute",top:3,left:editItem.hasSpice?22:3,width:22,height:22,borderRadius:"50%",background:"#fff",transition:"left .2s"}} />
+              </div>
+            </div>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",background:"#f4fff0",borderRadius:12,border:"1px solid #c8e6b0"}}>
+              <div>
+                <div style={{fontWeight:700,fontSize:15}}>Noodles / Rice Option</div>
+                <div style={{color:"#666",fontSize:13}}>손님이 국수 또는 밥 선택 (주방 영수증에 표시)</div>
+              </div>
+              <div onClick={function() { setEditItem(Object.assign({},editItem,{baseOpt:!editItem.baseOpt, hasSpice:editItem.baseOpt?editItem.hasSpice:false})); }}
+                style={{width:48,height:28,borderRadius:14,background:editItem.baseOpt?RED:"#e0e0e0",position:"relative",cursor:"pointer",flexShrink:0,transition:"background .2s"}}>
+                <div style={{position:"absolute",top:3,left:editItem.baseOpt?22:3,width:22,height:22,borderRadius:"50%",background:"#fff",transition:"left .2s"}} />
               </div>
             </div>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",background:"#f0f4ff",borderRadius:12,border:"1px solid #c0d0f0"}}>
