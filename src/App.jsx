@@ -25,6 +25,15 @@ var DEVICE_ID = (function() {
 var WS_URL = "ws://192.168.68.62:8765";
 var wsRef = { ws: null, listeners: {}, lastMsgAt: Date.now(), probing: false, recoveredAt: 0 };
 
+// 자동 업데이트(새 버전 자동 적용)로 재시작된 경우, 직전 화면 상태를 복원
+var RESUME = (function() {
+  try {
+    var r = JSON.parse(sessionStorage.getItem("sj-resume") || "null");
+    sessionStorage.removeItem("sj-resume");
+    return r;
+  } catch (e) { return null; }
+})();
+
 function wsConnect() {
   try {
     var ws = new WebSocket(WS_URL);
@@ -417,7 +426,7 @@ export default function App() {
     return function() { clearInterval(recoverCheck); if (wakeLock) wakeLock.release().catch(function() {}); };
   }, []);
 
-  var [mode,setMode]               = useState("home");
+  var [mode,setMode]               = useState(function() { return (RESUME&&RESUME.mode)||"home"; });
   var [tableNum,setTableNum]       = useState(function() { return db.get(TABLE_KEY); });
   var [isMain,setIsMain]           = useState(function() { return !!db.get(MAIN_KEY); });
   var [serverMode,setServerMode]   = useState(function() { return !!db.get(SERVER_KEY); });
@@ -453,8 +462,8 @@ export default function App() {
   var [selSub,setSelSub]           = useState("");
   var [ktab,setKtab]               = useState("all");
   var [pin,setPin]                 = useState("");
-  var [unlocked,setUnlocked]       = useState(false);
-  var [adminTab,setAdminTab]       = useState("orders");
+  var [unlocked,setUnlocked]       = useState(function() { return !!(RESUME&&RESUME.unlocked); });
+  var [adminTab,setAdminTab]       = useState(function() { return (RESUME&&RESUME.adminTab)||"orders"; });
   var [editItem,setEditItem]       = useState(null);
   var [isNewItem,setIsNewItem]     = useState(false);
   var [emojiOpen,setEmojiOpen]     = useState(false);
@@ -1082,6 +1091,49 @@ export default function App() {
   var activeCats = cats.filter(function(c) { return !c.hidden; });
   var curCat  = cats.find(function(c) { return c.id===selCat; })||null;
   var hasSubs = curCat&&curCat.subs&&curCat.subs.length>0;
+  // ── 자동 업데이트: 라즈베리파이에 새 빌드가 배포되면 각 태블릿이 스스로 새 버전으로 재시작 ──
+  // 안전 조건: 장바구니 비어 있음, 팝업·편집창 없음, 60초간 터치 없음,
+  //            메인 태블릿은 미확인 신규 주문이 없을 때만 (재시작 시 재출력 방지)
+  var updSafeRef = useRef({});
+  updSafeRef.current = {
+    busy: cart.length>0 || !!detail || cartOpen || histOpen || !!editItem || !!editCat || !!upsellPop,
+    pendingNew: isMain && orders.some(function(o){ return o.status==="pending" && !o.confirmed; }),
+    resume: {
+      mode: mode==="done" ? "order" : (serverMode && mode==="order" ? "serverTable" : mode),
+      unlocked: unlocked,
+      adminTab: adminTab
+    }
+  };
+  useEffect(function() {
+    function bundleOf(src) { var m = String(src||"").match(/\/assets\/index-[\w-]+\.js/); return m ? m[0] : null; }
+    var el = document.querySelector('script[type="module"][src*="/assets/"]');
+    var current = el ? bundleOf(el.getAttribute("src")) : null;
+    if (!current) return; // 개발 모드 등 빌드본이 아니면 비활성
+    var lastTouch = Date.now();
+    function touched() { lastTouch = Date.now(); }
+    document.addEventListener("touchstart", touched, {passive:true});
+    document.addEventListener("click", touched);
+    var updateReady = false;
+    var t = setInterval(function() {
+      if (!updateReady) {
+        fetch("/?_v=" + Date.now(), { cache: "no-store" })
+          .then(function(r) { return r.text(); })
+          .then(function(html) { var latest = bundleOf(html); if (latest && latest !== current) updateReady = true; })
+          .catch(function() {});
+        return;
+      }
+      var st = updSafeRef.current;
+      if (st.busy || st.pendingNew || Date.now() - lastTouch < 60000) return;
+      try { sessionStorage.setItem("sj-resume", JSON.stringify(st.resume)); } catch(e) {}
+      window.location.replace(window.location.pathname + "?_v=" + Date.now());
+    }, 30000);
+    return function() {
+      clearInterval(t);
+      document.removeEventListener("touchstart", touched);
+      document.removeEventListener("click", touched);
+    };
+  }, []);
+
   var dispMenu = menu.filter(function(m) {
     if (!curCat||m.cat!==curCat.name) return false;
     if (m.hidden) return false;
