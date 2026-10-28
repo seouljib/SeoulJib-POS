@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seoul Jib 클라우드 프린트 테스트</title>
+<script src="epos-2.27.0.js"></script>
+<style>
+  body { font-family: -apple-system, sans-serif; background: #fff7f0; margin: 0; padding: 24px; color: #1a1a1a; }
+  h1 { font-size: 26px; margin: 0 0 6px; }
+  .sub { color: #666; margin-bottom: 20px; font-size: 15px; }
+  .box { background: #fff; border: 1.5px solid #e0e0e0; border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+  label { font-weight: 700; font-size: 14px; }
+  input { font-size: 20px; padding: 10px 12px; border: 1.5px solid #ccc; border-radius: 10px; width: 260px; margin-top: 6px; }
+  button { font-size: 20px; font-weight: 800; padding: 16px 28px; border: none; border-radius: 14px; background: #c0392b; color: #fff; margin: 10px 10px 0 0; }
+  button.gray { background: #777; }
+  #result { font-size: 24px; font-weight: 900; padding: 16px; border-radius: 12px; display: none; }
+  .ok { background: #e8f8ee; color: #1e8449; display: block !important; }
+  .fail { background: #fdecea; color: #c0392b; display: block !important; }
+  .wait { background: #fff4e0; color: #a06010; display: block !important; }
+  #log { font-family: monospace; font-size: 13px; white-space: pre-wrap; background: #222; color: #ddd; padding: 12px; border-radius: 10px; min-height: 80px; }
+</style>
+</head>
+<body>
+  <h1>클라우드 프린트 테스트</h1>
+  <div class="sub">인터넷 주소에서 열린 페이지가 가게 안 프린터로 출력할 수 있는지 확인합니다.</div>
+
+  <div class="box">
+    <label>프린터 IP</label><br>
+    <input id="ip" value="192.168.68.50"><br>
+    <button onclick="runTest()">프린트 테스트</button>
+    <button class="gray" onclick="location.href='http://192.168.68.62:5173'">POS로 돌아가기</button>
+  </div>
+
+  <div id="result"></div>
+
+  <div class="box">
+    <label>진단 정보 (결과 화면을 캡처해서 보내주세요)</label>
+    <div id="log"></div>
+  </div>
+
+<script>
+  var logEl = document.getElementById('log');
+  function log(m) { logEl.textContent += new Date().toLocaleTimeString() + '  ' + m + '\n'; }
+  function result(cls, text) { var r = document.getElementById('result'); r.className = cls; r.textContent = text; }
+
+  window.onerror = function(msg) { log('JS 오류: ' + msg); };
+  log('페이지 주소: ' + location.href);
+  log('보안 연결(https): ' + (location.protocol === 'https:' ? '예' : '아니오'));
+  log('실행 환경: ' + (/; wv\)/.test(navigator.userAgent) ? '앱(WebView)' : '브라우저') + ' | ' + navigator.userAgent);
+  log('Epson SDK 로드: ' + (window.epson ? '성공' : '실패'));
+
+  var done = false;
+  function runTest() {
+    done = false;
+    var ip = document.getElementById('ip').value.trim();
+    if (!window.epson) { result('fail', '실패: Epson SDK가 로드되지 않았습니다'); return; }
+    result('wait', '프린터에 연결 중...');
+    log('연결 시도: ' + ip + ':8008');
+    var timer = setTimeout(function() {
+      if (!done) { done = true; result('fail', '실패: 15초 동안 응답 없음 (차단됐을 가능성)'); log('타임아웃'); }
+    }, 15000);
+    try {
+      var dev = new epson.ePOSDevice();
+      dev.connect(ip, 8008, function(res) {
+        log('연결 응답: ' + res);
+        if (res !== 'OK' && res !== 'SSL_CONNECT_OK') {
+          clearTimeout(timer); done = true; result('fail', '실패: 연결 거부 (' + res + ')'); return;
+        }
+        dev.createDevice('local_printer', dev.DEVICE_TYPE_PRINTER, { crypto: false, buffer: false }, function(p, code) {
+          log('프린터 장치 생성: ' + code);
+          if (code !== 'OK') { clearTimeout(timer); done = true; result('fail', '실패: 장치 생성 (' + code + ')'); return; }
+          p.onreceive = function(r) {
+            clearTimeout(timer); done = true;
+            log('출력 응답: success=' + r.success + ' code=' + r.code);
+            if (r.success) result('ok', '성공: 영수증이 나왔으면 클라우드 이전 가능');
+            else result('fail', '실패: 출력 오류 (' + r.code + ')');
+          };
+          p.addTextAlign(p.ALIGN_CENTER);
+          p.addTextSize(2, 2);
+          p.addText('\nCLOUD PRINT TEST\n');
+          p.addTextSize(1, 1);
+          p.addText(location.host + '\n' + new Date().toLocaleString() + '\n\n');
+          p.addCut(p.CUT_FEED);
+          p.send();
+          log('출력 명령 전송');
+        });
+      });
+    } catch (e) {
+      clearTimeout(timer); done = true; result('fail', '실패: ' + e.message); log('예외: ' + e.message);
+    }
+  }
+</script>
+</body>
+</html>
