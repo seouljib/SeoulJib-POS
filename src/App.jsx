@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, setDoc, onSnapshot, collection, deleteDoc } from "firebase/firestore";
+import { getFirestore, doc, setDoc, onSnapshot, collection, deleteDoc, getDocsFromServer, getDocFromServer, query, where } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBVMWiAcH05UYstTQCxQ8MOQ3k_rZmvq-k",
@@ -113,8 +113,24 @@ async function fsSet(col, id, data) {
 
 async function fsSetMenuItem(item) {
   try {
-    await setDoc(doc(firestore, "menu", item.id), Object.assign({}, item, { _writer: DEVICE_ID }));
+    await setDoc(doc(firestore, "menu", item.id), Object.assign({}, item, { _writer: DEVICE_ID, _ts: Date.now() }));
   } catch(e) { console.error(e); }
+}
+
+// 메뉴 한 개의 "바꾼 칸만" 저장 (다른 칸은 서버 값 유지 → 오래된 기기가 남의 수정을 덮어쓰지 못함)
+async function fsPatchMenuItem(id, fields) {
+  try {
+    var f = Object.assign({}, fields); delete f.__patch;
+    await setDoc(doc(firestore, "menu", id), Object.assign(f, { _writer: DEVICE_ID, _ts: Date.now() }), { merge: true });
+  } catch(e) { console.error(e); }
+}
+
+// 메뉴 버전: 메뉴를 바꿀 때마다 올림 → 모든 태블릿이 감지하고 바뀐 메뉴를 다시 받아옴 (재시작 불필요)
+// full=true 이면 (삭제 등) 전체 다시 받기
+function bumpMenuVersion(full) {
+  var v = Date.now();
+  wsSet("menuV", { v: v, full: !!full });
+  fsSet("pos", "menuMeta", { v: v, full: !!full });
 }
 
 async function fsDeleteMenuItem(itemId) {
@@ -539,13 +555,10 @@ export default function App() {
         setOrders(parsed); db.set(ORDERS_KEY,parsed);
       } catch(e) {}
     });
-    wsOn("menu", function(v, fromRemote) {
-      if (!fromRemote) return;
-      try {
-        var parsed = typeof v === "string" ? JSON.parse(v) : v;
-        setMenu(parsed); db.set(MENU_KEY, parsed);
-      } catch(e) {}
-    });
+    // 메뉴 전체 덮어쓰기(구버전 기기의 방식)는 받지 않음.
+    // 오래된 기기가 보낸 메뉴 전체가 최신 메뉴를 덮어쓰는 사고를 막기 위함.
+    // 메뉴 변경은 개별 메뉴 수정 + 메뉴 버전(menuV) 신호로만 반영됨.
+    wsOn("menu", function() {});
     wsOn("cats", function(v, fromRemote) {
       if (!fromRemote) return;
       try {
@@ -576,15 +589,115 @@ export default function App() {
         }
       } catch(e) {}
     });
-    // 개별 메뉴 아이템 변경 (soldOut/hide 즉각 반영)
+    // 개별 메뉴 아이템 변경 (soldOut/hide/수정 즉각 반영)
+    // __patch 가 있으면 그 칸만 반영 (보낸 기기의 나머지 칸이 오래됐어도 덮어쓰지 않음)
     wsRef.itemListener = function(key, value) {
-      if (key.startsWith("menu_item_")) {
-        setMenu(function(prev) {
-          return prev.map(function(m) { return m.id===value.id?value:m; });
+      if (!key.startsWith("menu_item_") || !value || !value.id) return;
+      var p = value.__patch;
+      setMenu(function(prev) {
+        var exists = prev.some(function(m) { return m.id===value.id; });
+        if (!exists) {
+          if (p) return prev; // 모르는 메뉴의 부분 수정 → 메뉴 버전 신호로 전체 동기화될 때 반영
+          var nv = Object.assign({}, value); delete nv.__patch;
+          return prev.concat([nv]);
+        }
+        return prev.map(function(m) {
+          if (m.id!==value.id) return m;
+          if (p) return Object.assign({}, m, p);
+          var nv2 = Object.assign({}, value); delete nv2.__patch;
+          return nv2;
         });
-      }
+      });
     };
+    // 메뉴 버전 신호 (실시간 서버 경로)
+    wsOn("menuV", function(v) { if (menuCheckRef.current) menuCheckRef.current(v); });
   }, []);
+
+  // ── 메뉴 자동 동기화: 메뉴가 바뀌면 재시작 없이 모든 태블릿에 반영 ──
+  // 1) 앱 시작 시 서버에서 메뉴 전체를 새로 받음 (기기에 저장된 옛 메뉴로 시작하는 것 방지)
+  // 2) 메뉴 버전 신호(실시간 서버 + Firestore)를 받으면 바뀐 메뉴만 다시 받음
+  // 3) 3분마다 서버에 버전을 직접 확인 (연결이 조용히 끊겨 신호를 놓친 경우 대비)
+  var menuCheckRef = useRef(null);
+  var menuSyncRef  = useRef({ v: 0, busy: false, pending: null });
+  useEffect(function() {
+    function resync(full, targetV) {
+      var st = menuSyncRef.current;
+      if (st.busy) { st.pending = { full: full || (st.pending && st.pending.full), v: Math.max(targetV||0, (st.pending&&st.pending.v)||0) }; return; }
+      st.busy = true;
+      var since = st.v;
+      var doFull = full || !since;
+      // 증분 동기화: 마지막 동기화 이후 바뀐 메뉴만 (기기 간 시계 차이 대비 10분 여유)
+      var q = doFull ? collection(firestore, "menu")
+                     : query(collection(firestore, "menu"), where("_ts", ">", since - 600000));
+      getDocsFromServer(q).then(function(snap) {
+        var got = [];
+        snap.forEach(function(d) { var it = d.data(); if (it && it.id) got.push(it); });
+        if (doFull) {
+          if (got.length > 0) setMenu(got);
+        } else if (got.length > 0) {
+          var byId = {}; got.forEach(function(g) { byId[g.id] = g; });
+          setMenu(function(prev) {
+            var next = prev.map(function(m) { return byId[m.id] ? byId[m.id] : m; });
+            got.forEach(function(g) { if (!prev.some(function(m) { return m.id===g.id; })) next.push(g); });
+            return next;
+          });
+        }
+        if (targetV && targetV > st.v) st.v = targetV;
+      }).catch(function() {}).then(function() {
+        st.busy = false;
+        if (st.pending) { var pd = st.pending; st.pending = null; if (pd.full || pd.v > st.v) resync(pd.full, pd.v); }
+      });
+    }
+    function check(raw) {
+      var v = 0, full = false;
+      if (raw && typeof raw === "object") { v = Number(raw.v)||0; full = !!raw.full; } else { v = Number(raw)||0; }
+      if (v > menuSyncRef.current.v) resync(full, v);
+    }
+    menuCheckRef.current = check;
+    // 시작 시: 현재 버전 확인 후 전체 동기화
+    var startT = setTimeout(function() {
+      getDocFromServer(doc(firestore, "pos", "menuMeta")).then(function(s) {
+        var v = s.exists() ? (Number(s.data().v)||0) : 0;
+        resync(true, v || 1);
+      }).catch(function() { resync(true, 0); });
+    }, 1500);
+    // Firestore 경로의 버전 신호
+    var unsubMeta = onSnapshot(doc(firestore, "pos", "menuMeta"), function(s) {
+      if (s.exists()) check(s.data());
+    }, function() {});
+    // 3분마다 직접 확인
+    var iv = setInterval(function() {
+      getDocFromServer(doc(firestore, "pos", "menuMeta")).then(function(s) {
+        if (s.exists()) check(s.data());
+      }).catch(function() {});
+    }, 180000);
+    // 화면이 다시 켜질 때도 확인
+    function onVis() {
+      if (document.hidden) return;
+      getDocFromServer(doc(firestore, "pos", "menuMeta")).then(function(s) {
+        if (s.exists()) check(s.data());
+      }).catch(function() {});
+    }
+    document.addEventListener("visibilitychange", onVis);
+    return function() { clearTimeout(startT); unsubMeta(); clearInterval(iv); document.removeEventListener("visibilitychange", onVis); menuCheckRef.current = null; };
+  }, []);
+
+  // 메뉴가 바뀔 때마다 기기 저장본도 갱신 (다음 시작 때 옛 메뉴가 뜨지 않도록)
+  useEffect(function() { db.set(MENU_KEY, menu); }, [menu]);
+
+  // 장바구니에 담긴 메뉴의 가격을 최신 메뉴 가격으로 맞춤
+  useEffect(function() {
+    setCart(function(prev) {
+      if (!prev.length) return prev;
+      var changed = false;
+      var next = prev.map(function(c) {
+        var cur = menu.find(function(m) { return m.id===c.id; });
+        if (cur && cur.price != null && Number(cur.price) !== Number(c.price)) { changed = true; return Object.assign({}, c, { price: Number(cur.price) }); }
+        return c;
+      });
+      return changed ? next : prev;
+    });
+  }, [menu]);
   var prevCallCount  = useRef(0);
   useEffect(function() {
     var unsubs = [];
@@ -710,12 +823,31 @@ export default function App() {
     wsSet("orders", n); // WS로 즉시 전송
     fsSet("pos","orders",{data:JSON.stringify(n),ts:Date.now()}); // Firestore 백업
   }, []);
-  var saveMenu   = useCallback(function(n) {
-    setMenu(n);
-    db.set(MENU_KEY,n);
-    wsSet("menu", n); // WS로 즉시 전송
-    n.forEach(function(item) { fsSetMenuItem(item); }); // Firestore 백업
+  // (구버전) 메뉴 전체 저장 — 더 이상 사용하지 않음. 오래된 기기가 최신 메뉴를 덮어쓰는 원인이었음.
+  // 메뉴 변경은 아래 patchMenuItems(바꾼 칸만 저장)로만 함.
+
+  // 메뉴 여러 개의 "바꾼 칸만" 저장 + 모든 기기에 알림
+  // patches: [{ id, fields, base }]  base = 이 기기의 해당 메뉴 (구버전 기기 호환용)
+  var patchMenuItems = useCallback(function(patches, full) {
+    if (!patches || !patches.length) return;
+    var byId = {};
+    patches.forEach(function(p) { byId[p.id] = p.fields; });
+    setMenu(function(prev) { return prev.map(function(m) { return byId[m.id] ? Object.assign({}, m, byId[m.id]) : m; }); });
+    patches.forEach(function(p) {
+      if (p.base) wsSet("menu_item_"+p.id, Object.assign({}, p.base, p.fields, { __patch: p.fields }));
+    });
+    // 서버 저장이 끝난 뒤에 버전 신호 → 다른 기기가 다시 받을 때 반드시 새 값이 들어 있음
+    Promise.all(patches.map(function(p) { return fsPatchMenuItem(p.id, p.fields); })).then(function() { bumpMenuVersion(!!full); });
   }, []);
+  // 순서 변경: sortOrder 가 바뀐 메뉴만 저장
+  var saveMenuOrder = useCallback(function(newList) {
+    var patches = [];
+    newList.forEach(function(m) {
+      var old = menu.find(function(x) { return x.id===m.id; });
+      if (!old || old.sortOrder !== m.sortOrder) patches.push({ id:m.id, fields:{ sortOrder:m.sortOrder }, base:old||m });
+    });
+    patchMenuItems(patches);
+  }, [menu, patchMenuItems]);
   var saveCats   = useCallback(function(n) { setCats(n);   db.set(CATS_KEY,n);   wsSet("cats",n); fsSet("pos","cats",{data:JSON.stringify(n),ts:Date.now()}); }, []);
   var saveCalls  = useCallback(function(n) {
     setCalls(n);  db.set(CALLS_KEY,n);
@@ -752,10 +884,7 @@ export default function App() {
                           var cur = st[item.id]||{};
                           var next = Object.assign({},st,{}); next[item.id]=Object.assign({},cur,{soldOut:!item.soldOut});
                           db.set("sj-status",next);
-                          var updatedItem = Object.assign({},item,{soldOut:!item.soldOut});
-                          setMenu(function(prev){return prev.map(function(m){return m.id===item.id?updatedItem:m;});});
-                          wsSet("menu_item_"+item.id, updatedItem);
-                          fsSetMenuItem(updatedItem);
+                          patchMenuItems([{ id:item.id, fields:{soldOut:!item.soldOut}, base:item }]);
                         }}
                           style={{padding:"5px 8px",borderRadius:6,border:"1px solid "+(item.soldOut?"#27ae60":RED),background:item.soldOut?"#f0fff0":"#fff0f0",color:item.soldOut?"#27ae60":RED,fontWeight:600,cursor:"pointer",fontSize:11,fontFamily:F,whiteSpace:"nowrap",flexShrink:0}}>
                           {item.soldOut?"Resume":"Sold Out"}
@@ -765,10 +894,7 @@ export default function App() {
                           var cur = st[item.id]||{};
                           var next = Object.assign({},st,{}); next[item.id]=Object.assign({},cur,{hidden:!item.hidden});
                           db.set("sj-status",next);
-                          var updatedItem = Object.assign({},item,{hidden:!item.hidden});
-                          setMenu(function(prev){return prev.map(function(m){return m.id===item.id?updatedItem:m;});});
-                          wsSet("menu_item_"+item.id, updatedItem);
-                          fsSetMenuItem(updatedItem);
+                          patchMenuItems([{ id:item.id, fields:{hidden:!item.hidden}, base:item }]);
                         }}
                           style={{padding:"5px 8px",borderRadius:6,border:"1px solid #999",background:"#f5f5f5",color:"#666",fontWeight:600,cursor:"pointer",fontSize:11,fontFamily:F,flexShrink:0}}>
                           {item.hidden?"Show":"Hide"}
@@ -782,7 +908,7 @@ export default function App() {
                             var subIdx = sameSub.findIndex(function(m){return m.id===item.id;});
                             if (subIdx<=0) return;
                             var a=sameSub[subIdx], b=sameSub[subIdx-1];
-                            saveMenu(norm.map(function(m){
+                            saveMenuOrder(norm.map(function(m){
                               if (m.id===a.id) return Object.assign({},m,{sortOrder:b.sortOrder});
                               if (m.id===b.id) return Object.assign({},m,{sortOrder:a.sortOrder});
                               return m;
@@ -794,7 +920,7 @@ export default function App() {
                             var subIdx = sameSub.findIndex(function(m){return m.id===item.id;});
                             if (subIdx>=sameSub.length-1) return;
                             var a=sameSub[subIdx], b=sameSub[subIdx+1];
-                            saveMenu(norm.map(function(m){
+                            saveMenuOrder(norm.map(function(m){
                               if (m.id===a.id) return Object.assign({},m,{sortOrder:b.sortOrder});
                               if (m.id===b.id) return Object.assign({},m,{sortOrder:a.sortOrder});
                               return m;
@@ -970,15 +1096,7 @@ export default function App() {
     return function() { clearInterval(pollRef.current); };
   }, [mode, adminTab, poll]);
 
-  // 앱 시작 시 기존 메뉴를 menu 컬렉션으로 마이그레이션 (최초 1회)
-  useEffect(function() {
-    if (db.get("sj-menu-migrated")) return;
-    var m = db.get(MENU_KEY)||[];
-    if (m.length > 0) {
-      m.forEach(function(item) { fsSetMenuItem(item); });
-      db.set("sj-menu-migrated", true);
-    }
-  }, []);
+  // (삭제) 기기 저장 메뉴를 서버로 일괄 업로드하던 마이그레이션 — 옛 메뉴로 최신 메뉴를 덮어쓸 위험이 있어 제거
 
   // 앱 시작 시 프린터 자동 연결
   useEffect(function() {
@@ -1062,10 +1180,17 @@ export default function App() {
 
   function submitOrder() {
     if (!cart.length) return;
+    // 주문 순간 최신 메뉴 가격으로 다시 확인 (장바구니에 담은 뒤 가격이 바뀐 경우 대비)
+    var oItems = cart.map(function(c) {
+      var cur = menu.find(function(m) { return m.id===c.id; });
+      var price = (cur && cur.price != null && !isNaN(Number(cur.price))) ? Number(cur.price) : c.price;
+      return {id:c.id,name:c.name,cat:c.cat||"",subcat:c.subcat||"",price:price,qty:c.qty,spice:c.spice||""};
+    });
+    var oTotal = oItems.reduce(function(s,i) { return s + i.price*i.qty; }, 0);
     var o = {
       id:Date.now().toString(), table:tableNum,
-      items:cart.map(function(c) { return {id:c.id,name:c.name,cat:c.cat||"",subcat:c.subcat||"",price:c.price,qty:c.qty,spice:c.spice||""}; }),
-      note:noteRef.current?noteRef.current.value:note, total:cartTotal, status:"pending", confirmed:false,
+      items:oItems,
+      note:noteRef.current?noteRef.current.value:note, total:oTotal, status:"pending", confirmed:false,
       time:new Date().toLocaleTimeString("en-NZ",{hour:"2-digit",minute:"2-digit"}),
       ts:Date.now(),
     };
@@ -1853,15 +1978,25 @@ export default function App() {
               <button style={Object.assign({},RB,{flex:1,padding:"16px",fontSize:16})}
                 onClick={function() {
                   if (!editItem.name.trim()) { showToast("Name required"); return; }
-                  if (isNewItem) saveMenu(menu.concat([editItem]));
-                  else saveMenu(menu.map(function(m) { return m.id===editItem.id?editItem:m; }));
+                  if (isNewItem) {
+                    var ni = Object.assign({}, editItem);
+                    setMenu(function(prev) { return prev.concat([ni]); });
+                    wsSet("menu_item_"+ni.id, ni);
+                    fsSetMenuItem(ni).then(function() { bumpMenuVersion(false); });
+                  } else {
+                    // 수정한 칸만 저장 (품절/숨김 상태는 건드리지 않음 → 다른 기기의 품절 처리를 되돌리지 않음)
+                    var ef = Object.assign({}, editItem);
+                    delete ef.soldOut; delete ef.hidden; delete ef._writer; delete ef._ts;
+                    var eb = menu.find(function(m) { return m.id===editItem.id; }) || editItem;
+                    patchMenuItems([{ id:editItem.id, fields:ef, base:eb }]);
+                  }
                   setEditItem(null);setIsNewItem(false); showToast(isNewItem?"Item added":"Saved");
                 }}>{isNewItem?"Add to Menu":"Save Changes"}</button>
               <button style={{background:"#fff",color:"#1a1a1a",fontWeight:600,border:"1.5px solid #e0e0e0",borderRadius:14,padding:"14px 20px",fontSize:15,cursor:"pointer",fontFamily:F}} onClick={function() { setEditItem(null);setIsNewItem(false); }}>Cancel</button>
             </div>
             {!isNewItem&&(
               <button style={{width:"100%",background:"#fff0f0",color:RED,border:"1.5px solid #ffc0c0",borderRadius:14,padding:"14px",fontSize:15,fontWeight:600,cursor:"pointer",fontFamily:F}}
-                onClick={function() { saveMenu(menu.filter(function(m) { return m.id!==editItem.id; })); fsDeleteMenuItem(editItem.id); setEditItem(null); showToast("Deleted"); }}>
+                onClick={function() { var delId = editItem.id; setMenu(function(prev) { return prev.filter(function(m) { return m.id!==delId; }); }); fsDeleteMenuItem(delId).then(function() { bumpMenuVersion(true); }); setEditItem(null); showToast("Deleted"); }}>
                 🗑️ Delete Item
               </button>
             )}
@@ -1922,7 +2057,7 @@ export default function App() {
                   var oldName = oldCat ? oldCat.name : null;
                   saveCats(cats.map(function(c) { return c.id===editCat.id?editCat:c; }));
                   if (oldName && oldName !== editCat.name) {
-                    saveMenu(menu.map(function(m) { return m.cat===oldName?Object.assign({},m,{cat:editCat.name}):m; }));
+                    patchMenuItems(menu.filter(function(m) { return m.cat===oldName; }).map(function(m) { return { id:m.id, fields:{cat:editCat.name}, base:m }; }));
                   }
                 }
                 setEditCat(null);setIsNewCat(false); showToast(isNewCat?"Category added":"Saved");
