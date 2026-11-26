@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Component } from "react";
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc, onSnapshot, collection, deleteDoc, getDocsFromServer, getDocFromServer, query, where } from "firebase/firestore";
 
@@ -52,7 +52,7 @@ function wsConnect() {
         if (m.type === "init" && wsRef.probing) { wsRef.probing = false; return; } // 생존 확인 응답은 상태에 적용하지 않음
         if (m.type === "init") {
           Object.keys(m.data).forEach(function(k) {
-            if (wsRef.listeners[k]) wsRef.listeners[k](m.data[k], true);
+            if (wsRef.listeners[k]) wsRef.listeners[k](m.data[k], true, true); // 세 번째 인자: 재접속 시 받는 전체 데이터(init)
             else if (k.startsWith("menu_item_") && wsRef.itemListener) wsRef.itemListener(k, m.data[k]);
           });
         } else if (m.type === "update") {
@@ -381,7 +381,38 @@ async function uploadToCloudinary(base64DataUrl) {
   }
 }
 
+// 화면 오류 시 흰 화면에 갇히지 않도록: 안내 표시 후 자동 재시작 (2분 안에 3번 넘게 반복되면 수동 버튼만)
+class CrashGuard extends Component {
+  constructor(props) { super(props); this.state = { err: null, auto: true }; }
+  static getDerivedStateFromError(err) { return { err: err }; }
+  componentDidCatch(err) {
+    var hist = [];
+    try { hist = JSON.parse(sessionStorage.getItem("sj-crash") || "[]"); } catch(e) {}
+    var now = Date.now();
+    hist = hist.filter(function(t) { return now - t < 120000; }); hist.push(now);
+    try { sessionStorage.setItem("sj-crash", JSON.stringify(hist)); } catch(e) {}
+    try { console.error("[CrashGuard]", err); } catch(e) {}
+    if (hist.length > 3) { this.setState({ auto: false }); return; }
+    setTimeout(function() { location.reload(); }, 5000);
+  }
+  render() {
+    if (!this.state.err) return this.props.children;
+    return (
+      <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#fff7f0",fontFamily:"system-ui, sans-serif",padding:24,textAlign:"center"}}>
+        <div style={{fontSize:28,fontWeight:800,marginBottom:12}}>Reconnecting…</div>
+        <div style={{fontSize:16,color:"#666",marginBottom:24}}>{this.state.auto ? "The app will restart in a few seconds." : "Please tap the button to restart."}</div>
+        <button onClick={function() { try { sessionStorage.removeItem("sj-crash"); } catch(e) {} location.reload(); }}
+          style={{fontSize:18,fontWeight:800,padding:"14px 28px",border:"none",borderRadius:12,background:"#c0392b",color:"#fff"}}>Restart now</button>
+      </div>
+    );
+  }
+}
+
 export default function App() {
+  return <CrashGuard><AppInner /></CrashGuard>;
+}
+
+function AppInner() {
   useEffect(function() {
     if (document.getElementById("sj-css")) return;
     var s = document.createElement("style"); s.id="sj-css"; s.textContent=CSS;
@@ -543,16 +574,34 @@ export default function App() {
 
   // Firebase real-time sync
   var prevOrderCount = useRef(0);
+  // 새 주문 알림음 + 자동 출력 (메인 태블릿 전용)
+  // 인터넷(Firestore) 경로와 파이(WS) 경로 중 먼저 도착한 쪽에서 한 번만 실행 (sj-printed-ids 로 중복 방지)
+  // → 매장 인터넷이 끊겨도 파이 경로로 알림·출력이 됨
+  var notifyNewOrdersRef = useRef(null);
+  notifyNewOrdersRef.current = function(v) {
+    if (!db.get(MAIN_KEY) || !Array.isArray(v)) return;
+    var newOrders = v.filter(function(o) { return o && o.status==="pending" && !o.confirmed; });
+    var printedIds = db.get("sj-printed-ids")||[];
+    var added = newOrders.filter(function(o) { return !printedIds.includes(o.id); });
+    if (added.length === 0) return;
+    db.set("sj-printed-ids", printedIds.concat(added.map(function(o){ return o.id; })));
+    playBeep("order");
+    if (db.get("sj-autoprint")) {
+      added.forEach(function(o) { printOrder(o); setTimeout(function(){ printOrder(o); }, 1000); });
+    }
+  };
   // 앱 시작 시 printed-ids 초기화
   useEffect(function() { db.set("sj-printed-ids",[]); }, []);
 
   // WebSocket 리스너 등록
   useEffect(function() {
-    wsOn("orders", function(v, fromRemote) {
+    wsOn("orders", function(v, fromRemote, isInit) {
       if (!fromRemote) return;
       try {
         var parsed = typeof v === "string" ? JSON.parse(v) : v;
         setOrders(parsed); db.set(ORDERS_KEY,parsed);
+        // 파이 경로로 들어온 새 주문도 알림·출력 (재접속 때 받는 전체 데이터는 제외)
+        if (!isInit && notifyNewOrdersRef.current) notifyNewOrdersRef.current(parsed);
       } catch(e) {}
     });
     // 메뉴 전체 덮어쓰기(구버전 기기의 방식)는 받지 않음.
@@ -747,17 +796,8 @@ export default function App() {
       orders: function(v, fromRemote) {
         setOrders(v); db.set(ORDERS_KEY,v);
         if (fromRemote && db.get(MAIN_KEY)) {
-          var newOrders = v.filter(function(o) { return o.status==="pending"&&!o.confirmed; });
-          var pendingCount = newOrders.length;
-          var printedIds = db.get("sj-printed-ids")||[];
-          var added = newOrders.filter(function(o) { return !printedIds.includes(o.id); });
-          if (added.length > 0) {
-            playBeep("order");
-            if (db.get("sj-autoprint")) {
-              added.forEach(function(o) { printOrder(o); setTimeout(function(){printOrder(o);},1000); });
-            }
-            db.set("sj-printed-ids", printedIds.concat(added.map(function(o){return o.id;})));
-          }
+          var pendingCount = v.filter(function(o) { return o.status==="pending"&&!o.confirmed; }).length;
+          if (notifyNewOrdersRef.current) notifyNewOrdersRef.current(v);
           prevOrderCount.current = pendingCount;
         } else if (!fromRemote) {
           var pending = v.filter(function(o) { return o.status==="pending"&&!o.confirmed; });
@@ -2416,6 +2456,12 @@ export default function App() {
                   </div>
                 </div>
                 <span style={{fontSize:36}}>{printerStatus==="connected"?"🖨️":"📵"}</span>
+              </div>
+              <div style={{marginBottom:12}}>
+                <button onClick={function() { location.href = "https://seouljib.github.io/SeoulJib-POS/printtest/"; }}
+                  style={{width:"100%",background:"#f4f8ff",color:"#2c5aa0",border:"1.5px dashed #2c5aa0",borderRadius:10,padding:"12px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:F}}>
+                  ☁️ Cloud Print Test (temporary)
+                </button>
               </div>
               <div style={{marginBottom:12}}>
                 <div style={{fontSize:13,color:"#666",marginBottom:6,fontWeight:600}}>Printer IP Address</div>

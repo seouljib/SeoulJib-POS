@@ -13,7 +13,8 @@
     <link rel="icon" type="image/png" href="/icon-192.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- 글꼴은 화면 표시를 막지 않도록 비동기로 불러옴: 인터넷이 느리거나 끊겨도 기본 글꼴로 바로 화면이 뜸 -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" onload="this.onload=null;this.rel='stylesheet'">
     <script src="/epos-2.27.0.js"></script>
     <title>Seoul Jib POS</title>
     <style>
@@ -30,6 +31,27 @@
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js');
       }
+    </script>
+    <script>
+      // 흰 화면 감시: 25초 안에 앱 화면이 그려지지 않으면 자동 새로고침 (연속 3번까지, 이후엔 다시 시도 버튼)
+      (function () {
+        setTimeout(function () {
+          var root = document.getElementById('root');
+          var n = 0;
+          try { n = Number(sessionStorage.getItem('sj-wd') || 0); } catch (e) {}
+          if (root && root.children.length > 0) { try { sessionStorage.removeItem('sj-wd'); } catch (e) {} return; }
+          if (n < 3) {
+            try { sessionStorage.setItem('sj-wd', String(n + 1)); } catch (e) {}
+            location.reload();
+          } else if (root) {
+            root.innerHTML = '<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:system-ui,sans-serif;text-align:center;padding:24px">'
+              + '<div style="font-size:26px;font-weight:800;margin-bottom:12px">Cannot load the app</div>'
+              + '<div style="font-size:16px;color:#666;margin-bottom:24px">Check the server, then tap Retry.</div>'
+              + '<button id="sjRetry" style="font-size:18px;font-weight:800;padding:14px 28px;border:none;border-radius:12px;background:#c0392b;color:#fff">Retry</button></div>';
+            document.getElementById('sjRetry').onclick = function () { try { sessionStorage.removeItem('sj-wd'); } catch (e) {} location.reload(); };
+          }
+        }, 25000);
+      })();
     </script>
   </body>
 </html>
