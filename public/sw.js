@@ -1,12 +1,3 @@
-const CACHE = 'sj-v1';
-self.addEventListener('install', function(e) {
-  self.skipWaiting();
-});
-self.addEventListener('activate', function(e) {
-  e.waitUntil(self.clients.claim());
-});
-self.addEventListener('fetch', function(e) {
-  e.respondWith(fetch(e.request).catch(function() {
-    return caches.match(e.request);
-  }));
-});
+// 서비스 워커 해제용: 요청을 가로채지 않고, 설치되는 즉시 스스로 등록을 해제함
+self.addEventListener('install', function () { self.skipWaiting(); });
+self.addEventListener('activate', function (e) { e.waitUntil(self.registration.unregister()); });

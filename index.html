@@ -43,8 +43,28 @@
           KEYS.forEach(function (k) { try { var v = localStorage.getItem(k); if (v !== null) ls[k] = v; } catch (e) {} });
           location.replace(target + "#sjcfg=" + enc({ ls: ls, resume: resume }));
         };
+        // 예전 서비스 워커가 이 화면을 붙잡고 있으면(클라우드에서 프린터 요청을 막던 원인) 해제 후 한 번만 새로고침
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+          var tries = 0;
+          try { tries = Number(sessionStorage.getItem("sj-sw-fix") || 0); } catch (e) {}
+          if (tries < 2) {
+            try { sessionStorage.setItem("sj-sw-fix", String(tries + 1)); } catch (e) {}
+            window.__sjBoot = new Promise(function () {});   // 앱 시작 보류
+            navigator.serviceWorker.getRegistrations()
+              .then(function (rs) { return Promise.all(rs.map(function (r) { return r.unregister(); })); })
+              .catch(function () {})
+              .then(function () { try { if (resume) sessionStorage.setItem("sj-resume", resume); } catch (e) {} location.reload(); });
+            return;
+          }
+        }
         if (isCloud) { window.__sjBoot = Promise.resolve(); return; }
         // 파이에서 열린 경우
+        // 손으로 "파이로 전환"을 누른 기기: 다시 "클라우드로 전환"을 누를 때까지 파이에 머묾
+        if (/[?&]stay=1/.test(location.search)) { try { localStorage.setItem("sj-prefer-local", "1"); } catch (e) {} }
+        var pinned = false;
+        try { pinned = localStorage.getItem("sj-prefer-local") === "1"; } catch (e) {}
+        window.__SJ_PINNED = pinned;
+        if (pinned) { window.__sjBoot = Promise.resolve(); return; }
         if (/[?&]local=1/.test(location.search)) {
           // 클라우드에서 문제가 생겨 돌아온 경우: 30분 동안은 파이에 머묾
           try { sessionStorage.setItem("sj-local-until", String(Date.now() + 30 * 60 * 1000)); } catch (e) {}
@@ -84,8 +104,9 @@
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
+      // 서비스 워커는 사용하지 않음 (https 에서 프린터 요청을 가로채 막았음). 남아 있으면 해제.
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js');
+        navigator.serviceWorker.getRegistrations().then(function (rs) { rs.forEach(function (r) { r.unregister(); }); }).catch(function () {});
       }
     </script>
     <script>

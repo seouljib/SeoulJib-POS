@@ -12,7 +12,7 @@ echo "===== [2/4] 클라우드에 올리기 ====="
 npx --yes firebase-tools@15 deploy --only hosting --project seoul-jib-pos
 
 echo "===== [3/4] GitHub에 저장 ====="
-git add src/App.jsx src/main.jsx index.html firebase.json .firebaserc deploy.sh public/sj-alive.json
+git add src/App.jsx src/main.jsx index.html firebase.json .firebaserc deploy.sh public/sj-alive.json public/sw.js
 git commit -m "$MSG" || echo "(새로 저장할 변경 없음)"
 git push
 

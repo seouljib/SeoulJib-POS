@@ -392,8 +392,17 @@ function ServerStatus() {
     <div style={{background:"#fff",borderRadius:14,padding:"16px 20px",border:"1.5px solid #e0e0e0",marginBottom:24}}>
       <div style={row}><span style={{fontWeight:700}}>App served from</span><span style={{fontWeight:800,color:origin==="cloud"?"#2c5aa0":"#8e44ad"}}>{origin==="cloud" ? "☁️ Cloud" : "🍓 Local Pi"}</span></div>
       <div style={row}><span style={{fontWeight:700}}>Pi live link</span><span style={{fontWeight:800,color:piLink?"#27ae60":"#e74c3c"}}>{piLink ? "● Connected" : "● Not connected"}</span></div>
+      {origin === "pi" && window.__SJ_PINNED && (
+        <div style={{fontSize:13,color:"#8e44ad",fontWeight:700,padding:"4px 0"}}>📌 Kept on local Pi (manual). Tap below to return to cloud.</div>
+      )}
       {window.__sjGo && (
-        <button onClick={function() { if (origin === "cloud") window.__sjGo(window.__SJ_PI + "/?local=1"); else window.__sjGo(window.__SJ_CLOUD + "/"); }}
+        <button onClick={function() {
+          if (origin === "cloud") { window.__sjGo(window.__SJ_PI + "/?local=1&stay=1"); }
+          else {
+            try { localStorage.removeItem("sj-prefer-local"); sessionStorage.removeItem("sj-local-until"); } catch(e) {}
+            window.__sjGo(window.__SJ_CLOUD + "/");
+          }
+        }}
           style={{marginTop:10,width:"100%",background:"#f9f9f9",border:"1.5px solid #ddd",borderRadius:10,padding:"10px",fontWeight:700,fontSize:14,cursor:"pointer"}}>
           {origin === "cloud" ? "Switch to local Pi server" : "Switch to cloud server"}
         </button>
@@ -425,7 +434,7 @@ class CrashGuard extends Component {
         <button onClick={function() { try { sessionStorage.removeItem("sj-crash"); } catch(e) {} location.reload(); }}
           style={{fontSize:18,fontWeight:800,padding:"14px 28px",border:"none",borderRadius:12,background:"#c0392b",color:"#fff"}}>Restart now</button>
         {window.__SJ_ORIGIN === "cloud" && window.__sjGo && (
-          <button onClick={function() { window.__sjGo(window.__SJ_PI + "/?local=1"); }}
+          <button onClick={function() { window.__sjGo(window.__SJ_PI + "/?local=1&stay=1"); }}
             style={{marginTop:12,fontSize:16,fontWeight:700,padding:"12px 24px",border:"1.5px solid #999",borderRadius:12,background:"#fff",color:"#333"}}>Use local Pi server</button>
         )}
       </div>
