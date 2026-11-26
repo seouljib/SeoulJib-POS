@@ -381,6 +381,27 @@ async function uploadToCloudinary(base64DataUrl) {
   }
 }
 
+// 서버 연결 상태 표시 (설정 화면): 지금 클라우드에서 열렸는지 파이에서 열렸는지, 파이 실시간 연결 상태
+function ServerStatus() {
+  var [tick, setTick] = useState(0);
+  useEffect(function() { var t = setInterval(function() { setTick(function(x) { return x + 1; }); }, 2000); return function() { clearInterval(t); }; }, []);
+  var origin = window.__SJ_ORIGIN === "cloud" ? "cloud" : "pi";
+  var piLink = !!(wsRef.ws && wsRef.ws.readyState === 1);
+  var row = {display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",fontSize:15};
+  return (
+    <div style={{background:"#fff",borderRadius:14,padding:"16px 20px",border:"1.5px solid #e0e0e0",marginBottom:24}}>
+      <div style={row}><span style={{fontWeight:700}}>App served from</span><span style={{fontWeight:800,color:origin==="cloud"?"#2c5aa0":"#8e44ad"}}>{origin==="cloud" ? "☁️ Cloud" : "🍓 Local Pi"}</span></div>
+      <div style={row}><span style={{fontWeight:700}}>Pi live link</span><span style={{fontWeight:800,color:piLink?"#27ae60":"#e74c3c"}}>{piLink ? "● Connected" : "● Not connected"}</span></div>
+      {window.__sjGo && (
+        <button onClick={function() { if (origin === "cloud") window.__sjGo(window.__SJ_PI + "/?local=1"); else window.__sjGo(window.__SJ_CLOUD + "/"); }}
+          style={{marginTop:10,width:"100%",background:"#f9f9f9",border:"1.5px solid #ddd",borderRadius:10,padding:"10px",fontWeight:700,fontSize:14,cursor:"pointer"}}>
+          {origin === "cloud" ? "Switch to local Pi server" : "Switch to cloud server"}
+        </button>
+      )}
+    </div>
+  );
+}
+
 // 화면 오류 시 흰 화면에 갇히지 않도록: 안내 표시 후 자동 재시작 (2분 안에 3번 넘게 반복되면 수동 버튼만)
 class CrashGuard extends Component {
   constructor(props) { super(props); this.state = { err: null, auto: true }; }
@@ -403,6 +424,10 @@ class CrashGuard extends Component {
         <div style={{fontSize:16,color:"#666",marginBottom:24}}>{this.state.auto ? "The app will restart in a few seconds." : "Please tap the button to restart."}</div>
         <button onClick={function() { try { sessionStorage.removeItem("sj-crash"); } catch(e) {} location.reload(); }}
           style={{fontSize:18,fontWeight:800,padding:"14px 28px",border:"none",borderRadius:12,background:"#c0392b",color:"#fff"}}>Restart now</button>
+        {window.__SJ_ORIGIN === "cloud" && window.__sjGo && (
+          <button onClick={function() { window.__sjGo(window.__SJ_PI + "/?local=1"); }}
+            style={{marginTop:12,fontSize:16,fontWeight:700,padding:"12px 24px",border:"1.5px solid #999",borderRadius:12,background:"#fff",color:"#333"}}>Use local Pi server</button>
+        )}
       </div>
     );
   }
@@ -2446,6 +2471,8 @@ function AppInner() {
         <div style={{flex:1,overflowY:"auto",padding:"20px",background:"#f5f5f5"}}>
           <div style={{maxWidth:500,margin:"0 auto"}}>
 
+            <div style={{fontSize:11,fontWeight:700,color:RED,letterSpacing:3,marginBottom:16,paddingBottom:6,borderBottom:"1px solid #e0e0e0"}}>SERVER</div>
+            <ServerStatus />
             <div style={{fontSize:11,fontWeight:700,color:RED,letterSpacing:3,marginBottom:16,paddingBottom:6,borderBottom:"1px solid #e0e0e0"}}>RECEIPT PRINTER</div>
             <div style={{background:"#fff",borderRadius:14,padding:"20px",border:"1.5px solid "+(printerStatus==="connected"?"#27ae60":printerStatus==="error"?"#e74c3c":"#e0e0e0"),marginBottom:24}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
@@ -2456,12 +2483,6 @@ function AppInner() {
                   </div>
                 </div>
                 <span style={{fontSize:36}}>{printerStatus==="connected"?"🖨️":"📵"}</span>
-              </div>
-              <div style={{marginBottom:12}}>
-                <button onClick={function() { location.href = "https://seouljib.github.io/SeoulJib-POS/printtest/"; }}
-                  style={{width:"100%",background:"#f4f8ff",color:"#2c5aa0",border:"1.5px dashed #2c5aa0",borderRadius:10,padding:"12px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:F}}>
-                  ☁️ Cloud Print Test (temporary)
-                </button>
               </div>
               <div style={{marginBottom:12}}>
                 <div style={{fontSize:13,color:"#666",marginBottom:6,fontWeight:600}}>Printer IP Address</div>
